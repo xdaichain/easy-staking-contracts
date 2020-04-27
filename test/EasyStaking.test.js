@@ -1,5 +1,5 @@
 const { accounts, contract } = require('@openzeppelin/test-environment');
-const { ether, BN } = require('@openzeppelin/test-helpers');
+const { ether, BN, expectRevert, constants } = require('@openzeppelin/test-helpers');
 const { expect } = require('chai');
 
 const EasyStaking = contract.fromArtifact('EasyStaking');
@@ -42,6 +42,33 @@ describe('PoaMania', () => {
       (await easyStaking.getInterestRates()).forEach((interestRate, index) => {
         expect(interestRate).to.be.bignumber.equal(interestRates[index]);
       });
+    });
+    it('fails if any of parameters is incorrect', async () => {
+      easyStaking = await EasyStaking.new();
+      await expectRevert(
+        initialize(
+          constants.ZERO_ADDRESS,
+          intervals.map(item => item.toString()),
+          interestRates.map(item => item.toString()),
+        ),
+        'not a contract address'
+      );
+      await expectRevert(
+        initialize(
+          stakeToken.address,
+          [],
+          [],
+        ),
+        'empty array'
+      );
+      await expectRevert(
+        initialize(
+          stakeToken.address,
+          [...intervals, new BN(600)].map(item => item.toString()),
+          interestRates.map(item => item.toString()),
+        ),
+        'different array sizes'
+      );
     });
   });
 });
