@@ -1,5 +1,5 @@
 const { accounts, contract } = require('@openzeppelin/test-environment');
-const { ether, BN, expectRevert, constants } = require('@openzeppelin/test-helpers');
+const { ether, BN, expectRevert, constants, time } = require('@openzeppelin/test-helpers');
 const { expect } = require('chai');
 
 const EasyStaking = contract.fromArtifact('EasyStaking');
@@ -9,6 +9,7 @@ describe('PoaMania', () => {
   const [owner, user1, user2] = accounts;
   const intervals = [new BN(600), new BN(600), new BN(600)];          // in seconds
   const interestRates = [ether('0.05'), ether('0.1'), ether('0.15')]; // 5%, 10% and 15%
+  const YEAR = new BN(31536000); // in seconds
 
   let easyStaking;
   let stakeToken;
@@ -69,6 +70,32 @@ describe('PoaMania', () => {
         ),
         'different array sizes'
       );
+    });
+  });
+
+  describe('deposit', () => {
+    beforeEach(async () => {
+      await stakeToken.mint(user1, ether('1000'), { from: owner });
+      await stakeToken.approve(easyStaking.address, ether('10000'), { from: user1 });
+    });
+    it('should deposit', async () => {
+      const value = ether('100');
+      await easyStaking.deposit(value, { from: user1 });
+      const timestamp = await time.latest();
+      expect(await easyStaking.balances(user1)).to.be.bignumber.equal(value);
+      expect(await easyStaking.depositDates(user1)).to.be.bignumber.equal(timestamp);
+    });
+    it('should earn interest', async () => {
+      const value = ether('100');
+      await easyStaking.deposit(value, { from: user1 });
+      const timestampBefore = await time.latest();
+      await time.increase(300);
+      await easyStaking.deposit(0, { from: user1 });
+      const timestampAfter = await time.latest();
+      const timePassed = timestampAfter.sub(timestampBefore);
+      const interest = value.mul(interestRates[0]).mul(timePassed).div(YEAR);
+      expect(await easyStaking.balances(user1)).to.be.bignumber.equal(value.add(interest));
+      expect(await easyStaking.depositDates(user1)).to.be.bignumber.equal(timestampAfter);
     });
   });
 });
