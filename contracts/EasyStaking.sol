@@ -11,13 +11,13 @@ contract EasyStaking is Ownable {
 
     uint256 constant YEAR = 365 days;
 
-    IStakeToken token;
+    IStakeToken public token;
 
     uint256[] intervals;
     uint256[] interestRates;
 
-    mapping (address => uint256) balances;
-    mapping (address => uint256) depositDates;
+    mapping (address => uint256) public balances;
+    mapping (address => uint256) public depositDates;
 
 
     function initialize(
@@ -58,6 +58,14 @@ contract EasyStaking is Ownable {
         uint256[] calldata _interestRates
     ) external onlyOwner {
         _setIntervalsAndInterestRates(_intervals, _interestRates);
+    }
+
+    function getIntervals() external view returns (uint256[] memory) {
+        return intervals;
+    }
+
+    function getInterestRates() external view returns (uint256[] memory) {
+        return interestRates;
     }
 
     function _mint() internal {
