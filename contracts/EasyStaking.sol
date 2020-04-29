@@ -77,7 +77,7 @@ contract EasyStaking is Ownable {
             sumOfIntervals = sumOfIntervals.add(intervals[i]);
             if (timePassed < sumOfIntervals) break;
         }
-        uint256 interest = balances[msg.sender].mul(currentInterestRate).mul(timePassed).div(YEAR);
+        uint256 interest = balances[msg.sender].mul(currentInterestRate).div(1 ether).mul(timePassed).div(YEAR);
         token.mint(address(this), interest);
         balances[msg.sender] = balances[msg.sender].add(interest);
         depositDates[msg.sender] = block.timestamp;

@@ -7,9 +7,10 @@ const Token = contract.fromArtifact('@openzeppelin/contracts-ethereum-package/St
 
 describe('PoaMania', () => {
   const [owner, user1, user2] = accounts;
-  const intervals = [new BN(600), new BN(600), new BN(600)];          // in seconds
-  const interestRates = [ether('0.05'), ether('0.1'), ether('0.15')]; // 5%, 10% and 15%
   const YEAR = new BN(31536000); // in seconds
+  const intervals = [YEAR.div(new BN(4)), YEAR.div(new BN(2)), YEAR];
+  const interestRates = [ether('0.05'), ether('0.1'), ether('0.15')]; // 5%, 10% and 15%
+  const oneEther = ether('1');
 
   let easyStaking;
   let stakeToken;
@@ -89,11 +90,11 @@ describe('PoaMania', () => {
       const value = ether('100');
       await easyStaking.deposit(value, { from: user1 });
       const timestampBefore = await time.latest();
-      await time.increase(300);
+      await time.increase(YEAR.div(new BN(8)));
       await easyStaking.deposit(0, { from: user1 });
       const timestampAfter = await time.latest();
       const timePassed = timestampAfter.sub(timestampBefore);
-      const interest = value.mul(interestRates[0]).mul(timePassed).div(YEAR);
+      const interest = value.mul(interestRates[0]).div(oneEther).mul(timePassed).div(YEAR);
       expect(await easyStaking.balances(user1)).to.be.bignumber.equal(value.add(interest));
       expect(await easyStaking.depositDates(user1)).to.be.bignumber.equal(timestampAfter);
     });
