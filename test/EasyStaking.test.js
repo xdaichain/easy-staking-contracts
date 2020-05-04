@@ -153,4 +153,24 @@ describe('PoaMania', () => {
       expect(await stakeToken.balanceOf(user1)).to.be.bignumber.equal(oneEther);
     });
   });
+  describe('setToken', () => {
+    it('should set', async () => {
+      expect(await easyStaking.token()).to.be.equal(stakeToken.address)
+      const newStakeToken = await Token.new();
+      await easyStaking.setToken(newStakeToken.address, { from: owner });
+      expect(newStakeToken.address).to.be.not.equal(stakeToken.address);
+      expect(await easyStaking.token()).to.be.equal(newStakeToken.address);
+    });
+    it('fails if not an owner', async () => {
+      const newStakeToken = await Token.new();
+      expectRevert(
+        easyStaking.setToken(newStakeToken.address, { from: user1 }),
+        'Ownable: caller is not the owner',
+      );
+    });
+    it('fails if not a contract address', async () => {
+      expectRevert(easyStaking.setToken(user1, { from: owner }), 'not a contract address');
+      expectRevert(easyStaking.setToken(constants.ZERO_ADDRESS, { from: owner }), 'not a contract address');
+    });
+  });
 });
