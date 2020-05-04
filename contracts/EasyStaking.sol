@@ -21,10 +21,13 @@ contract EasyStaking is Ownable {
 
 
     function initialize(
+        address _owner,
         address _tokenAddress,
         uint256[] memory _intervals,
         uint256[] memory _interestRates
     ) public initializer {
+        require(_owner != address(0), "zero address");
+        Ownable.initialize(_owner);
         _setToken(_tokenAddress);
         _setIntervalsAndInterestRates(_intervals, _interestRates);
     }

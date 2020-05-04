@@ -15,11 +15,12 @@ describe('PoaMania', () => {
   let easyStaking;
   let stakeToken;
 
-  const initializeMethod = 'initialize(address,uint256[],uint256[])';
+  const initializeMethod = 'initialize(address,address,uint256[],uint256[])';
 
   function initialize(...params) {
     if (params.length === 0) {
       params = [
+        owner,
         stakeToken.address,
         intervals.map(item => item.toString()),
         interestRates.map(item => item.toString()),
@@ -50,6 +51,16 @@ describe('PoaMania', () => {
       await expectRevert(
         initialize(
           constants.ZERO_ADDRESS,
+          stakeToken.address,
+          intervals.map(item => item.toString()),
+          interestRates.map(item => item.toString()),
+        ),
+        'zero address'
+      );
+      await expectRevert(
+        initialize(
+          owner,
+          constants.ZERO_ADDRESS,
           intervals.map(item => item.toString()),
           interestRates.map(item => item.toString()),
         ),
@@ -57,6 +68,7 @@ describe('PoaMania', () => {
       );
       await expectRevert(
         initialize(
+          owner,
           stakeToken.address,
           [],
           [],
@@ -65,6 +77,7 @@ describe('PoaMania', () => {
       );
       await expectRevert(
         initialize(
+          owner,
           stakeToken.address,
           [...intervals, new BN(600)].map(item => item.toString()),
           interestRates.map(item => item.toString()),
@@ -97,6 +110,47 @@ describe('PoaMania', () => {
       const interest = value.mul(interestRates[0]).div(oneEther).mul(timePassed).div(YEAR);
       expect(await easyStaking.balances(user1)).to.be.bignumber.equal(value.add(interest));
       expect(await easyStaking.depositDates(user1)).to.be.bignumber.equal(timestampAfter);
+    });
+  });
+  describe('withdraw', () => {
+    const value = ether('1000');
+    beforeEach(async () => {
+      await stakeToken.mint(user1, value, { from: owner });
+      await stakeToken.approve(easyStaking.address, ether('10000'), { from: user1 });
+    });
+    it('should withdraw', async () => {
+      await easyStaking.setIntervalsAndInterestRates([0], [0], { from: owner });
+      await easyStaking.deposit(value, { from: user1 });
+      await easyStaking.withdraw(oneEther, { from: user1 });
+      const timestamp = await time.latest();
+      expect(await easyStaking.balances(user1)).to.be.bignumber.equal(value.sub(oneEther));
+      expect(await easyStaking.depositDates(user1)).to.be.bignumber.equal(timestamp);
+      expect(await stakeToken.balanceOf(user1)).to.be.bignumber.equal(oneEther);
+      await easyStaking.methods['withdraw()']({ from: user1 });
+      expect(await easyStaking.balances(user1)).to.be.bignumber.equal(new BN(0));
+      expect(await stakeToken.balanceOf(user1)).to.be.bignumber.equal(value);
+    });
+    it('should withdraw with interest', async () => {
+      await easyStaking.deposit(value, { from: user1 });
+      const timestampBefore = await time.latest();
+      await time.increase(YEAR.div(new BN(8)));
+      await easyStaking.methods['withdraw()']({ from: user1 });
+      const timestampAfter = await time.latest();
+      const timePassed = timestampAfter.sub(timestampBefore);
+      const interest = value.mul(interestRates[0]).div(oneEther).mul(timePassed).div(YEAR);
+      expect(await easyStaking.balances(user1)).to.be.bignumber.equal(new BN(0));
+      expect(await stakeToken.balanceOf(user1)).to.be.bignumber.equal(value.add(interest));
+    });
+    it('should withdraw part and earn interest', async () => {
+      await easyStaking.deposit(value, { from: user1 });
+      const timestampBefore = await time.latest();
+      await time.increase(YEAR.div(new BN(8)));
+      await easyStaking.withdraw(oneEther, { from: user1 });
+      const timestampAfter = await time.latest();
+      const timePassed = timestampAfter.sub(timestampBefore);
+      const interest = value.mul(interestRates[0]).div(oneEther).mul(timePassed).div(YEAR);
+      expect(await easyStaking.balances(user1)).to.be.bignumber.equal(value.sub(oneEther).add(interest));
+      expect(await stakeToken.balanceOf(user1)).to.be.bignumber.equal(oneEther);
     });
   });
 });
