@@ -173,4 +173,49 @@ describe('PoaMania', () => {
       expectRevert(easyStaking.setToken(constants.ZERO_ADDRESS, { from: owner }), 'not a contract address');
     });
   });
+  describe('setIntervalsAndInterestRates', () => {
+    it('should set', async () => {
+      (await easyStaking.getIntervals()).forEach((interval, index) => {
+        expect(interval).to.be.bignumber.equal(intervals[index]);
+      });
+      (await easyStaking.getInterestRates()).forEach((interestRate, index) => {
+        expect(interestRate).to.be.bignumber.equal(interestRates[index]);
+      });
+      const newIntervals = [YEAR.div(new BN(2)), YEAR, YEAR.mul(new BN(2))];
+      const newInterestRates = [ether('0.3'), ether('0.6'), ether('0.9')];
+      await easyStaking.setIntervalsAndInterestRates(newIntervals, newInterestRates, { from: owner });
+      (await easyStaking.getIntervals()).forEach((interval, index) => {
+        expect(interval).to.be.bignumber.equal(newIntervals[index]);
+      });
+      (await easyStaking.getInterestRates()).forEach((interestRate, index) => {
+        expect(interestRate).to.be.bignumber.equal(newInterestRates[index]);
+      });
+    });
+    it('fails if not an owner', async () => {
+      const newIntervals = [YEAR.div(new BN(2)), YEAR, YEAR.mul(new BN(2))];
+      const newInterestRates = [ether('0.3'), ether('0.6'), ether('0.9')];
+      expectRevert(
+        easyStaking.setIntervalsAndInterestRates(newIntervals, newInterestRates, { from: user1 }),
+        'Ownable: caller is not the owner',
+      );
+    });
+    it('fails if arrays are empty or not the same size', async () => {
+      expectRevert(
+        easyStaking.setIntervalsAndInterestRates([], [], { from: owner }),
+        'empty array',
+      );
+      expectRevert(
+        easyStaking.setIntervalsAndInterestRates([], [ether('0.05')], { from: owner }),
+        'empty array',
+      );
+      expectRevert(
+        easyStaking.setIntervalsAndInterestRates([YEAR], [], { from: owner }),
+        'different array sizes',
+      );
+      expectRevert(
+        easyStaking.setIntervalsAndInterestRates([YEAR, YEAR], [], { from: owner }),
+        'different array sizes',
+      );
+    });
+  });
 });
