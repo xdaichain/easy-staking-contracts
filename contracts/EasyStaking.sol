@@ -19,6 +19,7 @@ contract EasyStaking is Ownable {
     mapping (address => uint256) public balances;
     mapping (address => uint256) public depositDates;
 
+    bool locked;
 
     function initialize(
         address _owner,
@@ -33,21 +34,34 @@ contract EasyStaking is Ownable {
     }
 
     function deposit(uint256 _amount) external {
-        _mint();
+        _deposit(msg.sender, _amount);
+        _setLocked(true);
         token.transferFrom(msg.sender, address(this), _amount);
-        balances[msg.sender] = balances[msg.sender].add(_amount);
+        _setLocked(false);
+    }
+
+    function onTokenTransfer(address _sender, uint256 _amount, bytes calldata) external {
+        require(msg.sender == address(token), "only token contract is allowed");
+        if (!locked) {
+            _deposit(_sender, _amount);
+        }
+    }
+
+    function _deposit(address _sender, uint256 _amount) internal {
+        _mint(_sender);
+        balances[_sender] = balances[_sender].add(_amount);
     }
 
     function withdraw() external {
         require(balances[msg.sender] > 0, "zero balance");
-        _mint();
+        _mint(msg.sender);
         token.transfer(msg.sender, balances[msg.sender]);
         balances[msg.sender] = 0;
     }
 
     function withdraw(uint256 _amount) external {
         require(balances[msg.sender] > 0, "zero balance");
-        _mint();
+        _mint(msg.sender);
         balances[msg.sender] = balances[msg.sender].sub(_amount);
         token.transfer(msg.sender, _amount);
     }
@@ -71,8 +85,9 @@ contract EasyStaking is Ownable {
         return interestRates;
     }
 
-    function _mint() internal {
-        uint256 timePassed = block.timestamp.sub(depositDates[msg.sender]);
+    function _mint(address _sender) internal {
+        // solium-disable-next-line security/no-block-members
+        uint256 timePassed = block.timestamp.sub(depositDates[_sender]);
         uint256 currentInterestRate;
         uint256 sumOfIntervals;
         for (uint256 i = 0; i < interestRates.length; i++) {
@@ -80,10 +95,11 @@ contract EasyStaking is Ownable {
             sumOfIntervals = sumOfIntervals.add(intervals[i]);
             if (timePassed < sumOfIntervals) break;
         }
-        uint256 interest = balances[msg.sender].mul(currentInterestRate).div(1 ether).mul(timePassed).div(YEAR);
+        uint256 interest = balances[_sender].mul(currentInterestRate).div(1 ether).mul(timePassed).div(YEAR);
         token.mint(address(this), interest);
-        balances[msg.sender] = balances[msg.sender].add(interest);
-        depositDates[msg.sender] = block.timestamp;
+        balances[_sender] = balances[_sender].add(interest);
+        // solium-disable-next-line security/no-block-members
+        depositDates[_sender] = block.timestamp;
     }
 
     function _setToken(address _tokenAddress) internal {
@@ -99,5 +115,9 @@ contract EasyStaking is Ownable {
         require(_intervals.length == _interestRates.length, "different array sizes");
         intervals = _intervals;
         interestRates = _interestRates;
+    }
+
+    function _setLocked(bool _locked) internal {
+        locked = _locked;
     }
 }

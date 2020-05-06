@@ -3,7 +3,7 @@ const { ether, BN, expectRevert, constants, time } = require('@openzeppelin/test
 const { expect } = require('chai');
 
 const EasyStaking = contract.fromArtifact('EasyStaking');
-const Token = contract.fromArtifact('@openzeppelin/contracts-ethereum-package/StandaloneERC20');
+const Token = contract.fromArtifact('ERC677Mock');
 
 describe('PoaMania', () => {
   const [owner, user1, user2] = accounts;
