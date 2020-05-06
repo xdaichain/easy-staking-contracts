@@ -86,32 +86,47 @@ describe('PoaMania', () => {
       );
     });
   });
-
-  describe('deposit', () => {
+  function testDeposit(directly) {
     beforeEach(async () => {
       await stakeToken.mint(user1, ether('1000'), { from: owner });
-      await stakeToken.approve(easyStaking.address, ether('10000'), { from: user1 });
+      if (directly) {
+        await stakeToken.approve(easyStaking.address, ether('10000'), { from: user1 });
+      }
     });
     it('should deposit', async () => {
       const value = ether('100');
-      await easyStaking.deposit(value, { from: user1 });
+      if (directly) {
+        await easyStaking.deposit(value, { from: user1 });
+      } else {
+        await stakeToken.transfer(easyStaking.address, value, { from: user1 });
+      }
       const timestamp = await time.latest();
       expect(await easyStaking.balances(user1)).to.be.bignumber.equal(value);
       expect(await easyStaking.depositDates(user1)).to.be.bignumber.equal(timestamp);
     });
     it('should earn interest', async () => {
       const value = ether('100');
-      await easyStaking.deposit(value, { from: user1 });
+      if (directly) {
+        await easyStaking.deposit(value, { from: user1 });
+      } else {
+        await stakeToken.transfer(easyStaking.address, value, { from: user1 });
+      }
       const timestampBefore = await time.latest();
       await time.increase(YEAR.div(new BN(8)));
-      await easyStaking.deposit(0, { from: user1 });
+      if (directly) {
+        await easyStaking.deposit(0, { from: user1 });
+      } else {
+        await stakeToken.transfer(easyStaking.address, 0, { from: user1 });
+      }
       const timestampAfter = await time.latest();
       const timePassed = timestampAfter.sub(timestampBefore);
       const interest = value.mul(interestRates[0]).div(oneEther).mul(timePassed).div(YEAR);
       expect(await easyStaking.balances(user1)).to.be.bignumber.equal(value.add(interest));
       expect(await easyStaking.depositDates(user1)).to.be.bignumber.equal(timestampAfter);
     });
-  });
+  }
+  describe('deposit', () => testDeposit(true));
+  describe('onTokenTransfer', () => testDeposit(false));
   describe('withdraw', () => {
     const value = ether('1000');
     beforeEach(async () => {
