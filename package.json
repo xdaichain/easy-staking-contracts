@@ -10,7 +10,8 @@
   "license": "ISC",
   "dependencies": {
     "@openzeppelin/cli": "^2.8.2",
-    "@openzeppelin/contracts-ethereum-package": "^2.5.0"
+    "@openzeppelin/contracts-ethereum-package": "^2.5.0",
+    "ethlint": "^1.2.5"
   },
   "devDependencies": {
     "@openzeppelin/test-environment": "^0.1.4",
