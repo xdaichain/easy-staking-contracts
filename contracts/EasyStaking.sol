@@ -52,18 +52,19 @@ contract EasyStaking is Ownable {
         balances[_sender] = balances[_sender].add(_amount);
     }
 
-    function withdraw() external {
-        require(balances[msg.sender] > 0, "zero balance");
-        _mint(msg.sender);
-        token.transfer(msg.sender, balances[msg.sender]);
-        balances[msg.sender] = 0;
+    function withdraw() public {
+        withdraw(0);
     }
 
-    function withdraw(uint256 _amount) external {
+    function withdraw(uint256 _amount) public {
         require(balances[msg.sender] > 0, "zero balance");
         _mint(msg.sender);
-        balances[msg.sender] = balances[msg.sender].sub(_amount);
-        token.transfer(msg.sender, _amount);
+        uint256 amount = _amount;
+        if (amount == 0) {
+            amount = balances[msg.sender];
+        }
+        balances[msg.sender] = balances[msg.sender].sub(amount);
+        token.transfer(msg.sender, amount);
     }
 
     function setToken(address _tokenAddress) external onlyOwner {
