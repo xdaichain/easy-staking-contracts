@@ -3,15 +3,18 @@ pragma solidity ^0.5.15;
 import "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
-import "./IStakeToken.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/SafeERC20.sol";
+import "./IERC20Mintable.sol";
+import "./Sacrifice.sol";
 
 contract EasyStaking is Ownable {
     using Address for address;
     using SafeMath for uint256;
+    using SafeERC20 for IERC20;
 
     uint256 constant YEAR = 365 days;
 
-    IStakeToken public token;
+    IERC20Mintable public token;
 
     uint256[] intervals;
     uint256[] interestRates;
@@ -67,6 +70,20 @@ contract EasyStaking is Ownable {
         token.transfer(msg.sender, amount);
     }
 
+    function claimTokens(address _token, address payable _to) public onlyOwner {
+        require(_to != address(0) && _to != address(this), "not a valid recipient");
+        if (_token == address(0)) {
+            uint256 value = address(this).balance;
+            if (!_to.send(value)) { // solium-disable-line security/no-send
+                (new Sacrifice).value(value)(_to);
+            }
+        } else {
+            IERC20 customToken = IERC20(_token);
+            uint256 balance = customToken.balanceOf(address(this));
+            customToken.safeTransfer(_to, balance);
+        }
+    }
+
     function setToken(address _tokenAddress) external onlyOwner {
         _setToken(_tokenAddress);
     }
@@ -105,7 +122,7 @@ contract EasyStaking is Ownable {
 
     function _setToken(address _tokenAddress) internal {
         require(_tokenAddress.isContract(), "not a contract address");
-        token = IStakeToken(_tokenAddress);
+        token = IERC20Mintable(_tokenAddress);
     }
 
     function _setIntervalsAndInterestRates(
