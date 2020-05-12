@@ -13,14 +13,18 @@ contract EasyStaking is Ownable {
     using SafeERC20 for IERC20;
 
     uint256 constant YEAR = 365 days;
+    address constant BURN_ADDRESS = 0x0000000000000000000000000000000000000001;
 
     IERC20Mintable public token;
 
     uint256[] intervals;
     uint256[] interestRates;
+    uint256 fee; // in percentage, represented as fixed point numbers with 18 decimals like in Ether
+    uint256 withdrawalLockDuration; // in seconds
 
     mapping (address => uint256) public balances;
     mapping (address => uint256) public depositDates;
+    mapping (address => uint256) public withdrawalRequestsDates;
 
     bool locked;
 
@@ -28,12 +32,16 @@ contract EasyStaking is Ownable {
         address _owner,
         address _tokenAddress,
         uint256[] memory _intervals,
-        uint256[] memory _interestRates
+        uint256[] memory _interestRates,
+        uint256 _fee,
+        uint256 _withdrawalLockDuration
     ) public initializer {
         require(_owner != address(0), "zero address");
         Ownable.initialize(_owner);
         _setToken(_tokenAddress);
         _setIntervalsAndInterestRates(_intervals, _interestRates);
+        _setFee(_fee);
+        _setWithdrawalLockDuration(_withdrawalLockDuration);
     }
 
     function deposit(uint256 _amount) external {
@@ -55,11 +63,28 @@ contract EasyStaking is Ownable {
         balances[_sender] = balances[_sender].add(_amount);
     }
 
-    function withdraw() public {
-        withdraw(0);
+    function makeForcedWithdrawal(uint256 _amount) public {
+        _withdraw(_amount, true);
     }
 
-    function withdraw(uint256 _amount) public {
+    function requestWithdrawal() external {
+        // solium-disable-next-line security/no-block-members
+        withdrawalRequestsDates[msg.sender] = block.timestamp;
+    }
+
+    function executeWithdrawal(uint256 _amount) external {
+        uint256 requestDate = withdrawalRequestsDates[msg.sender];
+        require(requestDate > 0, "withdrawal wasn't requested");
+        // solium-disable-next-line security/no-block-members
+        uint256 timestamp = block.timestamp;
+        uint256 lockEnd = requestDate.add(withdrawalLockDuration);
+        require(timestamp >= lockEnd, "too early");
+        require(timestamp < lockEnd.add(1 days), "too late");
+        _withdraw(_amount, false);
+        withdrawalRequestsDates[msg.sender] = 0;
+    }
+
+    function _withdraw(uint256 _amount, bool _forced) internal {
         require(balances[msg.sender] > 0, "zero balance");
         _mint(msg.sender);
         uint256 amount = _amount;
@@ -67,6 +92,11 @@ contract EasyStaking is Ownable {
             amount = balances[msg.sender];
         }
         balances[msg.sender] = balances[msg.sender].sub(amount);
+        if (_forced) {
+            uint256 feeValue = amount.mul(fee).div(1 ether);
+            amount = amount.sub(feeValue);
+            token.transfer(BURN_ADDRESS, feeValue);
+        }
         token.transfer(msg.sender, amount);
     }
 
@@ -93,6 +123,14 @@ contract EasyStaking is Ownable {
         uint256[] calldata _interestRates
     ) external onlyOwner {
         _setIntervalsAndInterestRates(_intervals, _interestRates);
+    }
+
+    function setFee(uint256 _fee) external onlyOwner {
+        _setFee(_fee);
+    }
+
+    function setWithdrawalLockDuration(uint256 _withdrawalLockDuration) internal {
+        _setWithdrawalLockDuration(_withdrawalLockDuration);
     }
 
     function getIntervals() external view returns (uint256[] memory) {
@@ -133,6 +171,15 @@ contract EasyStaking is Ownable {
         require(_intervals.length == _interestRates.length, "different array sizes");
         intervals = _intervals;
         interestRates = _interestRates;
+    }
+
+    function _setFee(uint256 _fee) internal {
+        require(_fee <= 1 ether, "should be less than or equal to 1 ether");
+        fee = _fee;
+    }
+
+    function _setWithdrawalLockDuration(uint256 _withdrawalLockDuration) internal {
+        withdrawalLockDuration = _withdrawalLockDuration;
     }
 
     function _setLocked(bool _locked) internal {
