@@ -113,7 +113,7 @@ contract EasyStaking is Ownable {
         _setFee(_fee);
     }
 
-    function setWithdrawalLockDuration(uint256 _withdrawalLockDuration) internal {
+    function setWithdrawalLockDuration(uint256 _withdrawalLockDuration) external onlyOwner {
         _setWithdrawalLockDuration(_withdrawalLockDuration);
     }
 
