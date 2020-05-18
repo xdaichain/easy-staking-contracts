@@ -12,6 +12,9 @@ contract EasyStaking is Ownable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
+    event Deposited(address indexed sender, uint256 amount, string customId);
+    event Withdrawn(address indexed sender, uint256 amount, string customId);
+
     uint256 constant YEAR = 365 days;
     address constant BURN_ADDRESS = 0x0000000000000000000000000000000000000001;
 
@@ -62,6 +65,7 @@ contract EasyStaking is Ownable {
         bytes32 userHash = _getUserHash(_sender, _customId);
         _mint(userHash);
         balances[userHash] = balances[userHash].add(_amount);
+        emit Deposited(_sender, _amount, _customId);
     }
 
     function makeForcedWithdrawal(uint256 _amount, string calldata _customId) external {
@@ -102,6 +106,7 @@ contract EasyStaking is Ownable {
             token.transfer(BURN_ADDRESS, feeValue);
         }
         token.transfer(_sender, amount);
+        emit Withdrawn(_sender, amount, _customId);
     }
 
     function claimTokens(address _token, address payable _to) public onlyOwner {
