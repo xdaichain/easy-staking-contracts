@@ -137,29 +137,17 @@ contract EasyStaking is Ownable {
         _setWithdrawalLockDuration(_withdrawalLockDuration);
     }
 
-    function getBalance(address _user) public view returns (uint256) {
-        return getBalance(_user, "");
-    }
-
-    function getBalance(address _user, string memory _customId) public view returns (uint256) {
+    function getBalance(address _user, string calldata _customId) external view returns (uint256) {
         bytes32 userHash = _getUserHash(_user, _customId);
         return balances[userHash];
     }
 
-    function getDepositDate(address _user) public view returns (uint256) {
-        return getDepositDate(_user, "");
-    }
-
-    function getDepositDate(address _user, string memory _customId) public view returns (uint256) {
+    function getDepositDate(address _user, string calldata _customId) external view returns (uint256) {
         bytes32 userHash = _getUserHash(_user, _customId);
         return depositDates[userHash];
     }
 
-    function getWithdrawalRequestDate(address _user) public view returns (uint256) {
-        return getWithdrawalRequestDate(_user, "");
-    }
-
-    function getWithdrawalRequestDate(address _user, string memory _customId) public view returns (uint256) {
+    function getWithdrawalRequestDate(address _user, string calldata _customId) external view returns (uint256) {
         bytes32 userHash = _getUserHash(_user, _customId);
         return withdrawalRequestsDates[userHash];
     }
