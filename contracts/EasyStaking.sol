@@ -19,8 +19,8 @@ contract EasyStaking is Ownable {
 
     uint256[] intervals;
     uint256[] interestRates;
-    uint256 fee; // in percentage, represented as fixed point numbers with 18 decimals like in Ether
-    uint256 withdrawalLockDuration; // in seconds
+    uint256 public fee; // in percentage, represented as fixed point numbers with 18 decimals like in Ether
+    uint256 public withdrawalLockDuration; // in seconds
 
     mapping (bytes32 => uint256) balances;
     mapping (bytes32 => uint256) depositDates;
