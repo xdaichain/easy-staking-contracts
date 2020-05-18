@@ -61,13 +61,6 @@ contract EasyStaking is Ownable {
         }
     }
 
-    function _deposit(address _sender, uint256 _amount, string memory _customId) internal {
-        bytes32 userHash = _getUserHash(_sender, _customId);
-        _mint(userHash);
-        balances[userHash] = balances[userHash].add(_amount);
-        emit Deposited(_sender, _amount, _customId);
-    }
-
     function makeForcedWithdrawal(uint256 _amount, string calldata _customId) external {
         _withdraw(msg.sender, _amount, _customId, true);
     }
@@ -89,24 +82,6 @@ contract EasyStaking is Ownable {
         require(timestamp < lockEnd.add(1 days), "too late");
         _withdraw(msg.sender, _amount, _customId, false);
         withdrawalRequestsDates[userHash] = 0;
-    }
-
-    function _withdraw(address _sender, uint256 _amount, string memory _customId, bool _forced) internal {
-        bytes32 userHash = _getUserHash(_sender, _customId);
-        require(balances[userHash] > 0, "zero balance");
-        _mint(userHash);
-        uint256 amount = _amount;
-        if (amount == 0) {
-            amount = balances[userHash];
-        }
-        balances[userHash] = balances[userHash].sub(amount);
-        if (_forced) {
-            uint256 feeValue = amount.mul(fee).div(1 ether);
-            amount = amount.sub(feeValue);
-            token.transfer(BURN_ADDRESS, feeValue);
-        }
-        token.transfer(_sender, amount);
-        emit Withdrawn(_sender, amount, _customId);
     }
 
     function claimTokens(address _token, address payable _to) public onlyOwner {
@@ -163,6 +138,31 @@ contract EasyStaking is Ownable {
 
     function getInterestRates() external view returns (uint256[] memory) {
         return interestRates;
+    }
+
+    function _deposit(address _sender, uint256 _amount, string memory _customId) internal {
+        bytes32 userHash = _getUserHash(_sender, _customId);
+        _mint(userHash);
+        balances[userHash] = balances[userHash].add(_amount);
+        emit Deposited(_sender, _amount, _customId);
+    }
+
+    function _withdraw(address _sender, uint256 _amount, string memory _customId, bool _forced) internal {
+        bytes32 userHash = _getUserHash(_sender, _customId);
+        require(balances[userHash] > 0, "zero balance");
+        _mint(userHash);
+        uint256 amount = _amount;
+        if (amount == 0) {
+            amount = balances[userHash];
+        }
+        balances[userHash] = balances[userHash].sub(amount);
+        if (_forced) {
+            uint256 feeValue = amount.mul(fee).div(1 ether);
+            amount = amount.sub(feeValue);
+            token.transfer(BURN_ADDRESS, feeValue);
+        }
+        token.transfer(_sender, amount);
+        emit Withdrawn(_sender, amount, _customId);
     }
 
     function _mint(bytes32 _user) internal {
