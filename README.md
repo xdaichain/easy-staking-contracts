@@ -41,6 +41,7 @@ The owner can only change the contract parameters and claim unsupported tokens a
 3. `setIntervalsAndInterestRates(uint256[],uint256[])`
 4. `setFee(uint256)`
 5. `setWithdrawalLockDuration(uint256)`
+6. `setWithdrawalUnlockDuration(uint256)`
 
 ### Proxy Admin
 The Proxy Admin can upgrade the logic of the contracts. This role will be abolished after an audit and some testing time.

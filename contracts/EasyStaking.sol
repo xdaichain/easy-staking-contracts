@@ -49,6 +49,8 @@ contract EasyStaking is Ownable {
     uint256 public fee;
     // The time from the request after which the withdrawal will be available (in seconds)
     uint256 public withdrawalLockDuration;
+    // The time during which the withdrawal will be available from the moment of unlocking (in seconds)
+    uint256 public withdrawalUnlockDuration;
 
     // The deposit balances of users
     mapping (bytes32 => uint256) balances;
@@ -68,6 +70,7 @@ contract EasyStaking is Ownable {
      * @param _interestRates The array of interest rates for each staking interval
      * @param _fee The fee of the forced withdrawal (in percentage)
      * @param _withdrawalLockDuration The time from the request after which the withdrawal will be available (in seconds)
+     * @param _withdrawalUnlockDuration The time during which the withdrawal will be available from the moment of unlocking (in seconds)
      */
     function initialize(
         address _owner,
@@ -75,7 +78,8 @@ contract EasyStaking is Ownable {
         uint256[] memory _intervals,
         uint256[] memory _interestRates,
         uint256 _fee,
-        uint256 _withdrawalLockDuration
+        uint256 _withdrawalLockDuration,
+        uint256 _withdrawalUnlockDuration
     ) public initializer {
         require(_owner != address(0), "zero address");
         Ownable.initialize(_owner);
@@ -83,6 +87,7 @@ contract EasyStaking is Ownable {
         _setIntervalsAndInterestRates(_intervals, _interestRates);
         _setFee(_fee);
         _setWithdrawalLockDuration(_withdrawalLockDuration);
+        _setWithdrawalUnlockDuration(_withdrawalUnlockDuration);
     }
 
     /**
@@ -146,7 +151,7 @@ contract EasyStaking is Ownable {
         uint256 timestamp = block.timestamp;
         uint256 lockEnd = requestDate.add(withdrawalLockDuration);
         require(timestamp >= lockEnd, "too early");
-        require(timestamp < lockEnd.add(1 days), "too late");
+        require(timestamp < lockEnd.add(withdrawalUnlockDuration), "too late");
         _withdraw(msg.sender, _amount, _customId, false);
         withdrawalRequestsDates[userHash] = 0;
     }
@@ -206,6 +211,15 @@ contract EasyStaking is Ownable {
      */
     function setWithdrawalLockDuration(uint256 _withdrawalLockDuration) external onlyOwner {
         _setWithdrawalLockDuration(_withdrawalLockDuration);
+    }
+
+    /**
+     * @dev Sets the time during which the withdrawal will be available from the moment of unlocking.
+     * Can be called only by owner
+     * @param _withdrawalUnlockDuration The new duration value (in seconds)
+     */
+    function setWithdrawalUnlockDuration(uint256 _withdrawalUnlockDuration) external onlyOwner {
+        _setWithdrawalUnlockDuration(_withdrawalUnlockDuration);
     }
 
     /**
@@ -350,6 +364,14 @@ contract EasyStaking is Ownable {
      */
     function _setWithdrawalLockDuration(uint256 _withdrawalLockDuration) internal {
         withdrawalLockDuration = _withdrawalLockDuration;
+    }
+
+    /**
+     * @dev Sets the time during which the withdrawal will be available from the moment of unlocking.
+     * @param _withdrawalUnlockDuration The new duration value (in seconds)
+     */
+    function _setWithdrawalUnlockDuration(uint256 _withdrawalUnlockDuration) internal {
+        withdrawalUnlockDuration = _withdrawalUnlockDuration;
     }
 
     /**

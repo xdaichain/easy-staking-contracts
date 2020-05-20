@@ -12,12 +12,13 @@ describe('PoaMania', () => {
   const interestRates = [ether('0.05'), ether('0.1'), ether('0.15')]; // 5%, 10% and 15%
   const fee = ether('0.03'); // 3%
   const withdrawalLockDuration = new BN(600); // in seconds
+  const withdrawalUnlockDuration = new BN(60); // in seconds
   const oneEther = ether('1');
 
   let easyStaking;
   let stakeToken;
 
-  const initializeMethod = 'initialize(address,address,uint256[],uint256[],uint256,uint256)';
+  const initializeMethod = 'initialize(address,address,uint256[],uint256[],uint256,uint256,uint256)';
 
   function initialize(...params) {
     if (params.length === 0) {
@@ -28,6 +29,7 @@ describe('PoaMania', () => {
         interestRates.map(item => item.toString()),
         fee.toString(),
         withdrawalLockDuration.toString(),
+        withdrawalUnlockDuration.toString(),
       ];
     }
     return easyStaking.methods[initializeMethod](...params, { from: owner });
@@ -60,6 +62,7 @@ describe('PoaMania', () => {
           interestRates.map(item => item.toString()),
           fee.toString(),
           withdrawalLockDuration.toString(),
+          withdrawalUnlockDuration.toString(),
         ),
         'zero address'
       );
@@ -71,6 +74,7 @@ describe('PoaMania', () => {
           interestRates.map(item => item.toString()),
           fee.toString(),
           withdrawalLockDuration.toString(),
+          withdrawalUnlockDuration.toString(),
         ),
         'not a contract address'
       );
@@ -82,6 +86,7 @@ describe('PoaMania', () => {
           [],
           fee.toString(),
           withdrawalLockDuration.toString(),
+          withdrawalUnlockDuration.toString(),
         ),
         'empty array'
       );
@@ -93,6 +98,7 @@ describe('PoaMania', () => {
           interestRates.map(item => item.toString()),
           fee.toString(),
           withdrawalLockDuration.toString(),
+          withdrawalUnlockDuration.toString(),
         ),
         'different array sizes'
       );
