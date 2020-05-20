@@ -308,4 +308,52 @@ describe('PoaMania', () => {
       await easyStaking.setIntervalsAndInterestRates([], [ether('0.6')], { from: owner });
     });
   });
+  describe('setFee', () => {
+    it('should set', async () => {
+      const newFee = ether('0.1');
+      expect(await easyStaking.fee()).to.be.bignumber.equal(fee);
+      expect(newFee).to.be.bignumber.not.equal(fee);
+      await easyStaking.setFee(newFee, { from: owner });
+      expect(await easyStaking.fee()).to.be.bignumber.equal(newFee);
+    });
+    it('fails if not an owner', async () => {
+      await expectRevert(
+        easyStaking.setFee(ether('0.1'), { from: user1 }),
+        'Ownable: caller is not the owner',
+      );
+    });
+    it('fails if greater than 1 ether', async () => {
+      await expectRevert(easyStaking.setFee(ether('1.01'), { from: owner }), 'should be less than or equal to 1 ether');
+    });
+  });
+  describe('setWithdrawalLockDuration', () => {
+    it('should set', async () => {
+      const newWithdrawalLockDuration = new BN(1000);
+      expect(await easyStaking.withdrawalLockDuration()).to.be.bignumber.equal(withdrawalLockDuration);
+      expect(newWithdrawalLockDuration).to.be.bignumber.not.equal(withdrawalLockDuration);
+      await easyStaking.setWithdrawalLockDuration(newWithdrawalLockDuration, { from: owner });
+      expect(await easyStaking.withdrawalLockDuration()).to.be.bignumber.equal(newWithdrawalLockDuration);
+    });
+    it('fails if not an owner', async () => {
+      await expectRevert(
+        easyStaking.setWithdrawalLockDuration(new BN(1000), { from: user1 }),
+        'Ownable: caller is not the owner',
+      );
+    });
+  });
+  describe('setWithdrawalUnlockDuration', () => {
+    it('should set', async () => {
+      const newWithdrawalUnlockDuration = new BN(100);
+      expect(await easyStaking.withdrawalUnlockDuration()).to.be.bignumber.equal(withdrawalUnlockDuration);
+      expect(newWithdrawalUnlockDuration).to.be.bignumber.not.equal(withdrawalUnlockDuration);
+      await easyStaking.setWithdrawalUnlockDuration(newWithdrawalUnlockDuration, { from: owner });
+      expect(await easyStaking.withdrawalUnlockDuration()).to.be.bignumber.equal(newWithdrawalUnlockDuration);
+    });
+    it('fails if not an owner', async () => {
+      await expectRevert(
+        easyStaking.setWithdrawalUnlockDuration(new BN(100), { from: user1 }),
+        'Ownable: caller is not the owner',
+      );
+    });
+  });
 });
