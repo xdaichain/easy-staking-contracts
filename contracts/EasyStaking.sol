@@ -253,6 +253,16 @@ contract EasyStaking is Ownable {
     }
 
     /**
+     * @param _user The address of the user
+     * @param _customId Custom identifier (for exchanges)
+     * @return Current earned interest
+     */
+    function getCurrentEarnedInterest(address _user, string calldata _customId) external view returns (uint256) {
+        bytes32 userHash = _getUserHash(_user, _customId);
+        return _getCurrentEarnedInterest(userHash);
+    }
+
+    /**
      * @return The array of staking intervals
      */
     function getIntervals() external view returns (uint256[] memory) {
@@ -309,16 +319,7 @@ contract EasyStaking is Ownable {
      * @param _user The hash of the user
      */
     function _mint(bytes32 _user) internal {
-        // solium-disable-next-line security/no-block-members
-        uint256 timePassed = block.timestamp.sub(depositDates[_user]);
-        uint256 currentInterestRate;
-        uint256 sumOfIntervals;
-        for (uint256 i = 0; i < interestRates.length; i++) {
-            currentInterestRate = interestRates[i];
-            sumOfIntervals = sumOfIntervals.add(intervals[i]);
-            if (timePassed < sumOfIntervals) break;
-        }
-        uint256 interest = balances[_user].mul(currentInterestRate).div(1 ether).mul(timePassed).div(YEAR);
+        uint256 interest = _getCurrentEarnedInterest(_user);
         token.mint(address(this), interest);
         balances[_user] = balances[_user].add(interest);
         // solium-disable-next-line security/no-block-members
@@ -388,5 +389,22 @@ contract EasyStaking is Ownable {
      */
     function _getUserHash(address _sender, string memory _customId) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(_sender, _customId));
+    }
+
+    /**
+     * @param _user The hash of the user
+     * @return Current earned interest
+     */
+    function _getCurrentEarnedInterest(bytes32 _user) internal view returns (uint256) {
+        // solium-disable-next-line security/no-block-members
+        uint256 timePassed = block.timestamp.sub(depositDates[_user]);
+        uint256 currentInterestRate;
+        uint256 sumOfIntervals;
+        for (uint256 i = 0; i < interestRates.length; i++) {
+            currentInterestRate = interestRates[i];
+            sumOfIntervals = sumOfIntervals.add(intervals[i]);
+            if (timePassed < sumOfIntervals) break;
+        }
+        return balances[_user].mul(currentInterestRate).div(1 ether).mul(timePassed).div(YEAR);
     }
 }
