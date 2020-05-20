@@ -256,14 +256,14 @@ describe('PoaMania', () => {
     });
     it('fails if not an owner', async () => {
       const newStakeToken = await Token.new();
-      expectRevert(
+      await expectRevert(
         easyStaking.setToken(newStakeToken.address, { from: user1 }),
         'Ownable: caller is not the owner',
       );
     });
     it('fails if not a contract address', async () => {
-      expectRevert(easyStaking.setToken(user1, { from: owner }), 'not a contract address');
-      expectRevert(easyStaking.setToken(constants.ZERO_ADDRESS, { from: owner }), 'not a contract address');
+      await expectRevert(easyStaking.setToken(user1, { from: owner }), 'not a contract address');
+      await expectRevert(easyStaking.setToken(constants.ZERO_ADDRESS, { from: owner }), 'not a contract address');
     });
   });
   describe('setIntervalsAndInterestRates', () => {
@@ -287,28 +287,25 @@ describe('PoaMania', () => {
     it('fails if not an owner', async () => {
       const newIntervals = [YEAR.div(new BN(2)), YEAR, YEAR.mul(new BN(2))];
       const newInterestRates = [ether('0.3'), ether('0.6'), ether('0.9')];
-      expectRevert(
+      await expectRevert(
         easyStaking.setIntervalsAndInterestRates(newIntervals, newInterestRates, { from: user1 }),
         'Ownable: caller is not the owner',
       );
     });
-    it('fails if arrays are empty or not the same size', async () => {
-      expectRevert(
+    it('fails if arrays have wrong sizes', async () => {
+      await expectRevert(
         easyStaking.setIntervalsAndInterestRates([], [], { from: owner }),
-        'empty array',
+        'wrong array sizes',
       );
-      expectRevert(
-        easyStaking.setIntervalsAndInterestRates([], [ether('0.05')], { from: owner }),
-        'empty array',
-      );
-      expectRevert(
+      await expectRevert(
         easyStaking.setIntervalsAndInterestRates([YEAR], [], { from: owner }),
-        'different array sizes',
+        'wrong array sizes',
       );
-      expectRevert(
-        easyStaking.setIntervalsAndInterestRates([YEAR, YEAR], [], { from: owner }),
-        'different array sizes',
+      await expectRevert(
+        easyStaking.setIntervalsAndInterestRates([YEAR], [ether('0.6')], { from: owner }),
+        'wrong array sizes',
       );
+      await easyStaking.setIntervalsAndInterestRates([], [ether('0.6')], { from: owner });
     });
   });
 });
