@@ -9,7 +9,7 @@ describe('PoaMania', () => {
   const [owner, user1, user2] = accounts;
   const YEAR = new BN(31536000); // in seconds
   const intervals = [YEAR.div(new BN(4)), YEAR.div(new BN(2)), YEAR];
-  const interestRates = [ether('0.05'), ether('0.1'), ether('0.15')]; // 5%, 10% and 15%
+  const interestRates = [ether('0.05'), ether('0.08'), ether('0.1'), ether('0.15')]; // 5%, 8%, 10% and 15%
   const fee = ether('0.03'); // 3%
   const withdrawalLockDuration = new BN(600); // in seconds
   const withdrawalUnlockDuration = new BN(60); // in seconds
@@ -82,25 +82,13 @@ describe('PoaMania', () => {
         initialize(
           owner,
           stakeToken.address,
-          [],
-          [],
-          fee.toString(),
-          withdrawalLockDuration.toString(),
-          withdrawalUnlockDuration.toString(),
-        ),
-        'empty array'
-      );
-      await expectRevert(
-        initialize(
-          owner,
-          stakeToken.address,
           [...intervals, new BN(600)].map(item => item.toString()),
           interestRates.map(item => item.toString()),
           fee.toString(),
           withdrawalLockDuration.toString(),
           withdrawalUnlockDuration.toString(),
         ),
-        'different array sizes'
+        'wrong array sizes'
       );
     });
   });
@@ -154,7 +142,7 @@ describe('PoaMania', () => {
       await easyStaking.setFee(0, { from: owner });
     });
     it('should withdraw', async () => {
-      await easyStaking.setIntervalsAndInterestRates([0], [0], { from: owner });
+      await easyStaking.setIntervalsAndInterestRates([], [0], { from: owner });
       await easyStaking.deposit(value, '', { from: user1 });
       let receipt = await easyStaking.makeForcedWithdrawal(oneEther, '', { from: user1 });
       const timestamp = await time.latest();
@@ -287,7 +275,7 @@ describe('PoaMania', () => {
         expect(interestRate).to.be.bignumber.equal(interestRates[index]);
       });
       const newIntervals = [YEAR.div(new BN(2)), YEAR, YEAR.mul(new BN(2))];
-      const newInterestRates = [ether('0.3'), ether('0.6'), ether('0.9')];
+      const newInterestRates = [ether('0.15'), ether('0.3'), ether('0.6'), ether('0.9')];
       await easyStaking.setIntervalsAndInterestRates(newIntervals, newInterestRates, { from: owner });
       (await easyStaking.getIntervals()).forEach((interval, index) => {
         expect(interval).to.be.bignumber.equal(newIntervals[index]);

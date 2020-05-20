@@ -344,8 +344,7 @@ contract EasyStaking is Ownable {
         uint256[] memory _intervals,
         uint256[] memory _interestRates
     ) internal {
-        require(_intervals.length > 0, "empty array");
-        require(_intervals.length == _interestRates.length, "different array sizes");
+        require(_intervals.length.add(1) == _interestRates.length, "wrong array sizes");
         intervals = _intervals;
         interestRates = _interestRates;
     }
@@ -398,12 +397,12 @@ contract EasyStaking is Ownable {
     function _getCurrentEarnedInterest(bytes32 _user) internal view returns (uint256) {
         // solium-disable-next-line security/no-block-members
         uint256 timePassed = block.timestamp.sub(depositDates[_user]);
-        uint256 currentInterestRate;
+        uint256 currentInterestRate = interestRates[0];
         uint256 sumOfIntervals;
-        for (uint256 i = 0; i < interestRates.length; i++) {
-            currentInterestRate = interestRates[i];
+        for (uint256 i = 0; i < intervals.length; i++) {
             sumOfIntervals = sumOfIntervals.add(intervals[i]);
             if (timePassed < sumOfIntervals) break;
+            currentInterestRate = interestRates[i.add(1)];
         }
         return balances[_user].mul(currentInterestRate).div(1 ether).mul(timePassed).div(YEAR);
     }
