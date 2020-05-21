@@ -4,14 +4,18 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "npx oz compile && mocha --timeout 10000 --exit --recursive test"
+    "test": "bash scripts/test.sh",
+    "coverage": "SOLIDITY_COVERAGE=true bash scripts/test.sh"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@openzeppelin/cli": "^2.8.2",
     "@openzeppelin/contracts-ethereum-package": "^2.5.0",
-    "ethlint": "^1.2.5"
+    "ethlint": "^1.2.5",
+    "ganache-cli": "^6.9.1",
+    "solidity-coverage": "^0.7.5",
+    "truffle": "^5.1.26"
   },
   "devDependencies": {
     "@openzeppelin/test-environment": "^0.1.4",

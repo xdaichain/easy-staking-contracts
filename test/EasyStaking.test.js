@@ -1,12 +1,11 @@
-const { accounts, contract } = require('@openzeppelin/test-environment');
 const { ether, BN, expectRevert, expectEvent, constants, time, balance, send } = require('@openzeppelin/test-helpers');
 const { expect } = require('chai');
 
-const EasyStaking = contract.fromArtifact('EasyStaking');
-const EasyStakingMock = contract.fromArtifact('EasyStakingMock');
-const Token = contract.fromArtifact('ERC677Mock');
+const EasyStaking = artifacts.require('EasyStaking');
+const EasyStakingMock = artifacts.require('EasyStakingMock');
+const Token = artifacts.require('ERC677Mock');
 
-describe('PoaMania', () => {
+contract('PoaMania', accounts => {
   const [owner, user1, user2] = accounts;
   const YEAR = new BN(31536000); // in seconds
   const intervals = [YEAR.div(new BN(4)), YEAR.div(new BN(2)), YEAR];

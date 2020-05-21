@@ -2,3 +2,5 @@ node_modules
 build
 .openzeppelin/.session
 .gitkeep
+coverage.json
+coverage
