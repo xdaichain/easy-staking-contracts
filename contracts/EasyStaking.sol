@@ -1,4 +1,4 @@
-pragma solidity ^0.5.15;
+pragma solidity 0.5.16;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
