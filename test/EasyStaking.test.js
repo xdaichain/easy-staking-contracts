@@ -3,6 +3,7 @@ const { expect } = require('chai');
 
 const EasyStaking = artifacts.require('EasyStaking');
 const EasyStakingMock = artifacts.require('EasyStakingMock');
+const ReceiverMock = artifacts.require('ReceiverMock');
 const Token = artifacts.require('ERC677Mock');
 
 contract('PoaMania', accounts => {
@@ -370,17 +371,24 @@ contract('PoaMania', accounts => {
       expect(await anotherToken.balanceOf(easyStaking.address)).to.be.bignumber.equal(new BN(0));
       expect(await anotherToken.balanceOf(owner)).to.be.bignumber.equal(value);
     });
-    it('should claim ether', async () => {
+    async function claimEtherAndSend(to) {
       easyStaking = await EasyStakingMock.new();
       await initialize();
       const value = ether('10');
       expect(await balance.current(easyStaking.address)).to.be.bignumber.equal(new BN(0));
       await send.ether(user1, easyStaking.address, value);
       expect(await balance.current(easyStaking.address)).to.be.bignumber.equal(value);
-      const balanceBefore = await balance.current(owner);
-      await easyStaking.claimTokens(constants.ZERO_ADDRESS, owner, { from: owner, gasPrice: 0 });
+      const balanceBefore = await balance.current(to);
+      await easyStaking.claimTokens(constants.ZERO_ADDRESS, to, { from: owner, gasPrice: 0 });
       expect(await balance.current(easyStaking.address)).to.be.bignumber.equal(new BN(0));
-      expect(await balance.current(owner)).to.be.bignumber.equal(balanceBefore.add(value));
+      expect(await balance.current(to)).to.be.bignumber.equal(balanceBefore.add(value));
+    }
+    it('should claim ether', async () => {
+      await claimEtherAndSend(owner)
+    });
+    it('should claim and send ether even if receiver reverts it', async () => {
+      const receiver = await ReceiverMock.new();
+      await claimEtherAndSend(receiver.address);
     });
     it('fails if not an owner', async () => {
       await expectRevert(
