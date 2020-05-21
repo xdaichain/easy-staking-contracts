@@ -413,4 +413,19 @@ contract('PoaMania', accounts => {
       );
     });
   });
+  describe('getCurrentEarnedInterest', () => {
+    it('should be calculated correctly', async () => {
+      const value = ether('100');
+      await stakeToken.mint(user1, value, { from: owner });
+      await stakeToken.approve(easyStaking.address, value, { from: user1 });
+      await easyStaking.deposit(value, '', { from: user1 });
+      const timestampBefore = await time.latest();
+      await time.increase(YEAR.div(new BN(8)));
+      await time.advanceBlock();
+      const timestampAfter = await time.latest();
+      const timePassed = timestampAfter.sub(timestampBefore);
+      const interest = value.mul(interestRates[0]).div(oneEther).mul(timePassed).div(YEAR);
+      expect(await easyStaking.getCurrentEarnedInterest(user1, '')).to.be.bignumber.equal(interest);
+    });
+  });
 });
