@@ -163,6 +163,7 @@ contract EasyStaking is Ownable {
      * @param _to The address of the tokens receiver
      */
     function claimTokens(address _token, address payable _to) public onlyOwner {
+        require(_token != address(token), "cannot be the main token");
         require(_to != address(0) && _to != address(this), "not a valid recipient");
         if (_token == address(0)) {
             uint256 value = address(this).balance;

@@ -1,8 +1,9 @@
 const { accounts, contract } = require('@openzeppelin/test-environment');
-const { ether, BN, expectRevert, expectEvent, constants, time } = require('@openzeppelin/test-helpers');
+const { ether, BN, expectRevert, expectEvent, constants, time, balance, send } = require('@openzeppelin/test-helpers');
 const { expect } = require('chai');
 
 const EasyStaking = contract.fromArtifact('EasyStaking');
+const EasyStakingMock = contract.fromArtifact('EasyStakingMock');
 const Token = contract.fromArtifact('ERC677Mock');
 
 describe('PoaMania', () => {
@@ -353,6 +354,55 @@ describe('PoaMania', () => {
       await expectRevert(
         easyStaking.setWithdrawalUnlockDuration(new BN(100), { from: user1 }),
         'Ownable: caller is not the owner',
+      );
+    });
+  });
+  describe('claimTokens', () => {
+    it('should claim tokens', async () => {
+      const value = ether('10');
+      const anotherToken = await Token.new();
+      await anotherToken.initialize('Some token', 'TOKEN', 18, 0, owner, [owner], []);
+      await anotherToken.mint(user1, value, { from: owner });
+      expect(await anotherToken.balanceOf(user1)).to.be.bignumber.equal(value);
+      await anotherToken.transfer(easyStaking.address, value, { from: user1 });
+      expect(await anotherToken.balanceOf(easyStaking.address)).to.be.bignumber.equal(value);
+      expect(await anotherToken.balanceOf(owner)).to.be.bignumber.equal(new BN(0));
+      await easyStaking.claimTokens(anotherToken.address, owner, { from: owner });
+      expect(await anotherToken.balanceOf(easyStaking.address)).to.be.bignumber.equal(new BN(0));
+      expect(await anotherToken.balanceOf(owner)).to.be.bignumber.equal(value);
+    });
+    it('should claim ether', async () => {
+      easyStaking = await EasyStakingMock.new();
+      await initialize();
+      const value = ether('10');
+      expect(await balance.current(easyStaking.address)).to.be.bignumber.equal(new BN(0));
+      await send.ether(user1, easyStaking.address, value);
+      expect(await balance.current(easyStaking.address)).to.be.bignumber.equal(value);
+      const balanceBefore = await balance.current(owner);
+      await easyStaking.claimTokens(constants.ZERO_ADDRESS, owner, { from: owner, gasPrice: 0 });
+      expect(await balance.current(easyStaking.address)).to.be.bignumber.equal(new BN(0));
+      expect(await balance.current(owner)).to.be.bignumber.equal(balanceBefore.add(value));
+    });
+    it('fails if not an owner', async () => {
+      await expectRevert(
+        easyStaking.claimTokens(constants.ZERO_ADDRESS, owner, { from: user1 }),
+        'Ownable: caller is not the owner',
+      );
+    });
+    it('fails if invalid recipient', async () => {
+      await expectRevert(
+        easyStaking.claimTokens(constants.ZERO_ADDRESS, constants.ZERO_ADDRESS, { from: owner }),
+        'not a valid recipient',
+      );
+      await expectRevert(
+        easyStaking.claimTokens(constants.ZERO_ADDRESS, easyStaking.address, { from: owner }),
+        'not a valid recipient',
+      );
+    });
+    it('fails if wrong token address', async () => {
+      await expectRevert(
+        easyStaking.claimTokens(stakeToken.address, owner, { from: owner }),
+        'cannot be the main token',
       );
     });
   });
