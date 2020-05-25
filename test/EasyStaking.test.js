@@ -210,7 +210,7 @@ contract('PoaMania', accounts => {
       expect(await easyStaking.getWithdrawalRequestDate(user1, '')).to.be.bignumber.equal(timestamp);
     });
   });
-  describe('executeWithdrawal', () => {
+  describe('makeRequestedWithdrawal', () => {
     const value = ether('1000');
     beforeEach(async () => {
       await stakeToken.mint(user1, value, { from: owner });
@@ -221,7 +221,7 @@ contract('PoaMania', accounts => {
       const timestampBefore = await time.latest();
       await easyStaking.requestWithdrawal('', { from: user1 });
       await time.increase(withdrawalLockDuration);
-      const receipt = await easyStaking.executeWithdrawal(0, '', { from: user1 });
+      const receipt = await easyStaking.makeRequestedWithdrawal(0, '', { from: user1 });
       const timestampAfter = await time.latest();
       const timePassed = timestampAfter.sub(timestampBefore);
       const interest = value.mul(interestRates[0]).div(oneEther).mul(timePassed).div(YEAR);
@@ -232,19 +232,19 @@ contract('PoaMania', accounts => {
     });
     it('should fail if not requested', async () => {
       await easyStaking.deposit(value, '', { from: user1 });
-      await expectRevert(easyStaking.executeWithdrawal(0, '', { from: user1 }), `withdrawal wasn't requested`);
+      await expectRevert(easyStaking.makeRequestedWithdrawal(0, '', { from: user1 }), `withdrawal wasn't requested`);
     });
     it('should fail if too early', async () => {
       await easyStaking.deposit(value, '', { from: user1 });
       await easyStaking.requestWithdrawal('', { from: user1 });
       await time.increase(withdrawalLockDuration.sub(new BN(5)));
-      await expectRevert(easyStaking.executeWithdrawal(0, '', { from: user1 }), 'too early');
+      await expectRevert(easyStaking.makeRequestedWithdrawal(0, '', { from: user1 }), 'too early');
     });
     it('should fail if too late', async () => {
       await easyStaking.deposit(value, '', { from: user1 });
       await easyStaking.requestWithdrawal('', { from: user1 });
       await time.increase(withdrawalLockDuration.add(new BN(86400)));
-      await expectRevert(easyStaking.executeWithdrawal(0, '', { from: user1 }), 'too late');
+      await expectRevert(easyStaking.makeRequestedWithdrawal(0, '', { from: user1 }), 'too late');
     });
   });
   describe('setToken', () => {

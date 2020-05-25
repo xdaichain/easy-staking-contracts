@@ -31,7 +31,7 @@ You can deposit tokens to the contract and withdraw them with the earned interes
 ### Anyone
 1. `deposit()`
 2. `requestWithdrawal(string)`
-3. `executeWithdrawal(uint256,string)`
+3. `makeRequestedWithdrawal(uint256,string)`
 4. `makeForcedWithdrawal(uint256,string)`
 
 ### Owner

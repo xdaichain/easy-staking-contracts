@@ -138,12 +138,12 @@ contract EasyStaking is Ownable {
     }
 
     /**
-     * @dev This method is used to execute a requested withdrawal.
+     * @dev This method is used to make a requested withdrawal.
      * It calls the internal "_withdraw" method and resets the date of the request
      * @param _amount The amount to withdraw (0 - to withdraw all)
      * @param _customId Custom identifier (for exchanges)
      */
-    function executeWithdrawal(uint256 _amount, string calldata _customId) external {
+    function makeRequestedWithdrawal(uint256 _amount, string calldata _customId) external {
         bytes32 userHash = _getUserHash(msg.sender, _customId);
         uint256 requestDate = withdrawalRequestsDates[userHash];
         require(requestDate > 0, "withdrawal wasn't requested");
