@@ -91,12 +91,20 @@ contract EasyStaking is Ownable {
     }
 
     /**
+     * @dev This method is used to deposit tokens. It calls another public "deposit" method
+     * @param _amount The amount to deposit
+     */
+    function deposit(uint256 _amount) public {
+        deposit(_amount, "");
+    }
+
+    /**
      * @dev This method is used to deposit tokens.
      * It calls the internal "_deposit" method and transfer tokens from user to contract
      * @param _amount The amount to deposit
      * @param _customId Custom identifier (for exchanges)
      */
-    function deposit(uint256 _amount, string calldata _customId) external {
+    function deposit(uint256 _amount, string memory _customId) public {
         _deposit(msg.sender, _amount, _customId);
         _setLocked(true);
         token.transferFrom(msg.sender, address(this), _amount);
@@ -118,12 +126,29 @@ contract EasyStaking is Ownable {
 
     /**
      * @dev This method is used to make a forced withdrawal with fee.
+     * It calls another public "makeForcedWithdrawal" method
+     * @param _amount The amount to withdraw (0 - to withdraw all)
+     */
+    function makeForcedWithdrawal(uint256 _amount) public {
+        makeForcedWithdrawal(_amount, "");
+    }
+
+    /**
+     * @dev This method is used to make a forced withdrawal with fee.
      * It calls the internal "_withdraw" method
      * @param _amount The amount to withdraw (0 - to withdraw all)
      * @param _customId Custom identifier (for exchanges)
      */
-    function makeForcedWithdrawal(uint256 _amount, string calldata _customId) external {
+    function makeForcedWithdrawal(uint256 _amount, string memory _customId) public {
         _withdraw(msg.sender, _amount, _customId, true);
+    }
+
+    /**
+     * @dev This method is used to request a withdrawal without fee.
+     * It call another public "requestWithdrawal" method
+     */
+    function requestWithdrawal() public {
+        requestWithdrawal("");
     }
 
     /**
@@ -131,10 +156,19 @@ contract EasyStaking is Ownable {
      * It sets the date of the request
      * @param _customId Custom identifier (for exchanges)
      */
-    function requestWithdrawal(string calldata _customId) external {
+    function requestWithdrawal(string memory _customId) public {
         bytes32 userHash = _getUserHash(msg.sender, _customId);
         // solium-disable-next-line security/no-block-members
         withdrawalRequestsDates[userHash] = block.timestamp;
+    }
+
+    /**
+     * @dev This method is used to make a requested withdrawal.
+     * It calls another public "makeRequestedWithdrawal" method
+     * @param _amount The amount to withdraw (0 - to withdraw all)
+     */
+    function makeRequestedWithdrawal(uint256 _amount) public {
+        makeRequestedWithdrawal(_amount, "");
     }
 
     /**
@@ -143,7 +177,7 @@ contract EasyStaking is Ownable {
      * @param _amount The amount to withdraw (0 - to withdraw all)
      * @param _customId Custom identifier (for exchanges)
      */
-    function makeRequestedWithdrawal(uint256 _amount, string calldata _customId) external {
+    function makeRequestedWithdrawal(uint256 _amount, string memory _customId) public {
         bytes32 userHash = _getUserHash(msg.sender, _customId);
         uint256 requestDate = withdrawalRequestsDates[userHash];
         require(requestDate > 0, "withdrawal wasn't requested");
@@ -225,12 +259,28 @@ contract EasyStaking is Ownable {
 
     /**
      * @param _user The address of the user
+     * @return The deposit balance of the user
+     */
+    function getBalance(address _user) public view returns (uint256) {
+        return getBalance(_user, "");
+    }
+
+    /**
+     * @param _user The address of the user
      * @param _customId Custom identifier (for exchanges)
      * @return The deposit balance of the user
      */
-    function getBalance(address _user, string calldata _customId) external view returns (uint256) {
+    function getBalance(address _user, string memory _customId) public view returns (uint256) {
         bytes32 userHash = _getUserHash(_user, _customId);
         return balances[userHash];
+    }
+
+    /**
+     * @param _user The address of the user
+     * @return The deposit date of the user
+     */
+    function getDepositDate(address _user) public view returns (uint256) {
+        return getDepositDate(_user, "");
     }
 
     /**
@@ -238,9 +288,17 @@ contract EasyStaking is Ownable {
      * @param _customId Custom identifier (for exchanges)
      * @return The deposit date of the user
      */
-    function getDepositDate(address _user, string calldata _customId) external view returns (uint256) {
+    function getDepositDate(address _user, string memory _customId) public view returns (uint256) {
         bytes32 userHash = _getUserHash(_user, _customId);
         return depositDates[userHash];
+    }
+
+    /**
+     * @param _user The address of the user
+     * @return The date of user's withdrawal request
+     */
+    function getWithdrawalRequestDate(address _user) public view returns (uint256) {
+        return getWithdrawalRequestDate(_user, "");
     }
 
     /**
@@ -248,9 +306,17 @@ contract EasyStaking is Ownable {
      * @param _customId Custom identifier (for exchanges)
      * @return The date of user's withdrawal request
      */
-    function getWithdrawalRequestDate(address _user, string calldata _customId) external view returns (uint256) {
+    function getWithdrawalRequestDate(address _user, string memory _customId) public view returns (uint256) {
         bytes32 userHash = _getUserHash(_user, _customId);
         return withdrawalRequestsDates[userHash];
+    }
+
+    /**
+     * @param _user The address of the user
+     * @return Current earned interest
+     */
+    function getCurrentEarnedInterest(address _user) public view returns (uint256) {
+        return getCurrentEarnedInterest(_user, "");
     }
 
     /**
@@ -258,7 +324,7 @@ contract EasyStaking is Ownable {
      * @param _customId Custom identifier (for exchanges)
      * @return Current earned interest
      */
-    function getCurrentEarnedInterest(address _user, string calldata _customId) external view returns (uint256) {
+    function getCurrentEarnedInterest(address _user, string memory _customId) public view returns (uint256) {
         bytes32 userHash = _getUserHash(_user, _customId);
         return _getCurrentEarnedInterest(userHash);
     }

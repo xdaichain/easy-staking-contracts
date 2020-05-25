@@ -29,10 +29,14 @@ You can deposit tokens to the contract and withdraw them with the earned interes
 ## Roles and methods available to each role
 
 ### Anyone
-1. `deposit()`
-2. `requestWithdrawal(string)`
-3. `makeRequestedWithdrawal(uint256,string)`
-4. `makeForcedWithdrawal(uint256,string)`
+1. `deposit(uint256)`
+2. `deposit(uint256,string)`
+3. `requestWithdrawal()`
+4. `requestWithdrawal(string)`
+5. `makeRequestedWithdrawal(uint256)`
+6. `makeRequestedWithdrawal(uint256,string)`
+7. `makeForcedWithdrawal(uint256)`
+8. `makeForcedWithdrawal(uint256,string)`
 
 ### Owner
 The owner can only change the contract parameters and claim unsupported tokens accidentally sent to the contract.

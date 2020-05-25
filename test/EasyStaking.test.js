@@ -103,34 +103,34 @@ contract('PoaMania', accounts => {
     it('should deposit', async () => {
       const value = ether('100');
       if (directly) {
-        const receipt = await easyStaking.deposit(value, '', { from: user1 });
+        const receipt = await easyStaking.methods['deposit(uint256)'](value, { from: user1 });
         expectEvent(receipt, 'Deposited', { sender: user1, amount: value, customId: '' });
       } else {
         await stakeToken.transfer(easyStaking.address, value, { from: user1 });
       }
       const timestamp = await time.latest();
-      expect(await easyStaking.getBalance(user1, '')).to.be.bignumber.equal(value);
-      expect(await easyStaking.getDepositDate(user1, '')).to.be.bignumber.equal(timestamp);
+      expect(await easyStaking.methods['getBalance(address)'](user1)).to.be.bignumber.equal(value);
+      expect(await easyStaking.methods['getDepositDate(address)'](user1)).to.be.bignumber.equal(timestamp);
     });
     it('should earn interest', async () => {
       const value = ether('100');
       if (directly) {
-        await easyStaking.deposit(value, '', { from: user1 });
+        await easyStaking.methods['deposit(uint256)'](value, { from: user1 });
       } else {
         await stakeToken.transfer(easyStaking.address, value, { from: user1 });
       }
       const timestampBefore = await time.latest();
       await time.increase(YEAR.div(new BN(8)));
       if (directly) {
-        await easyStaking.deposit(0, '', { from: user1 });
+        await easyStaking.methods['deposit(uint256)'](0, { from: user1 });
       } else {
         await stakeToken.transfer(easyStaking.address, 0, { from: user1 });
       }
       const timestampAfter = await time.latest();
       const timePassed = timestampAfter.sub(timestampBefore);
       const interest = value.mul(interestRates[0]).div(oneEther).mul(timePassed).div(YEAR);
-      expect(await easyStaking.getBalance(user1, '')).to.be.bignumber.equal(value.add(interest));
-      expect(await easyStaking.getDepositDate(user1, '')).to.be.bignumber.equal(timestampAfter);
+      expect(await easyStaking.methods['getBalance(address)'](user1)).to.be.bignumber.equal(value.add(interest));
+      expect(await easyStaking.methods['getDepositDate(address)'](user1)).to.be.bignumber.equal(timestampAfter);
     });
   }
   describe('deposit', () => testDeposit(true));
@@ -144,38 +144,38 @@ contract('PoaMania', accounts => {
     });
     it('should withdraw', async () => {
       await easyStaking.setIntervalsAndInterestRates([], [0], { from: owner });
-      await easyStaking.deposit(value, '', { from: user1 });
-      let receipt = await easyStaking.makeForcedWithdrawal(oneEther, '', { from: user1 });
+      await easyStaking.methods['deposit(uint256)'](value, { from: user1 });
+      let receipt = await easyStaking.methods['makeForcedWithdrawal(uint256)'](oneEther, { from: user1 });
       const timestamp = await time.latest();
-      expect(await easyStaking.getBalance(user1, '')).to.be.bignumber.equal(value.sub(oneEther));
-      expect(await easyStaking.getDepositDate(user1, '')).to.be.bignumber.equal(timestamp);
+      expect(await easyStaking.methods['getBalance(address)'](user1)).to.be.bignumber.equal(value.sub(oneEther));
+      expect(await easyStaking.methods['getDepositDate(address)'](user1)).to.be.bignumber.equal(timestamp);
       expect(await stakeToken.balanceOf(user1)).to.be.bignumber.equal(oneEther);
       expectEvent(receipt, 'Withdrawn', { sender: user1, amount: oneEther, customId: '' });
-      receipt = await easyStaking.makeForcedWithdrawal(0, '', { from: user1 });
-      expect(await easyStaking.getBalance(user1, '')).to.be.bignumber.equal(new BN(0));
+      receipt = await easyStaking.methods['makeForcedWithdrawal(uint256)'](0, { from: user1 });
+      expect(await easyStaking.methods['getBalance(address)'](user1)).to.be.bignumber.equal(new BN(0));
       expect(await stakeToken.balanceOf(user1)).to.be.bignumber.equal(value);
       expectEvent(receipt, 'Withdrawn', { sender: user1, amount: value.sub(oneEther), customId: '' });
     });
     it('should withdraw with interest', async () => {
-      await easyStaking.deposit(value, '', { from: user1 });
+      await easyStaking.methods['deposit(uint256)'](value, { from: user1 });
       const timestampBefore = await time.latest();
       await time.increase(YEAR.div(new BN(8)));
-      await easyStaking.makeForcedWithdrawal(0, '', { from: user1 });
+      await easyStaking.methods['makeForcedWithdrawal(uint256)'](0, { from: user1 });
       const timestampAfter = await time.latest();
       const timePassed = timestampAfter.sub(timestampBefore);
       const interest = value.mul(interestRates[0]).div(oneEther).mul(timePassed).div(YEAR);
-      expect(await easyStaking.getBalance(user1, '')).to.be.bignumber.equal(new BN(0));
+      expect(await easyStaking.methods['getBalance(address)'](user1)).to.be.bignumber.equal(new BN(0));
       expect(await stakeToken.balanceOf(user1)).to.be.bignumber.equal(value.add(interest));
     });
     it('should withdraw part and earn interest', async () => {
-      await easyStaking.deposit(value, '', { from: user1 });
+      await easyStaking.methods['deposit(uint256)'](value, { from: user1 });
       const timestampBefore = await time.latest();
       await time.increase(YEAR.div(new BN(8)));
-      await easyStaking.makeForcedWithdrawal(oneEther, '', { from: user1 });
+      await easyStaking.methods['makeForcedWithdrawal(uint256)'](oneEther, { from: user1 });
       const timestampAfter = await time.latest();
       const timePassed = timestampAfter.sub(timestampBefore);
       const interest = value.mul(interestRates[0]).div(oneEther).mul(timePassed).div(YEAR);
-      expect(await easyStaking.getBalance(user1, '')).to.be.bignumber.equal(value.sub(oneEther).add(interest));
+      expect(await easyStaking.methods['getBalance(address)'](user1)).to.be.bignumber.equal(value.sub(oneEther).add(interest));
       expect(await stakeToken.balanceOf(user1)).to.be.bignumber.equal(oneEther);
     });
     it('should earn interest for different users from 1 address', async () => {
@@ -183,20 +183,20 @@ contract('PoaMania', accounts => {
       const users = ['ben', 'sarah', 'steve'];
       const values = [ether('100'), ether('250'), ether('600')];
       await Promise.all(users.map(async (user, index) => {
-        await easyStaking.deposit(values[index], user, { from: exchange });
-        expect(await easyStaking.getBalance(exchange, user)).to.be.bignumber.equal(values[index]);
+        await easyStaking.methods['deposit(uint256,string)'](values[index], user, { from: exchange });
+        expect(await easyStaking.methods['getBalance(address,string)'](exchange, user)).to.be.bignumber.equal(values[index]);
       }));
       let exchangeBalance = await stakeToken.balanceOf(exchange);
       await time.increase(intervals[0].div(new BN(2)));
       for (let i = 0; i < users.length; i++) {
-        const timestampBefore = await easyStaking.getDepositDate(exchange, users[i]);
-        await easyStaking.makeForcedWithdrawal(0, users[i], { from: user1 });
+        const timestampBefore = await easyStaking.methods['getDepositDate(address,string)'](exchange, users[i]);
+        await easyStaking.methods['makeForcedWithdrawal(uint256,string)'](0, users[i], { from: user1 });
         const timestampAfter = await time.latest();
         const timePassed = timestampAfter.sub(timestampBefore);
         const interest = values[i].mul(interestRates[i]).div(oneEther).mul(timePassed).div(YEAR);
         const expectedExchangeBalance = exchangeBalance.add(values[i]).add(interest);
         expect(interest).to.be.bignumber.gt(new BN(0));
-        expect(await easyStaking.getBalance(exchange, users[i])).to.be.bignumber.equal(new BN(0));
+        expect(await easyStaking.methods['getBalance(address,string)'](exchange, users[i])).to.be.bignumber.equal(new BN(0));
         expect(await stakeToken.balanceOf(exchange)).to.be.bignumber.equal(expectedExchangeBalance);
         exchangeBalance = expectedExchangeBalance;
         await time.increase(intervals[i]);
@@ -205,9 +205,9 @@ contract('PoaMania', accounts => {
   });
   describe('requestWithdrawal', () => {
     it('should request', async () => {
-      await easyStaking.requestWithdrawal('', { from: user1 });
+      await easyStaking.methods['requestWithdrawal()']({ from: user1 });
       const timestamp = await time.latest();
-      expect(await easyStaking.getWithdrawalRequestDate(user1, '')).to.be.bignumber.equal(timestamp);
+      expect(await easyStaking.methods['getWithdrawalRequestDate(address)'](user1)).to.be.bignumber.equal(timestamp);
     });
   });
   describe('makeRequestedWithdrawal', () => {
@@ -217,34 +217,34 @@ contract('PoaMania', accounts => {
       await stakeToken.approve(easyStaking.address, ether('10000'), { from: user1 });
     });
     it('should withdraw', async () => {
-      await easyStaking.deposit(value, '', { from: user1 });
+      await easyStaking.methods['deposit(uint256)'](value, { from: user1 });
       const timestampBefore = await time.latest();
-      await easyStaking.requestWithdrawal('', { from: user1 });
+      await easyStaking.methods['requestWithdrawal()']({ from: user1 });
       await time.increase(withdrawalLockDuration);
-      const receipt = await easyStaking.makeRequestedWithdrawal(0, '', { from: user1 });
+      const receipt = await easyStaking.methods['makeRequestedWithdrawal(uint256)'](0, { from: user1 });
       const timestampAfter = await time.latest();
       const timePassed = timestampAfter.sub(timestampBefore);
       const interest = value.mul(interestRates[0]).div(oneEther).mul(timePassed).div(YEAR);
-      expect(await easyStaking.getWithdrawalRequestDate(user1, '')).to.be.bignumber.equal(new BN(0));
-      expect(await easyStaking.getBalance(user1, '')).to.be.bignumber.equal(new BN(0));
+      expect(await easyStaking.methods['getWithdrawalRequestDate(address)'](user1)).to.be.bignumber.equal(new BN(0));
+      expect(await easyStaking.methods['getBalance(address)'](user1)).to.be.bignumber.equal(new BN(0));
       expect(await stakeToken.balanceOf(user1)).to.be.bignumber.equal(value.add(interest));
       expectEvent(receipt, 'Withdrawn', { sender: user1, amount: value.add(interest), customId: '' });
     });
     it('should fail if not requested', async () => {
-      await easyStaking.deposit(value, '', { from: user1 });
-      await expectRevert(easyStaking.makeRequestedWithdrawal(0, '', { from: user1 }), `withdrawal wasn't requested`);
+      await easyStaking.methods['deposit(uint256)'](value, { from: user1 });
+      await expectRevert(easyStaking.methods['makeRequestedWithdrawal(uint256)'](0, { from: user1 }), `withdrawal wasn't requested`);
     });
     it('should fail if too early', async () => {
-      await easyStaking.deposit(value, '', { from: user1 });
-      await easyStaking.requestWithdrawal('', { from: user1 });
+      await easyStaking.methods['deposit(uint256)'](value, { from: user1 });
+      await easyStaking.methods['requestWithdrawal()']({ from: user1 });
       await time.increase(withdrawalLockDuration.sub(new BN(5)));
-      await expectRevert(easyStaking.makeRequestedWithdrawal(0, '', { from: user1 }), 'too early');
+      await expectRevert(easyStaking.methods['makeRequestedWithdrawal(uint256)'](0, { from: user1 }), 'too early');
     });
     it('should fail if too late', async () => {
-      await easyStaking.deposit(value, '', { from: user1 });
-      await easyStaking.requestWithdrawal('', { from: user1 });
+      await easyStaking.methods['deposit(uint256)'](value, { from: user1 });
+      await easyStaking.methods['requestWithdrawal()']({ from: user1 });
       await time.increase(withdrawalLockDuration.add(new BN(86400)));
-      await expectRevert(easyStaking.makeRequestedWithdrawal(0, '', { from: user1 }), 'too late');
+      await expectRevert(easyStaking.methods['makeRequestedWithdrawal(uint256)'](0, { from: user1 }), 'too late');
     });
   });
   describe('setToken', () => {
@@ -418,14 +418,14 @@ contract('PoaMania', accounts => {
       const value = ether('100');
       await stakeToken.mint(user1, value, { from: owner });
       await stakeToken.approve(easyStaking.address, value, { from: user1 });
-      await easyStaking.deposit(value, '', { from: user1 });
+      await easyStaking.methods['deposit(uint256)'](value, { from: user1 });
       const timestampBefore = await time.latest();
       await time.increase(YEAR.div(new BN(8)));
       await time.advanceBlock();
       const timestampAfter = await time.latest();
       const timePassed = timestampAfter.sub(timestampBefore);
       const interest = value.mul(interestRates[0]).div(oneEther).mul(timePassed).div(YEAR);
-      expect(await easyStaking.getCurrentEarnedInterest(user1, '')).to.be.bignumber.equal(interest);
+      expect(await easyStaking.getCurrentEarnedInterest(user1)).to.be.bignumber.equal(interest);
     });
   });
 });
