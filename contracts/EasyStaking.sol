@@ -35,16 +35,16 @@ contract EasyStaking is Ownable {
      */
     event Withdrawn(address indexed sender, uint256 amount, string customId);
 
-    uint256 constant YEAR = 365 days;
-    address constant BURN_ADDRESS = 0x0000000000000000000000000000000000000001;
+    uint256 private constant YEAR = 365 days;
+    address private constant BURN_ADDRESS = 0x0000000000000000000000000000000000000001;
 
     // STAKE token
     IERC20Mintable public token;
 
     // The array of staking intervals
-    uint256[] intervals;
+    uint256[] internal intervals;
     // The array of interest rates for each staking interval
-    uint256[] interestRates;
+    uint256[] internal interestRates;
     // The fee of the forced withdrawal (in percentage)
     uint256 public fee;
     // The time from the request after which the withdrawal will be available (in seconds)
@@ -53,14 +53,14 @@ contract EasyStaking is Ownable {
     uint256 public withdrawalUnlockDuration;
 
     // The deposit balances of users
-    mapping (bytes32 => uint256) balances;
+    mapping (bytes32 => uint256) internal balances;
     // The dates of users' deposits
-    mapping (bytes32 => uint256) depositDates;
+    mapping (bytes32 => uint256) internal depositDates;
     // The dates of users' withdrawal requests
-    mapping (bytes32 => uint256) withdrawalRequestsDates;
+    mapping (bytes32 => uint256) internal withdrawalRequestsDates;
 
     // Variable that prevents reentrance
-    bool locked;
+    bool private locked;
 
     /**
      * @dev Initializes the contract
