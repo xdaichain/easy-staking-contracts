@@ -10,8 +10,8 @@ import "./Sacrifice.sol";
 /**
  * @title EasyStaking
  *
- * Note: all percentage values are between 0 and 1
- * and represented as fixed point numbers with 18 decimals like in Ether
+ * Note: all percentage values are between 0 (0%) and 1 (100%)
+ * and represented as fixed point numbers containing 18 decimals like with Ether
  * 100% == 1 ether
  */
 contract EasyStaking is Ownable {
@@ -133,7 +133,7 @@ contract EasyStaking is Ownable {
     }
 
     /**
-     * @dev This method is used to make a forced withdrawal with fee.
+     * @dev This method is used to make a forced withdrawal with a fee.
      * It calls another public "makeForcedWithdrawal" method
      * @param _amount The amount to withdraw (0 - to withdraw all)
      */
@@ -142,7 +142,7 @@ contract EasyStaking is Ownable {
     }
 
     /**
-     * @dev This method is used to make a forced withdrawal with fee.
+     * @dev This method is used to make a forced withdrawal with a fee.
      * It calls the internal "_withdraw" method
      * @param _amount The amount to withdraw (0 - to withdraw all)
      * @param _customId Custom identifier (for exchanges)
@@ -152,7 +152,7 @@ contract EasyStaking is Ownable {
     }
 
     /**
-     * @dev This method is used to request a withdrawal without fee.
+     * @dev This method is used to request a withdrawal without a fee.
      * It call another public "requestWithdrawal" method
      */
     function requestWithdrawal() public {
@@ -160,7 +160,7 @@ contract EasyStaking is Ownable {
     }
 
     /**
-     * @dev This method is used to request a withdrawal without fee.
+     * @dev This method is used to request a withdrawal without a fee.
      * It sets the date of the request
      *
      * Note: each call updates the date of the request so don't call this method twice during the lock
@@ -207,7 +207,7 @@ contract EasyStaking is Ownable {
 
     /**
      * @dev This method is used to claim unsupported tokens accidentally sent to the contract.
-     * It can be called only by owner
+     * It can only be called by the owner
      * @param _token The address of the token contract (zero address for native tokens)
      * @param _to The address of the tokens receiver
      */
@@ -227,7 +227,7 @@ contract EasyStaking is Ownable {
     }
 
     /**
-     * @dev Sets the staking token address. Can be called only by owner
+     * @dev Sets the staking token address. Can only be called by owner
      * @param _tokenAddress The new address of the token
      */
     function setToken(address _tokenAddress) external onlyOwner {
@@ -235,9 +235,9 @@ contract EasyStaking is Ownable {
     }
 
     /**
-     * @dev Sets staking intervals and interest rates. Can be called only by owner
-     * @param _intervals The array of staking intervals
-     * @param _interestRates The array of interest rates for each staking interval
+     * @dev Sets staking intervals and interest rates. Can only be called by owner
+     * @param _intervals The array of staking intervals in seconds
+     * @param _interestRates The array of interest rates in Annual Percentage Rate for each staking interval
      */
     function setIntervalsAndInterestRates(
         uint256[] calldata _intervals,
@@ -247,7 +247,7 @@ contract EasyStaking is Ownable {
     }
 
     /**
-     * @dev Sets the fee of the forced withdrawals. Can be called only by owner
+     * @dev Sets the fee for forced withdrawals. Can only be called by owner
      * @param _fee The new fee value (in percentage)
      */
     function setFee(uint256 _fee) external onlyOwner {
@@ -256,7 +256,7 @@ contract EasyStaking is Ownable {
 
     /**
      * @dev Sets the time from the request after which the withdrawal will be available.
-     * Can be called only by owner
+     * Can only be called by owner
      * @param _withdrawalLockDuration The new duration value (in seconds)
      */
     function setWithdrawalLockDuration(uint256 _withdrawalLockDuration) external onlyOwner {
@@ -265,7 +265,7 @@ contract EasyStaking is Ownable {
 
     /**
      * @dev Sets the time during which the withdrawal will be available from the moment of unlocking.
-     * Can be called only by owner
+     * Can only be called by owner
      * @param _withdrawalUnlockDuration The new duration value (in seconds)
      */
     function setWithdrawalUnlockDuration(uint256 _withdrawalUnlockDuration) external onlyOwner {
