@@ -2,7 +2,12 @@
 
 [![built-with openzeppelin](https://img.shields.io/badge/built%20with-OpenZeppelin-3677FF)](https://docs.openzeppelin.com/)
 
-**Easy Staking** allows you to earn interest on deposits of [STAKE](https://github.com/xdaichain/stake-token) token on Ethereum side.
+**Easy Staking** provides an alternative interest-earning application for [POSDAO](https://forum.poa.network/t/posdao-white-paper/2208) participants. Users can deposit [STAKE](https://github.com/xdaichain/stake-token) tokens deployed on the Ethereum mainnet and earn a pre-determined interest rate while tokens are locked in the contract.
+
+Easy Staking gives users an additional choice for STAKE token usage. There are no minimum deposit requirements (vs minimum 1000K for POSDAO delegated staking) and several withdrawal options available for users. While the overall APR is set lower in Easy Staking than for POSDAO stakers, effective earnings will vary between the two methods based on POSDAO reward distribution percentages.
+
+Easy Staking serves to reduce the overall amount of STAKE in active circulation and acts as a mechanism to limit available liquidity and supply. Limited supply in the open market increases security for POSDAO chains such as the xDai stable chain.
+
 
 ## How to run
 ### Setup
@@ -24,17 +29,17 @@ $ npx oz create
 More about `oz` commands [here](https://docs.openzeppelin.com/cli).
 
 ## How it works
-You can deposit [STAKE](https://github.com/xdaichain/stake-token) tokens to the contract and withdraw them with the earned interest at any time.
+Users can deposit [STAKE](https://github.com/xdaichain/stake-token) tokens to the contract and withdraw them along with earned interest at any time.
 
 There are 2 types of withdrawal:
-1. request a withdrawal and, after some blocking period, withdraw tokens without any commission
-2. make an instant withdrawal by paying a small commission.
+1. _Timed Withdrawal:_ user submits a withdrawal request, and after a specified time period, tokens and interest may be withdrawn with no fee.
+2. _Instant Withdrawal:_ user requests an instant withdrawal and pays a small fee to withdraw tokens and interest.
 
-*Note:* each deposit and withdrawal operation adds current earned interest to your balance and updates your deposit date, so be careful if you want to make a long staking — make a deposit only once in this case.
+*Note:* each deposit and withdrawal operation adds current earned interest to the user balance and updates (resets to current) the deposit date.  If the desire is to stake for a longer period of time, user should make a single deposit.
 
 ### Examples of earning interest
 
-The contract has an array of staking intervals (for example: `[1 month, 2 months, 3 months, 6 months]`), an array of insterest rates (for example: `[5%, 6%, 7%, 8%, 10%]`) and a commission for the instant withdrawal (for example: `3%`).
+The contract has an array of staking intervals (for example: `[1 month, 2 months, 3 months, 6 months]`), an array of interest rates (for example: `[5%, 6%, 7%, 8%, 10%]`) and a fee for the instant withdrawal (for example: `3%`).
 
 ```
 if (staking_period < 1 month) interest_rate = 5%
@@ -46,15 +51,25 @@ else interest_rate = 10%
 
 **1st example:**
 
-You made your first deposit `1000 tokens` and then made an instant withdrawal in or near this block. In this case, your earned interest will be 0 or very small and you will pay a commission about `30 tokens` and get about `970 tokens` back.
+User deposits `1000 tokens` then makes an instant withdrawal in or near this block. In this case, earned interest will be close to 0 with a fee of about `30 tokens`. User will receive `970 tokens` back.
 
 **2nd example:**
 
-You made your first deposit `1000 tokens`. Then you decided to make one more deposit `1000 tokens` after `2 weeks`. As it is the 1st interval the contract will pay you `5%` annual interest `(1000 * 0.05) / 365 * 14 = 1.92` and it will update your deposit date to the current date. Now you have `2001.92 tokens`, and `3 months` later you decided to withdraw all. `3 months >= (1 month + 2 months)` so this is the 3rd interval. In this case, the contract will pay you `7%` annual interest `(2001.92 * 0.07) / 365 * 90 = 34.55` and you will receive `2036.47 tokens`.
+User deposits `1000 tokens`. After `2 weeks`, the user makes a 2nd deposit of `1000 tokens`. This is within the 1st interval, so the contract will pay  `5%` annual interest `(1000 * 0.05) / 365 * 14 = 1.92` and will update the deposit date to the current date. The new balance will be `2001.92 tokens`.
+
+`3 months` later the user makes a timed withdawal for the total amount. `3 months >= (1 month + 2 months)` which corresponds to the 3rd interval. In this case, the contract will pay `7%` annual interest `(2001.92 * 0.07) / 365 * 90 = 34.55` and the userwill receive `2036.47 tokens`.
 
 **3rd example**
 
-You made your first deposit `1000 tokens`. Then you decided to withdraw a half after `6 months`. As it is the 4th interval the contract will pay you `8%` annual interest `(1000 * 0.08) / 365 * 180 = 3.95` and it will update your deposit date to the current date. Now you have `503.95 tokens`, and `1 year` later you decided to withdraw all. This staking period is greater than the sum of staking intervals so the contract will pay you `10%` annual interest `(503.95 * 0.1) = 50.4` and you will receive `554.35 tokens`.
+User deposits `1000 tokens`. They make a timed withdraw for half after `6 months`. This is the 4th interval corresponding to `8%` annual interest `(1000 * 0.08) / 365 * 180 = 39.45` . User receives `500` STAKE, the remaining half + interest remains in the contract and the deposit date is updated to the current date. 
+
+User has `539.45 tokens`, and `1 year` later they decide to withdraw all. This staking period is greater than the sum of staking intervals so the contract pays `10%` annual interest `(539.45 * 0.1) = 53.95` and user receives `593.4 tokens`.
+
+### Withdrawal Window
+
+When a user requests a timed withdrawal, they must wait to withdraw their tokens within a set window of time. There is a lock period before they can withdraw, then there is a set withdrawal window during which they can execute their withdrawal. 
+
+If a user requests a timed withdrawal but fails to execute within the alloted time, their STAKE tokens are relocked into the contract. This does not update their deposit date. Tokens are relocked and accrue interest according to the initial deposit timestamp.
 
 
 ## Roles and methods available to each role
@@ -79,6 +94,6 @@ The owner can only change the contract parameters and claim unsupported tokens a
 6. `setWithdrawalUnlockDuration(uint256)`
 
 ### Proxy Admin
-The Proxy Admin can upgrade the logic of the contracts. This role will be abolished after an audit and some testing time.
+The Proxy Admin can upgrade the contract logic. This role will be abolished following an audit and sufficient testing.
 
 *`Note: All methods are described in code.`*
