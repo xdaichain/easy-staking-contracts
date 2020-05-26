@@ -57,7 +57,7 @@ User deposits `1000 tokens` then makes an instant withdrawal in or near this blo
 
 User deposits `1000 tokens`. After `2 weeks`, the user makes a 2nd deposit of `1000 tokens`. This is within the 1st interval, so the contract will pay  `5%` annual interest `(1000 * 0.05) / 365 * 14 = 1.92` and will update the deposit date to the current date. The new balance will be `2001.92 tokens`.
 
-`3 months` later the user makes a timed withdawal for the total amount. `3 months >= (1 month + 2 months)` which corresponds to the 3rd interval. In this case, the contract will pay `7%` annual interest `(2001.92 * 0.07) / 365 * 90 = 34.55` and the userwill receive `2036.47 tokens`.
+`3 months` later the user makes a timed withdawal for the total amount. `3 months >= (1 month + 2 months)` which corresponds to the 3rd interval. In this case, the contract will pay `7%` annual interest `(2001.92 * 0.07) / 365 * 90 = 34.55` and the user will receive `2036.47 tokens`.
 
 **3rd example**
 
