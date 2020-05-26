@@ -61,7 +61,7 @@ User deposits `1000 tokens`. After `2 weeks`, the user makes a 2nd deposit of `1
 
 **3rd example**
 
-User deposits `1000 tokens`. They make a timed withdraw for half after `6 months`. This is the 4th interval corresponding to `8%` annual interest `(1000 * 0.08) / 365 * 180 = 39.45` . User receives `500` STAKE, the remaining half + interest remains in the contract and the deposit date is updated to the current date. 
+User deposits `1000 tokens`. They make a timed withdraw for half after `6 months`. This is the 4th interval corresponding to `8%` annual interest `(1000 * 0.08) / 365 * 180 = 39.45` . User receives `500 tokens`, the remaining half + interest remains in the contract and the deposit date is updated to the current date. 
 
 User has `539.45 tokens`, and `1 year` later they decide to withdraw all. This staking period is greater than the sum of staking intervals so the contract pays `10%` annual interest `(539.45 * 0.1) = 53.95` and user receives `593.4 tokens`.
 
