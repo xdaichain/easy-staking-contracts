@@ -30,7 +30,7 @@ There are 2 types of withdrawal:
 1. request a withdrawal and, after some blocking period, withdraw tokens without any commission
 2. make an instant withdrawal by paying a small commission.
 
-*Note:* each deposit and withdrawal operation adds current earned interest to your balance and updates your deposit date so be careful if you want to make a long staking - make a deposit only once in this case.
+*Note:* each deposit and withdrawal operation adds current earned interest to your balance and updates your deposit date, so be careful if you want to make a long staking — make a deposit only once in this case.
 
 ### Examples of earning interest
 
@@ -46,7 +46,7 @@ else interest_rate = 10%
 
 **1st example:**
 
-You made your first deposit `1000 tokens` and then made an instant withdrawal in or near this block. In this case, your earned interest will be 0 or very small and you will pay a commission about `30 tokens` and receive about `970 tokens` back.
+You made your first deposit `1000 tokens` and then made an instant withdrawal in or near this block. In this case, your earned interest will be 0 or very small and you will pay a commission about `30 tokens` and get about `970 tokens` back.
 
 **2nd example:**
 
