@@ -44,6 +44,7 @@ contract EasyStaking is Ownable {
     // The array of staking intervals
     uint256[] internal intervals;
     // The array of interest rates for each staking interval
+    // The last element is used when the user's staking period is longer than the sum of the intervals
     uint256[] internal interestRates;
     // The fee of the forced withdrawal (in percentage)
     uint256 public fee;
@@ -100,7 +101,14 @@ contract EasyStaking is Ownable {
 
     /**
      * @dev This method is used to deposit tokens.
-     * It calls the internal "_deposit" method and transfer tokens from user to contract
+     * It calls the internal "_deposit" method and transfer tokens from sender to contract.
+     * Sender must approve tokens first.
+     *
+     * In addition, if sender doesn't need to use a custom id,
+     * they can use the simple "transfer" method of STAKE token contract to make a deposit.
+     *
+     * Note: each call updates the deposit date so be careful if you want to make a long staking
+     *
      * @param _amount The amount to deposit
      * @param _customId Custom identifier (for exchanges)
      */
@@ -154,6 +162,9 @@ contract EasyStaking is Ownable {
     /**
      * @dev This method is used to request a withdrawal without fee.
      * It sets the date of the request
+     *
+     * Note: each call updates the date of the request so don't call this method twice during the lock
+     *
      * @param _customId Custom identifier (for exchanges)
      */
     function requestWithdrawal(string memory _customId) public {
@@ -173,7 +184,11 @@ contract EasyStaking is Ownable {
 
     /**
      * @dev This method is used to make a requested withdrawal.
-     * It calls the internal "_withdraw" method and resets the date of the request
+     * It calls the internal "_withdraw" method and resets the date of the request.
+     *
+     * If sender didn't call this method during the unlock period (if timestamp > lockEnd.add(withdrawalUnlockDuration))
+     * they have to call "requestWithdrawal" one more time
+     *
      * @param _amount The amount to withdraw (0 - to withdraw all)
      * @param _customId Custom identifier (for exchanges)
      */
