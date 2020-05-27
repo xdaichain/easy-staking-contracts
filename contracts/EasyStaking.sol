@@ -24,16 +24,32 @@ contract EasyStaking is Ownable {
      * @param sender User address
      * @param amount The amount of deposited tokens
      * @param customId Custom identifier (for exchanges)
+     * @param balance Current user balance
+     * @param lastStakingPeriod The last staking period
      */
-    event Deposited(address indexed sender, uint256 amount, string customId);
+    event Deposited(
+        address indexed sender,
+        uint256 amount,
+        string customId,
+        uint256 balance,
+        uint256 lastStakingPeriod
+    );
 
     /**
      * @dev Emitted when a user withdraws tokens
      * @param sender User address
      * @param amount The amount of deposited tokens
      * @param customId Custom identifier (for exchanges)
+     * @param balance Current user balance
+     * @param lastStakingPeriod The last staking period
      */
-    event Withdrawn(address indexed sender, uint256 amount, string customId);
+    event Withdrawn(
+        address indexed sender,
+        uint256 amount,
+        string customId,
+        uint256 balance,
+        uint256 lastStakingPeriod
+    );
 
     uint256 private constant YEAR = 365 days;
     address private constant BURN_ADDRESS = 0x0000000000000000000000000000000000000001;
@@ -343,7 +359,8 @@ contract EasyStaking is Ownable {
      */
     function getCurrentEarnedInterest(address _user, string memory _customId) public view returns (uint256) {
         bytes32 userHash = _getUserHash(_user, _customId);
-        return _getCurrentEarnedInterest(userHash);
+        (uint256 interest, ) = _getCurrentEarnedInterest(userHash);
+        return interest;
     }
 
     /**
@@ -378,9 +395,9 @@ contract EasyStaking is Ownable {
         if (balances[userHash] == 0) {
             numberOfParticipants = numberOfParticipants.add(1);
         }
-        _mint(userHash);
+        uint256 timePassed = _mint(userHash);
         balances[userHash] = balances[userHash].add(_amount);
-        emit Deposited(_sender, _amount, _customId);
+        emit Deposited(_sender, _amount, _customId, balances[userHash], timePassed);
     }
 
     /**
@@ -393,7 +410,7 @@ contract EasyStaking is Ownable {
     function _withdraw(address _sender, uint256 _amount, string memory _customId, bool _forced) internal {
         bytes32 userHash = _getUserHash(_sender, _customId);
         require(balances[userHash] > 0, "zero balance");
-        _mint(userHash);
+        uint256 timePassed = _mint(userHash);
         uint256 amount = _amount;
         if (amount == 0) {
             amount = balances[userHash];
@@ -411,21 +428,22 @@ contract EasyStaking is Ownable {
             token.transfer(BURN_ADDRESS, feeValue);
         }
         token.transfer(_sender, amount);
-        emit Withdrawn(_sender, amount, _customId);
+        emit Withdrawn(_sender, amount, _customId, balances[userHash], timePassed);
     }
 
     /**
      * @dev Mints the user's interest and updates the deposit date
      * @param _user The hash of the user
      */
-    function _mint(bytes32 _user) internal {
-        uint256 interest = _getCurrentEarnedInterest(_user);
+    function _mint(bytes32 _user) internal returns (uint256) {
+        (uint256 interest, uint256 timePassed) = _getCurrentEarnedInterest(_user);
         if (interest > 0) {
             token.mint(address(this), interest);
             balances[_user] = balances[_user].add(interest);
         }
         // solium-disable-next-line security/no-block-members
         depositDates[_user] = block.timestamp;
+        return timePassed;
     }
 
     /**
@@ -496,9 +514,9 @@ contract EasyStaking is Ownable {
      * @param _user The hash of the user
      * @return Current earned interest
      */
-    function _getCurrentEarnedInterest(bytes32 _user) internal view returns (uint256) {
+    function _getCurrentEarnedInterest(bytes32 _user) internal view returns (uint256, uint256) {
         uint256 balance = balances[_user];
-        if (balance == 0) return 0;
+        if (balance == 0) return (0, 0);
         // solium-disable-next-line security/no-block-members
         uint256 timePassed = block.timestamp.sub(depositDates[_user]);
         uint256 currentInterestRate = interestRates[0];
@@ -508,6 +526,7 @@ contract EasyStaking is Ownable {
             if (timePassed < sumOfIntervals) break;
             currentInterestRate = interestRates[i.add(1)];
         }
-        return balance.mul(currentInterestRate).div(1 ether).mul(timePassed).div(YEAR);
+        uint256 interest = balance.mul(currentInterestRate).div(1 ether).mul(timePassed).div(YEAR);
+        return (interest, timePassed);
     }
 }
