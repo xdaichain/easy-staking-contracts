@@ -345,6 +345,13 @@ contract EasyStaking is Ownable {
     }
 
     /**
+     * @return The amount of tokens that are staked on the contract
+     */
+    function getTotalStakedAmount() external view returns (uint256) {
+        return token.balanceOf(address(this));
+    }
+
+    /**
      * @return The array of staking intervals
      */
     function getIntervals() external view returns (uint256[] memory) {
