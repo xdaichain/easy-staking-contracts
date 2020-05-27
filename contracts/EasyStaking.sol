@@ -60,6 +60,8 @@ contract EasyStaking is Ownable {
     // The dates of users' withdrawal requests
     mapping (bytes32 => uint256) internal withdrawalRequestsDates;
 
+    // The number of participants with positive deposit balance
+    uint256 public numberOfParticipants;
     // Variable that prevents reentrance
     bool private locked;
 
@@ -373,6 +375,9 @@ contract EasyStaking is Ownable {
      */
     function _deposit(address _sender, uint256 _amount, string memory _customId) internal {
         bytes32 userHash = _getUserHash(_sender, _customId);
+        if (balances[userHash] == 0) {
+            numberOfParticipants = numberOfParticipants.add(1);
+        }
         _mint(userHash);
         balances[userHash] = balances[userHash].add(_amount);
         emit Deposited(_sender, _amount, _customId);
@@ -396,6 +401,9 @@ contract EasyStaking is Ownable {
         balances[userHash] = balances[userHash].sub(amount);
         if (balances[userHash] == 0) {
             depositDates[userHash] = 0;
+            if (numberOfParticipants > 0) {
+                numberOfParticipants = numberOfParticipants.sub(1);
+            }
         }
         if (_forced) {
             uint256 feeValue = amount.mul(fee).div(1 ether);

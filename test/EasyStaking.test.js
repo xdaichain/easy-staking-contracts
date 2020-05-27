@@ -111,6 +111,7 @@ contract('PoaMania', accounts => {
       const timestamp = await time.latest();
       expect(await easyStaking.methods['getBalance(address)'](user1)).to.be.bignumber.equal(value);
       expect(await easyStaking.methods['getDepositDate(address)'](user1)).to.be.bignumber.equal(timestamp);
+      expect(await easyStaking.numberOfParticipants()).to.be.bignumber.equal(new BN(1));
     });
     it('should earn interest', async () => {
       const value = ether('100');
@@ -186,10 +187,12 @@ contract('PoaMania', accounts => {
       const exchange = user1;
       const users = ['ben', 'sarah', 'steve'];
       const values = [ether('100'), ether('250'), ether('600')];
-      await Promise.all(users.map(async (user, index) => {
-        await easyStaking.methods['deposit(uint256,string)'](values[index], user, { from: exchange });
-        expect(await easyStaking.methods['getBalance(address,string)'](exchange, user)).to.be.bignumber.equal(values[index]);
-      }));
+      for (let i = 0; i < users.length; i++) {
+        await easyStaking.methods['deposit(uint256,string)'](values[i], users[i], { from: exchange });
+        expect(await easyStaking.methods['getBalance(address,string)'](exchange, users[i])).to.be.bignumber.equal(values[i]);
+        expect(await easyStaking.numberOfParticipants()).to.be.bignumber.equal(new BN(i + 1));
+      }
+      expect(await easyStaking.numberOfParticipants()).to.be.bignumber.equal(new BN(users.length));
       expect(await easyStaking.getTotalStakedAmount()).to.be.bignumber.equal(values.reduce((acc, cur) => acc.add(cur), new BN(0)));
       let exchangeBalance = await stakeToken.balanceOf(exchange);
       await time.increase(intervals[0].div(new BN(2)));
@@ -205,8 +208,10 @@ contract('PoaMania', accounts => {
         expect(await stakeToken.balanceOf(exchange)).to.be.bignumber.equal(expectedExchangeBalance);
         exchangeBalance = expectedExchangeBalance;
         await time.increase(intervals[i]);
+        expect(await easyStaking.numberOfParticipants()).to.be.bignumber.equal(new BN(users.length - (i + 1)));
       }
       expect(await easyStaking.getTotalStakedAmount()).to.be.bignumber.equal(new BN(0));
+      expect(await easyStaking.numberOfParticipants()).to.be.bignumber.equal(new BN(0));
     });
   });
   describe('requestWithdrawal', () => {
