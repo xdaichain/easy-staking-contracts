@@ -4,3 +4,5 @@ build
 .gitkeep
 coverage.json
 coverage
+.env
+.openzeppelin/kovan.json

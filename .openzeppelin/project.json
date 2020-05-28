@@ -1,6 +1,8 @@
 {
   "manifestVersion": "2.2",
-  "contracts": {},
+  "contracts": {
+    "EasyStaking": "EasyStaking"
+  },
   "dependencies": {},
   "name": "easy-staking-contracts",
   "version": "1.0.0",
