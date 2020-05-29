@@ -72,7 +72,7 @@ User has `500 + 39.45 = 539.45 tokens`, and `1 year` later they decide to withdr
 
 ### Withdrawal Window
 
-When a user requests a timed withdrawal, they must wait to withdraw their tokens within a set window of time. There is a lock period before they can withdraw, then there is a set withdrawal window during which they can execute their withdrawal.
+When a user requests a timed withdrawal, they must wait to withdraw their tokens within a set window of time. There is a lock period (e.g., 7 days) before they can withdraw, then there is a set withdrawal window during which they can execute their withdrawal (e.g., 24 hours).
 
 If a user requests a timed withdrawal but fails to execute within the allotted time, their STAKE tokens are relocked into the contract. This does not update their deposit date. Tokens are relocked and accrue interest according to the initial deposit timestamp.
 
