@@ -21,12 +21,17 @@ To run the entire test suite:
 ```
 $ npm test
 ```
+### Compiling
+This will create `build/contracts` directory with contract's artifacts:
+```
+$ npx oz compile
+```
+More about `oz` commands [here](https://docs.openzeppelin.com/cli).
 ### Deployment
 To run deployment in interactive mode:
 ```
 $ npx oz create
 ```
-More about `oz` commands [here](https://docs.openzeppelin.com/cli).
 
 ## How it works
 Users can deposit [STAKE](https://github.com/xdaichain/stake-token) tokens to the contract and withdraw them along with earned interest at any time.
@@ -35,7 +40,7 @@ There are 2 types of withdrawal:
 1. _Timed Withdrawal:_ user submits a withdrawal request, and after a specified time period, tokens and interest may be withdrawn with no fee.
 2. _Instant Withdrawal:_ user requests an instant withdrawal and pays a small fee to withdraw tokens and interest.
 
-*Note:* each deposit and withdrawal operation adds current earned interest to the user balance and updates (resets to current) the deposit date.  If the desire is to stake for a longer period of time, user should make a single deposit.
+*Note:* each deposit and withdrawal operation adds current earned interest to the user balance and updates (resets to current) the deposit date. If the desire is to stake for a longer period of time, user should make a single deposit and shouldn't deposit/withdraw for that period.
 
 ### Examples of earning interest
 
@@ -55,19 +60,19 @@ User deposits `1000 tokens` then makes an instant withdrawal in or near this blo
 
 **2nd example:**
 
-User deposits `1000 tokens`. After `2 weeks`, the user makes a 2nd deposit of `1000 tokens`. This is within the 1st interval, so the contract will pay  `5%` annual interest `(1000 * 0.05) / 365 * 14 = 1.92` and will update the deposit date to the current date. The new balance will be `2001.92 tokens`.
+User deposits `1000 tokens`. After `2 weeks` (14 days), the user makes a 2nd deposit of `1000 tokens`. This is within the 1st interval, so the contract will pay `5%` annual interest `(1000 * 0.05) / 365 * 14 = 1.92` and will update the deposit date to the current date. The new balance will be `1000 + 1.92 + 1000 = 2001.92 tokens`.
 
-`3 months` later the user makes a timed withdawal for the total amount. `3 months >= (1 month + 2 months)` which corresponds to the 3rd interval. In this case, the contract will pay `7%` annual interest `(2001.92 * 0.07) / 365 * 90 = 34.55` and the user will receive `2036.47 tokens`.
+`3 months` (90 days) later the user makes a timed withdawal for the total amount. `3 months >= (1 month + 2 months)` which corresponds to the 3rd interval. In this case, the contract will pay `7%` annual interest `(2001.92 * 0.07) / 365 * 90 = 34.55` and the user will receive `2001.92 + 34.55 = 2036.47 tokens`.
 
 **3rd example**
 
-User deposits `1000 tokens`. They make a timed withdraw for half after `6 months`. This is the 4th interval corresponding to `8%` annual interest `(1000 * 0.08) / 365 * 180 = 39.45` . User receives `500 tokens`, the remaining half + interest remains in the contract and the deposit date is updated to the current date. 
+User deposits `1000 tokens`. They make a timed withdraw for half after `6 months` (180 days). This is the 4th interval corresponding to `8%` annual interest `(1000 * 0.08) / 365 * 180 = 39.45` . User receives `500 tokens`, the remaining half + interest remains in the contract and the deposit date is updated to the current date. 
 
-User has `539.45 tokens`, and `1 year` later they decide to withdraw all. This staking period is greater than the sum of staking intervals so the contract pays `10%` annual interest `(539.45 * 0.1) = 53.95` and user receives `593.4 tokens`.
+User has `500 + 39.45 = 539.45 tokens`, and `1 year` later they decide to withdraw all. This staking period is greater than the sum of staking intervals so the contract pays `10%` annual interest `(539.45 * 0.1) = 53.95` and user receives `539.45 + 53.95 = 593.4 tokens`.
 
 ### Withdrawal Window
 
-When a user requests a timed withdrawal, they must wait to withdraw their tokens within a set window of time. There is a lock period before they can withdraw, then there is a set withdrawal window during which they can execute their withdrawal. 
+When a user requests a timed withdrawal, they must wait to withdraw their tokens within a set window of time. There is a lock period (e.g., 7 days) before they can withdraw, then there is a set withdrawal window during which they can execute their withdrawal (e.g., 24 hours).
 
 If a user requests a timed withdrawal but fails to execute within the allotted time, their STAKE tokens are relocked into the contract. This does not update their deposit date. Tokens are relocked and accrue interest according to the initial deposit timestamp.
 
