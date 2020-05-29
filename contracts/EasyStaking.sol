@@ -29,7 +29,7 @@ contract EasyStaking is Ownable {
      */
     event Deposited(
         address indexed sender,
-        string customId,
+        string indexed customId,
         uint256 amount,
         uint256 balance,
         uint256 prevDepositDuration
@@ -46,7 +46,7 @@ contract EasyStaking is Ownable {
      */
     event Withdrawn(
         address indexed sender,
-        string customId,
+        string indexed customId,
         uint256 amount,
         uint256 fee,
         uint256 balance,
