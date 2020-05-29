@@ -40,7 +40,7 @@ There are 2 types of withdrawal:
 1. _Timed Withdrawal:_ user submits a withdrawal request, and after a specified time period, tokens and interest may be withdrawn with no fee.
 2. _Instant Withdrawal:_ user requests an instant withdrawal and pays a small fee to withdraw tokens and interest.
 
-*Note:* each deposit and withdrawal operation adds current earned interest to the user balance and updates (resets to current) the deposit date. If the desire is to stake for a longer period of time, user should make a single deposit and shouldn't reposit/withdraw for that period.
+*Note:* each deposit and withdrawal operation adds current earned interest to the user balance and updates (resets to current) the deposit date. If the desire is to stake for a longer period of time, user should make a single deposit and shouldn't deposit/withdraw for that period.
 
 ### Examples of earning interest
 
