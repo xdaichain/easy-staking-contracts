@@ -1,5 +1,6 @@
 const { ether, BN, expectRevert, expectEvent, constants, time, balance, send } = require('@openzeppelin/test-helpers');
 const { expect } = require('chai');
+const { ethers } = require('ethers');
 
 const EasyStaking = artifacts.require('EasyStaking');
 const EasyStakingMock = artifacts.require('EasyStakingMock');
@@ -107,9 +108,9 @@ contract('PoaMania', accounts => {
         expectEvent(receipt, 'Deposited', {
           sender: user1,
           amount: value,
-          customId: '',
+          customId: ethers.utils.solidityKeccak256(['string'], ['']),
           balance: value,
-          lastStakingPeriod: new BN(0),
+          prevDepositDuration: new BN(0),
         });
       } else {
         await stakeToken.transfer(easyStaking.address, value, { from: user1 });
@@ -130,9 +131,9 @@ contract('PoaMania', accounts => {
       await time.increase(YEAR.div(new BN(8)));
       let receipt;
       if (directly) {
-        receipt = await easyStaking.methods['deposit(uint256)'](0, { from: user1 });
+        receipt = await easyStaking.methods['deposit(uint256)'](value, { from: user1 });
       } else {
-        await stakeToken.transfer(easyStaking.address, 0, { from: user1 });
+        await stakeToken.transfer(easyStaking.address, value, { from: user1 });
       }
       const timestampAfter = await time.latest();
       const timePassed = timestampAfter.sub(timestampBefore);
@@ -140,15 +141,15 @@ contract('PoaMania', accounts => {
       if (directly) {
         expectEvent(receipt, 'Deposited', {
           sender: user1,
-          amount: new BN(0),
-          customId: '',
-          balance: value.add(interest),
-          lastStakingPeriod: new BN(timePassed),
+          amount: value,
+          customId: ethers.utils.solidityKeccak256(['string'], ['']),
+          balance: value.add(value).add(interest),
+          prevDepositDuration: new BN(timePassed),
         });
       }
-      expect(await easyStaking.methods['getBalance(address)'](user1)).to.be.bignumber.equal(value.add(interest));
+      expect(await easyStaking.methods['getBalance(address)'](user1)).to.be.bignumber.equal(value.add(value).add(interest));
       expect(await easyStaking.methods['getDepositDate(address)'](user1)).to.be.bignumber.equal(timestampAfter);
-      expect(await easyStaking.getTotalStakedAmount()).to.be.bignumber.equal(value.add(interest));
+      expect(await easyStaking.getTotalStakedAmount()).to.be.bignumber.equal(value.add(value).add(interest));
     });
   }
   describe('deposit', () => testDeposit(true));
@@ -174,9 +175,9 @@ contract('PoaMania', accounts => {
       expectEvent(receipt, 'Withdrawn', {
         sender: user1,
         amount: oneEther,
-        customId: '',
+        customId: ethers.utils.solidityKeccak256(['string'], ['']),
         balance: value.sub(oneEther),
-        lastStakingPeriod: timestampAfter.sub(timestampBefore),
+        lastDepositDuration: timestampAfter.sub(timestampBefore),
       });
       timestampAfter = timestampBefore;
       receipt = await easyStaking.methods['makeForcedWithdrawal(uint256)'](0, { from: user1 });
@@ -187,9 +188,9 @@ contract('PoaMania', accounts => {
       expectEvent(receipt, 'Withdrawn', {
         sender: user1,
         amount: value.sub(oneEther),
-        customId: '',
+        customId: ethers.utils.solidityKeccak256(['string'], ['']),
         balance: new BN(0),
-        lastStakingPeriod: timestampAfter.sub(timestampBefore),
+        lastDepositDuration: timestampAfter.sub(timestampBefore),
       });
     });
     it('should withdraw with interest', async () => {
@@ -273,9 +274,9 @@ contract('PoaMania', accounts => {
       expectEvent(receipt, 'Withdrawn', {
         sender: user1,
         amount: value.add(interest),
-        customId: '',
+        customId: ethers.utils.solidityKeccak256(['string'], ['']),
         balance: new BN(0),
-        lastStakingPeriod: timePassed,
+        lastDepositDuration: timePassed,
       });
     });
     it('should fail if not requested', async () => {

@@ -13,6 +13,7 @@
     "@openzeppelin/cli": "^2.8.2",
     "@openzeppelin/contracts-ethereum-package": "^2.5.0",
     "dotenv": "^8.2.0",
+    "ethers": "^4.0.47",
     "ethlint": "^1.2.5",
     "ganache-cli": "^6.9.1",
     "solidity-coverage": "^0.7.5",

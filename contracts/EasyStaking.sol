@@ -402,7 +402,7 @@ contract EasyStaking is Ownable {
      * @param _customId Custom identifier (for exchanges only).
      */
     function _deposit(address _sender, uint256 _amount, string memory _customId) internal {
-        require(_amount > 0);
+        require(_amount > 0, "deposit amount should be more than 0");
         bytes32 userHash = _getUserHash(_sender, _customId);
         if (balances[userHash] == 0) {
             numberOfParticipants = numberOfParticipants.add(1);
