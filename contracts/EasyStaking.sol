@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/SafeERC20.sol";
 import "./IERC20Mintable.sol";
 import "./Sacrifice.sol";
+import "./Sigmoid.sol";
 
 /**
  * @title EasyStaking
@@ -18,6 +19,7 @@ contract EasyStaking is Ownable {
     using Address for address;
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
+    using Sigmoid for Sigmoid.State;
 
     /**
      * @dev Emitted when a user deposits tokens.
@@ -55,15 +57,12 @@ contract EasyStaking is Ownable {
 
     uint256 private constant YEAR = 365 days;
     address private constant BURN_ADDRESS = 0x0000000000000000000000000000000000000001;
+    // The maximum emission rate (in percentage)
+    uint256 public constant MAX_EMISSION_RATE = 150 finney; // 15%, 0.15 ether
 
     // STAKE token
     IERC20Mintable public token;
 
-    // The array of staking intervals
-    uint256[] internal intervals;
-    // The array of interest rates for each staking interval.
-    // The last element is used when the user's staking period is longer than the sum of the intervals
-    uint256[] internal interestRates;
     // The fee of the forced withdrawal (in percentage)
     uint256 public fee;
     // The time from the request after which the withdrawal will be available (in seconds)
@@ -82,41 +81,37 @@ contract EasyStaking is Ownable {
     uint256 public numberOfParticipants;
     // Variable that prevents reentrance
     bool private locked;
+    // The library that is used to calculate user's current emission rate
+    Sigmoid.State private sigmoid;
 
     /**
      * @dev Initializes the contract.
      * @param _owner The owner of the contract.
      * @param _tokenAddress The address of the STAKE token contract.
-     * @param _intervals The array of staking intervals in seconds.
-     * Must be one item less than the length of `_interestRates`.
-     * Example [1 month, 2 months, 3 months, 6 months] represents the following corresponding durations:
-     * 1 month
-     * 1 month + 2 months = 3 months
-     * 1 month + 2 months + 3 months = 6 months
-     * 1 month + 2 months + 3 months + 6 months = 12 months
-     * @param _interestRates The array of annual interest rates for each staking interval.
-     * The last item is used when a user holds tokens longer than the sum of `_intervals`.
-     * Example: [5%, 6%, 7%, 8%, 10%].
      * @param _fee The fee of the forced withdrawal (in percentage).
      * @param _withdrawalLockDuration The time from the request after which the withdrawal will be available (in seconds).
      * @param _withdrawalUnlockDuration The time during which the withdrawal will be available from the moment of unlocking (in seconds).
+     * @param _sigmoidParamA Sigmoid parameter A.
+     * @param _sigmoidParamB Sigmoid parameter B.
+     * @param _sigmoidParamC Sigmoid parameter C.
      */
     function initialize(
         address _owner,
         address _tokenAddress,
-        uint256[] memory _intervals,
-        uint256[] memory _interestRates,
         uint256 _fee,
         uint256 _withdrawalLockDuration,
-        uint256 _withdrawalUnlockDuration
+        uint256 _withdrawalUnlockDuration,
+        uint256 _sigmoidParamA,
+        uint256 _sigmoidParamB,
+        uint256 _sigmoidParamC
     ) public initializer {
         require(_owner != address(0), "zero address");
         Ownable.initialize(_owner);
         _setToken(_tokenAddress);
-        _setIntervalsAndInterestRates(_intervals, _interestRates);
         _setFee(_fee);
         _setWithdrawalLockDuration(_withdrawalLockDuration);
         _setWithdrawalUnlockDuration(_withdrawalUnlockDuration);
+        _setSigmoidParameters(_sigmoidParamA, _sigmoidParamB, _sigmoidParamC);
     }
 
     /**
@@ -264,18 +259,6 @@ contract EasyStaking is Ownable {
     }
 
     /**
-     * @dev Sets staking intervals and interest rates. Can only be called by owner.
-     * @param _intervals The array of staking intervals in seconds.
-     * @param _interestRates The array of interest rates in Annual Percentage Rate for each staking interval.
-     */
-    function setIntervalsAndInterestRates(
-        uint256[] calldata _intervals,
-        uint256[] calldata _interestRates
-    ) external onlyOwner {
-        _setIntervalsAndInterestRates(_intervals, _interestRates);
-    }
-
-    /**
      * @dev Sets the fee for forced withdrawals. Can only be called by owner.
      * @param _fee The new fee value (in percentage).
      */
@@ -299,6 +282,17 @@ contract EasyStaking is Ownable {
      */
     function setWithdrawalUnlockDuration(uint256 _withdrawalUnlockDuration) external onlyOwner {
         _setWithdrawalUnlockDuration(_withdrawalUnlockDuration);
+    }
+
+    /**
+     * @dev Sets parameters of the sigmoid that is used to calculate the user's current emission rate
+     * Can only be called by owner.
+     * @param _a Sigmoid parameter A.
+     * @param _b Sigmoid parameter B.
+     * @param _c Sigmoid parameter C.
+     */
+    function setSigmoidParameters(uint256 _a, uint256 _b, uint256 _c) external onlyOwner {
+        _setSigmoidParameters(_a, _b, _c);
     }
 
     /**
@@ -382,17 +376,10 @@ contract EasyStaking is Ownable {
     }
 
     /**
-     * @return The array of staking intervals.
+     * @return Sigmoid parameters.
      */
-    function getIntervals() external view returns (uint256[] memory) {
-        return intervals;
-    }
-
-    /**
-     * @return The array of interest rates.
-     */
-    function getInterestRates() external view returns (uint256[] memory) {
-        return interestRates;
+    function getSigmoidParameters() external view returns (uint256 a, uint256 b, uint256 c) {
+        return sigmoid.getParameters();
     }
 
     /**
@@ -469,20 +456,6 @@ contract EasyStaking is Ownable {
     }
 
     /**
-     * @dev Sets staking intervals and interest rates.
-     * @param _intervals The array of staking intervals.
-     * @param _interestRates The array of interest rates for each staking interval.
-     */
-    function _setIntervalsAndInterestRates(
-        uint256[] memory _intervals,
-        uint256[] memory _interestRates
-    ) internal {
-        require(_intervals.length.add(1) == _interestRates.length, "wrong array sizes");
-        intervals = _intervals;
-        interestRates = _interestRates;
-    }
-
-    /**
      * @dev Sets the fee of the forced withdrawals.
      * @param _fee The new fee value (in percentage).
      */
@@ -505,6 +478,17 @@ contract EasyStaking is Ownable {
      */
     function _setWithdrawalUnlockDuration(uint256 _withdrawalUnlockDuration) internal {
         withdrawalUnlockDuration = _withdrawalUnlockDuration;
+    }
+
+    /**
+     * @dev Sets parameters of the sigmoid that is used to calculate the user's current emission rate
+     * @param _a Sigmoid parameter A.
+     * @param _b Sigmoid parameter B.
+     * @param _c Sigmoid parameter C.
+     */
+    function _setSigmoidParameters(uint256 _a, uint256 _b, uint256 _c) internal {
+        require(_a <= MAX_EMISSION_RATE, "should be less than or equal to the maximum emission rate");
+        sigmoid.setParameters(_a, _b, _c);
     }
 
     /**
@@ -534,13 +518,7 @@ contract EasyStaking is Ownable {
         // solium-disable-next-line security/no-block-members
         uint256 timePassed = block.timestamp.sub(lastDepositDate);
         if (timePassed == 0) return (0, 0);
-        uint256 currentInterestRate = interestRates[0];
-        uint256 sumOfIntervals;
-        for (uint256 i = 0; i < intervals.length; i++) {
-            sumOfIntervals = sumOfIntervals.add(intervals[i]);
-            if (timePassed < sumOfIntervals) break;
-            currentInterestRate = interestRates[i.add(1)];
-        }
+        uint256 currentInterestRate = sigmoid.calculate(timePassed);
         uint256 interest = balance.mul(currentInterestRate).div(1 ether).mul(timePassed).div(YEAR);
         return (interest, timePassed);
     }
