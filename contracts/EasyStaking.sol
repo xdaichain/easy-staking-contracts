@@ -364,21 +364,21 @@ contract EasyStaking is Ownable {
 
     /**
      * @param _user The address of the user.
-     * @return Current earned interest.
+     * @return Current accrued emission.
      */
-    function getCurrentEarnedInterest(address _user) public view returns (uint256) {
-        return getCurrentEarnedInterest(_user, "");
+    function getCurrentAccruedEmission(address _user) public view returns (uint256) {
+        return getCurrentAccruedEmission(_user, "");
     }
 
     /**
      * @param _user The address of the user.
      * @param _customId Custom identifier (for exchanges only).
-     * @return Current earned interest.
+     * @return User's current accrued emission.
      */
-    function getCurrentEarnedInterest(address _user, string memory _customId) public view returns (uint256) {
+    function getCurrentAccruedEmission(address _user, string memory _customId) public view returns (uint256) {
         bytes32 userHash = _getUserHash(_user, _customId);
-        (, uint256 interest, ) = _getCurrentEarnedInterest(userHash);
-        return interest;
+        (, uint256 userAccruedEmission, ) = _getCurrentAccruedEmission(userHash);
+        return userAccruedEmission;
     }
 
     /**
@@ -445,11 +445,12 @@ contract EasyStaking is Ownable {
     }
 
     /**
-     * @dev Mints the user's interest and updates the deposit date.
+     * @dev Mints 15% per annum and distributes the emission between the user and Liquidity Providers in proportion.
+     * Also it updates the deposit date of the user.
      * @param _user The hash of the user.
      */
     function _mint(bytes32 _user) internal returns (uint256) {
-        (uint256 total, uint256 userShare, uint256 timePassed) = _getCurrentEarnedInterest(_user);
+        (uint256 total, uint256 userShare, uint256 timePassed) = _getCurrentAccruedEmission(_user);
         if (total > 0) {
             token.mint(address(this), total);
             balances[_user] = balances[_user].add(userShare);
@@ -532,9 +533,9 @@ contract EasyStaking is Ownable {
 
     /**
      * @param _user The hash of the user.
-     * @return Total earned interest and user share.
+     * @return Total accrued emission (for the user and Liquidity Providers) and user share.
      */
-    function _getCurrentEarnedInterest(bytes32 _user) internal view returns (uint256, uint256, uint256) {
+    function _getCurrentAccruedEmission(bytes32 _user) internal view returns (uint256, uint256, uint256) {
         uint256 balance = balances[_user];
         uint256 lastDepositDate = depositDates[_user];
         if (balance == 0 || lastDepositDate == 0) return (0, 0, 0);

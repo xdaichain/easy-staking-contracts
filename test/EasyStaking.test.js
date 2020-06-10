@@ -57,10 +57,10 @@ contract('PoaMania', accounts => {
     return z;
   }
 
-  function calculateUserInterest(deposit, timePassed) {
-    const userInterestRate = sigmoidParamA.mul(timePassed.sub(sigmoidParamB)).div(squareRoot(timePassed.sub(sigmoidParamB).sqr().add(sigmoidParamC)));
-    const interest = deposit.mul(MAX_EMISSION_RATE).div(oneEther).mul(timePassed).div(YEAR);
-    return interest.mul(userInterestRate).div(MAX_EMISSION_RATE);
+  function calculateUserAccruedEmission(deposit, timePassed) {
+    const userEmissionRate = sigmoidParamA.mul(timePassed.sub(sigmoidParamB)).div(squareRoot(timePassed.sub(sigmoidParamB).sqr().add(sigmoidParamC)));
+    const total = deposit.mul(MAX_EMISSION_RATE).div(oneEther).mul(timePassed).div(YEAR);
+    return total.mul(userEmissionRate).div(MAX_EMISSION_RATE);
   }
 
   beforeEach(async () => {
@@ -165,7 +165,7 @@ contract('PoaMania', accounts => {
       expect(await easyStaking.methods['getDepositDate(address)'](user1)).to.be.bignumber.equal(timestamp);
       expect(await easyStaking.numberOfParticipants()).to.be.bignumber.equal(new BN(1));
     });
-    it('should earn interest', async () => {
+    it('should accrue emission', async () => {
       const value = ether('100');
       if (directly) {
         await easyStaking.methods['deposit(uint256)'](value, { from: user1 });
@@ -182,19 +182,19 @@ contract('PoaMania', accounts => {
       }
       const timestampAfter = await time.latest();
       const timePassed = timestampAfter.sub(timestampBefore);
-      const interest = calculateUserInterest(value, timePassed);
+      const userAccruedEmission = calculateUserAccruedEmission(value, timePassed);
       if (directly) {
         expectEvent(receipt, 'Deposited', {
           sender: user1,
           amount: value,
           customId: ethers.utils.solidityKeccak256(['string'], ['']),
-          balance: value.add(value).add(interest),
+          balance: value.add(value).add(userAccruedEmission),
           prevDepositDuration: new BN(timePassed),
         });
       }
-      expect(await easyStaking.methods['getBalance(address)'](user1)).to.be.bignumber.equal(value.add(value).add(interest));
+      expect(await easyStaking.methods['getBalance(address)'](user1)).to.be.bignumber.equal(value.add(value).add(userAccruedEmission));
       expect(await easyStaking.methods['getDepositDate(address)'](user1)).to.be.bignumber.equal(timestampAfter);
-      expect(await easyStaking.getTotalStakedAmount()).to.be.bignumber.equal(value.add(value).add(interest));
+      expect(await easyStaking.getTotalStakedAmount()).to.be.bignumber.equal(value.add(value).add(userAccruedEmission));
     });
   }
   describe('deposit', () => testDeposit(true));
@@ -238,29 +238,29 @@ contract('PoaMania', accounts => {
         lastDepositDuration: timestampAfter.sub(timestampBefore),
       });
     });
-    it('should withdraw with interest', async () => {
+    it('should withdraw with accrued emission', async () => {
       await easyStaking.methods['deposit(uint256)'](value, { from: user1 });
       const timestampBefore = await time.latest();
       await time.increase(YEAR.div(new BN(8)));
       await easyStaking.methods['makeForcedWithdrawal(uint256)'](0, { from: user1 });
       const timestampAfter = await time.latest();
       const timePassed = timestampAfter.sub(timestampBefore);
-      const interest = calculateUserInterest(value, timePassed);
+      const userAccruedEmission = calculateUserAccruedEmission(value, timePassed);
       expect(await easyStaking.methods['getBalance(address)'](user1)).to.be.bignumber.equal(new BN(0));
-      expect(await stakeToken.balanceOf(user1)).to.be.bignumber.equal(value.add(interest));
+      expect(await stakeToken.balanceOf(user1)).to.be.bignumber.equal(value.add(userAccruedEmission));
     });
-    it('should withdraw part and earn interest', async () => {
+    it('should withdraw part and accrue emission', async () => {
       await easyStaking.methods['deposit(uint256)'](value, { from: user1 });
       const timestampBefore = await time.latest();
       await time.increase(YEAR.div(new BN(8)));
       await easyStaking.methods['makeForcedWithdrawal(uint256)'](oneEther, { from: user1 });
       const timestampAfter = await time.latest();
       const timePassed = timestampAfter.sub(timestampBefore);
-      const interest = calculateUserInterest(value, timePassed);
-      expect(await easyStaking.methods['getBalance(address)'](user1)).to.be.bignumber.equal(value.sub(oneEther).add(interest));
+      const userAccruedEmission = calculateUserAccruedEmission(value, timePassed);
+      expect(await easyStaking.methods['getBalance(address)'](user1)).to.be.bignumber.equal(value.sub(oneEther).add(userAccruedEmission));
       expect(await stakeToken.balanceOf(user1)).to.be.bignumber.equal(oneEther);
     });
-    it('should earn interest for different users from 1 address', async () => {
+    it('should accrue emission for different users from 1 address', async () => {
       const exchange = user1;
       const users = ['ben', 'sarah', 'steve'];
       const values = [ether('100'), ether('250'), ether('600')];
@@ -279,9 +279,9 @@ contract('PoaMania', accounts => {
         await easyStaking.methods['makeForcedWithdrawal(uint256,string)'](0, users[i], { from: user1 });
         const timestampAfter = await time.latest();
         const timePassed = timestampAfter.sub(timestampBefore);
-        const interest = calculateUserInterest(values[i], timePassed);
-        const expectedExchangeBalance = exchangeBalance.add(values[i]).add(interest);
-        expect(interest).to.be.bignumber.gt(new BN(0));
+        const userAccruedEmission = calculateUserAccruedEmission(values[i], timePassed);
+        const expectedExchangeBalance = exchangeBalance.add(values[i]).add(userAccruedEmission);
+        expect(userAccruedEmission).to.be.bignumber.gt(new BN(0));
         expect(await easyStaking.methods['getBalance(address,string)'](exchange, users[i])).to.be.bignumber.equal(new BN(0));
         expect(await stakeToken.balanceOf(exchange)).to.be.bignumber.equal(expectedExchangeBalance);
         exchangeBalance = expectedExchangeBalance;
@@ -313,13 +313,13 @@ contract('PoaMania', accounts => {
       const receipt = await easyStaking.methods['makeRequestedWithdrawal(uint256)'](0, { from: user1 });
       const timestampAfter = await time.latest();
       const timePassed = timestampAfter.sub(timestampBefore);
-      const interest = calculateUserInterest(value, timePassed);
+      const userAccruedEmission = calculateUserAccruedEmission(value, timePassed);
       expect(await easyStaking.methods['getWithdrawalRequestDate(address)'](user1)).to.be.bignumber.equal(new BN(0));
       expect(await easyStaking.methods['getBalance(address)'](user1)).to.be.bignumber.equal(new BN(0));
-      expect(await stakeToken.balanceOf(user1)).to.be.bignumber.equal(value.add(interest));
+      expect(await stakeToken.balanceOf(user1)).to.be.bignumber.equal(value.add(userAccruedEmission));
       expectEvent(receipt, 'Withdrawn', {
         sender: user1,
-        amount: value.add(interest),
+        amount: value.add(userAccruedEmission),
         customId: ethers.utils.solidityKeccak256(['string'], ['']),
         balance: new BN(0),
         lastDepositDuration: timePassed,
@@ -466,7 +466,7 @@ contract('PoaMania', accounts => {
       );
     });
   });
-  describe('getCurrentEarnedInterest', () => {
+  describe('getCurrentAccruedEmission', () => {
     it('should be calculated correctly', async () => {
       const value = ether('100');
       await stakeToken.mint(user1, value, { from: owner });
@@ -477,8 +477,8 @@ contract('PoaMania', accounts => {
       await time.advanceBlock();
       const timestampAfter = await time.latest();
       const timePassed = timestampAfter.sub(timestampBefore);
-      const interest = calculateUserInterest(value, timePassed);
-      expect(await easyStaking.getCurrentEarnedInterest(user1)).to.be.bignumber.equal(interest);
+      const userAccruedEmission = calculateUserAccruedEmission(value, timePassed);
+      expect(await easyStaking.getCurrentAccruedEmission(user1)).to.be.bignumber.equal(userAccruedEmission);
     });
   });
 });
