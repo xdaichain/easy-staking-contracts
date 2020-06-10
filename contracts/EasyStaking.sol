@@ -56,12 +56,13 @@ contract EasyStaking is Ownable {
     );
 
     uint256 private constant YEAR = 365 days;
-    address private constant BURN_ADDRESS = 0x0000000000000000000000000000000000000001;
     // The maximum emission rate (in percentage)
     uint256 public constant MAX_EMISSION_RATE = 150 finney; // 15%, 0.15 ether
 
     // STAKE token
     IERC20Mintable public token;
+    // The address of the LiquidityProvidersReward contract
+    address public liquidityProvidersRewardContract;
 
     // The fee of the forced withdrawal (in percentage)
     uint256 public fee;
@@ -88,6 +89,7 @@ contract EasyStaking is Ownable {
      * @dev Initializes the contract.
      * @param _owner The owner of the contract.
      * @param _tokenAddress The address of the STAKE token contract.
+     * @param _liquidityProvidersRewardContract The address of the LiquidityProvidersReward contract
      * @param _fee The fee of the forced withdrawal (in percentage).
      * @param _withdrawalLockDuration The time from the request after which the withdrawal will be available (in seconds).
      * @param _withdrawalUnlockDuration The time during which the withdrawal will be available from the moment of unlocking (in seconds).
@@ -98,6 +100,7 @@ contract EasyStaking is Ownable {
     function initialize(
         address _owner,
         address _tokenAddress,
+        address _liquidityProvidersRewardContract,
         uint256 _fee,
         uint256 _withdrawalLockDuration,
         uint256 _withdrawalUnlockDuration,
@@ -112,6 +115,7 @@ contract EasyStaking is Ownable {
         _setWithdrawalLockDuration(_withdrawalLockDuration);
         _setWithdrawalUnlockDuration(_withdrawalUnlockDuration);
         _setSigmoidParameters(_sigmoidParamA, _sigmoidParamB, _sigmoidParamC);
+        _setLiquidityProvidersRewardContract(_liquidityProvidersRewardContract);
     }
 
     /**
@@ -296,6 +300,15 @@ contract EasyStaking is Ownable {
     }
 
     /**
+     * @dev Sets the Liquidity Providers Reward contract address
+     * Can only be called by owner.
+     * @param _contractAddress The new contract address
+     */
+    function setLiquidityProvidersRewardContract(address _contractAddress) external onlyOwner {
+        _setLiquidityProvidersRewardContract(_contractAddress);
+    }
+
+    /**
      * @param _user The address of the user.
      * @return The deposit balance of the user.
      */
@@ -364,7 +377,7 @@ contract EasyStaking is Ownable {
      */
     function getCurrentEarnedInterest(address _user, string memory _customId) public view returns (uint256) {
         bytes32 userHash = _getUserHash(_user, _customId);
-        (uint256 interest, ) = _getCurrentEarnedInterest(userHash);
+        (, uint256 interest, ) = _getCurrentEarnedInterest(userHash);
         return interest;
     }
 
@@ -425,7 +438,7 @@ contract EasyStaking is Ownable {
         if (_forced) {
             feeValue = amount.mul(fee).div(1 ether);
             amount = amount.sub(feeValue);
-            token.transfer(BURN_ADDRESS, feeValue);
+            token.transfer(liquidityProvidersRewardContract, feeValue);
         }
         token.transfer(_sender, amount);
         emit Withdrawn(_sender, _customId, amount, feeValue, balances[userHash], timePassed);
@@ -436,10 +449,11 @@ contract EasyStaking is Ownable {
      * @param _user The hash of the user.
      */
     function _mint(bytes32 _user) internal returns (uint256) {
-        (uint256 interest, uint256 timePassed) = _getCurrentEarnedInterest(_user);
-        if (interest > 0) {
-            token.mint(address(this), interest);
-            balances[_user] = balances[_user].add(interest);
+        (uint256 total, uint256 userShare, uint256 timePassed) = _getCurrentEarnedInterest(_user);
+        if (total > 0) {
+            token.mint(address(this), total);
+            balances[_user] = balances[_user].add(userShare);
+            token.transfer(liquidityProvidersRewardContract, total.sub(userShare));
         }
         // solium-disable-next-line security/no-block-members
         depositDates[_user] = block.timestamp;
@@ -492,6 +506,15 @@ contract EasyStaking is Ownable {
     }
 
     /**
+     * @dev Sets the Liquidity Providers Reward contract address
+     * @param _contractAddress The new contract address
+     */
+    function _setLiquidityProvidersRewardContract(address _contractAddress) internal {
+        require(_contractAddress.isContract(), "not a contract address");
+        liquidityProvidersRewardContract = _contractAddress;
+    }
+
+    /**
      * @dev Sets lock to prevent reentrance.
      */
     function _setLocked(bool _locked) internal {
@@ -509,17 +532,18 @@ contract EasyStaking is Ownable {
 
     /**
      * @param _user The hash of the user.
-     * @return Current earned interest.
+     * @return Total earned interest and user share.
      */
-    function _getCurrentEarnedInterest(bytes32 _user) internal view returns (uint256, uint256) {
+    function _getCurrentEarnedInterest(bytes32 _user) internal view returns (uint256, uint256, uint256) {
         uint256 balance = balances[_user];
         uint256 lastDepositDate = depositDates[_user];
-        if (balance == 0 || lastDepositDate == 0) return (0, 0);
+        if (balance == 0 || lastDepositDate == 0) return (0, 0, 0);
         // solium-disable-next-line security/no-block-members
         uint256 timePassed = block.timestamp.sub(lastDepositDate);
-        if (timePassed == 0) return (0, 0);
-        uint256 currentInterestRate = sigmoid.calculate(timePassed);
-        uint256 interest = balance.mul(currentInterestRate).div(1 ether).mul(timePassed).div(YEAR);
-        return (interest, timePassed);
+        if (timePassed == 0) return (0, 0, 0);
+        uint256 userEmissionRate = sigmoid.calculate(timePassed);
+        uint256 total = balance.mul(MAX_EMISSION_RATE).div(1 ether).mul(timePassed).div(YEAR);
+        uint256 userShare = total.mul(userEmissionRate).div(MAX_EMISSION_RATE);
+        return (total, userShare, timePassed);
     }
 }

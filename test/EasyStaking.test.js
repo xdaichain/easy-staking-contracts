@@ -10,6 +10,7 @@ const Token = artifacts.require('ERC677Mock');
 contract('PoaMania', accounts => {
   const [owner, user1, user2] = accounts;
   const YEAR = new BN(31536000); // in seconds
+  const MAX_EMISSION_RATE = ether('0.15'); // 15%
   const fee = ether('0.03'); // 3%
   const withdrawalLockDuration = new BN(600); // in seconds
   const withdrawalUnlockDuration = new BN(60); // in seconds
@@ -20,14 +21,16 @@ contract('PoaMania', accounts => {
 
   let easyStaking;
   let stakeToken;
+  let liquidityProvidersRewardContract;
 
-  const initializeMethod = 'initialize(address,address,uint256,uint256,uint256,uint256,uint256,uint256)';
+  const initializeMethod = 'initialize(address,address,address,uint256,uint256,uint256,uint256,uint256,uint256)';
 
   function initialize(...params) {
     if (params.length === 0) {
       params = [
         owner,
         stakeToken.address,
+        liquidityProvidersRewardContract.address,
         fee.toString(),
         withdrawalLockDuration.toString(),
         withdrawalUnlockDuration.toString(),
@@ -54,14 +57,16 @@ contract('PoaMania', accounts => {
     return z;
   }
 
-  function calculateInterest(deposit, timePassed) {
-    const interestRate = sigmoidParamA.mul(timePassed.sub(sigmoidParamB)).div(squareRoot(timePassed.sub(sigmoidParamB).sqr().add(sigmoidParamC)));
-    return deposit.mul(interestRate).div(oneEther).mul(timePassed).div(YEAR);
+  function calculateUserInterest(deposit, timePassed) {
+    const userInterestRate = sigmoidParamA.mul(timePassed.sub(sigmoidParamB)).div(squareRoot(timePassed.sub(sigmoidParamB).sqr().add(sigmoidParamC)));
+    const interest = deposit.mul(MAX_EMISSION_RATE).div(oneEther).mul(timePassed).div(YEAR);
+    return interest.mul(userInterestRate).div(MAX_EMISSION_RATE);
   }
 
   beforeEach(async () => {
     stakeToken = await Token.new();
     easyStaking = await EasyStaking.new();
+    liquidityProvidersRewardContract = await ReceiverMock.new();
     await initialize();
     await stakeToken.initialize('Stake', 'STAKE', 18, 0, owner, [owner, easyStaking.address], []);
   });
@@ -80,6 +85,7 @@ contract('PoaMania', accounts => {
         initialize(
           constants.ZERO_ADDRESS,
           stakeToken.address,
+          liquidityProvidersRewardContract.address,
           fee.toString(),
           withdrawalLockDuration.toString(),
           withdrawalUnlockDuration.toString(),
@@ -93,6 +99,7 @@ contract('PoaMania', accounts => {
         initialize(
           owner,
           constants.ZERO_ADDRESS,
+          liquidityProvidersRewardContract.address,
           fee.toString(),
           withdrawalLockDuration.toString(),
           withdrawalUnlockDuration.toString(),
@@ -106,6 +113,7 @@ contract('PoaMania', accounts => {
         initialize(
           owner,
           stakeToken.address,
+          liquidityProvidersRewardContract.address,
           fee.toString(),
           withdrawalLockDuration.toString(),
           withdrawalUnlockDuration.toString(),
@@ -114,6 +122,20 @@ contract('PoaMania', accounts => {
           sigmoidParamC.toString(),
         ),
         'should be less than or equal to the maximum emission rate'
+      );
+      await expectRevert(
+        initialize(
+          owner,
+          stakeToken.address,
+          owner,
+          fee.toString(),
+          withdrawalLockDuration.toString(),
+          withdrawalUnlockDuration.toString(),
+          sigmoidParamA.toString(),
+          sigmoidParamB.toString(),
+          sigmoidParamC.toString(),
+        ),
+        'not a contract address'
       );
     });
   });
@@ -160,7 +182,7 @@ contract('PoaMania', accounts => {
       }
       const timestampAfter = await time.latest();
       const timePassed = timestampAfter.sub(timestampBefore);
-      const interest = calculateInterest(value, timePassed);
+      const interest = calculateUserInterest(value, timePassed);
       if (directly) {
         expectEvent(receipt, 'Deposited', {
           sender: user1,
@@ -223,7 +245,7 @@ contract('PoaMania', accounts => {
       await easyStaking.methods['makeForcedWithdrawal(uint256)'](0, { from: user1 });
       const timestampAfter = await time.latest();
       const timePassed = timestampAfter.sub(timestampBefore);
-      const interest = calculateInterest(value, timePassed);
+      const interest = calculateUserInterest(value, timePassed);
       expect(await easyStaking.methods['getBalance(address)'](user1)).to.be.bignumber.equal(new BN(0));
       expect(await stakeToken.balanceOf(user1)).to.be.bignumber.equal(value.add(interest));
     });
@@ -234,7 +256,7 @@ contract('PoaMania', accounts => {
       await easyStaking.methods['makeForcedWithdrawal(uint256)'](oneEther, { from: user1 });
       const timestampAfter = await time.latest();
       const timePassed = timestampAfter.sub(timestampBefore);
-      const interest = calculateInterest(value, timePassed);
+      const interest = calculateUserInterest(value, timePassed);
       expect(await easyStaking.methods['getBalance(address)'](user1)).to.be.bignumber.equal(value.sub(oneEther).add(interest));
       expect(await stakeToken.balanceOf(user1)).to.be.bignumber.equal(oneEther);
     });
@@ -257,7 +279,7 @@ contract('PoaMania', accounts => {
         await easyStaking.methods['makeForcedWithdrawal(uint256,string)'](0, users[i], { from: user1 });
         const timestampAfter = await time.latest();
         const timePassed = timestampAfter.sub(timestampBefore);
-        const interest = calculateInterest(values[i], timePassed);
+        const interest = calculateUserInterest(values[i], timePassed);
         const expectedExchangeBalance = exchangeBalance.add(values[i]).add(interest);
         expect(interest).to.be.bignumber.gt(new BN(0));
         expect(await easyStaking.methods['getBalance(address,string)'](exchange, users[i])).to.be.bignumber.equal(new BN(0));
@@ -291,7 +313,7 @@ contract('PoaMania', accounts => {
       const receipt = await easyStaking.methods['makeRequestedWithdrawal(uint256)'](0, { from: user1 });
       const timestampAfter = await time.latest();
       const timePassed = timestampAfter.sub(timestampBefore);
-      const interest = calculateInterest(value, timePassed);
+      const interest = calculateUserInterest(value, timePassed);
       expect(await easyStaking.methods['getWithdrawalRequestDate(address)'](user1)).to.be.bignumber.equal(new BN(0));
       expect(await easyStaking.methods['getBalance(address)'](user1)).to.be.bignumber.equal(new BN(0));
       expect(await stakeToken.balanceOf(user1)).to.be.bignumber.equal(value.add(interest));
@@ -455,7 +477,7 @@ contract('PoaMania', accounts => {
       await time.advanceBlock();
       const timestampAfter = await time.latest();
       const timePassed = timestampAfter.sub(timestampBefore);
-      const interest = calculateInterest(value, timePassed);
+      const interest = calculateUserInterest(value, timePassed);
       expect(await easyStaking.getCurrentEarnedInterest(user1)).to.be.bignumber.equal(interest);
     });
   });
