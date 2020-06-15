@@ -59,8 +59,7 @@ contract('PoaMania', accounts => {
 
   function calculateUserAccruedEmission(deposit, timePassed) {
     const userEmissionRate = sigmoidParamA.mul(timePassed.sub(sigmoidParamB)).div(squareRoot(timePassed.sub(sigmoidParamB).sqr().add(sigmoidParamC)));
-    const total = deposit.mul(MAX_EMISSION_RATE).div(oneEther).mul(timePassed).div(YEAR);
-    return total.mul(userEmissionRate).div(MAX_EMISSION_RATE);
+    return deposit.mul(userEmissionRate).div(oneEther).mul(timePassed).div(YEAR);
   }
 
   beforeEach(async () => {

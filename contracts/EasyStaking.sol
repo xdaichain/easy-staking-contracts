@@ -544,7 +544,7 @@ contract EasyStaking is Ownable {
         if (timePassed == 0) return (0, 0, 0);
         uint256 userEmissionRate = sigmoid.calculate(timePassed);
         uint256 total = balance.mul(MAX_EMISSION_RATE).div(1 ether).mul(timePassed).div(YEAR);
-        uint256 userShare = total.mul(userEmissionRate).div(MAX_EMISSION_RATE);
+        uint256 userShare = balance.mul(userEmissionRate).div(1 ether).mul(timePassed).div(YEAR);
         return (total, userShare, timePassed);
     }
 }
