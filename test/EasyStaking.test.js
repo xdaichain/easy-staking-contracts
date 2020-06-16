@@ -147,12 +147,15 @@ contract('PoaMania', accounts => {
     });
     it('should deposit', async () => {
       const value = ether('100');
+      let customId = '';
       if (directly) {
-        const receipt = await easyStaking.methods['deposit(uint256)'](value, { from: user1 });
+        customId = 'user1';
+        const receipt = await easyStaking.methods['deposit(uint256,string)'](value, customId, { from: user1 });
         expectEvent(receipt, 'Deposited', {
           sender: user1,
           amount: value,
-          customId: ethers.utils.solidityKeccak256(['string'], ['']),
+          customIdHash: ethers.utils.solidityKeccak256(['string'], [customId]),
+          customId: customId,
           balance: value,
           prevDepositDuration: new BN(0),
         });
@@ -160,8 +163,8 @@ contract('PoaMania', accounts => {
         await stakeToken.transfer(easyStaking.address, value, { from: user1 });
       }
       const timestamp = await time.latest();
-      expect(await easyStaking.methods['getBalance(address)'](user1)).to.be.bignumber.equal(value);
-      expect(await easyStaking.methods['getDepositDate(address)'](user1)).to.be.bignumber.equal(timestamp);
+      expect(await easyStaking.methods['getBalance(address,string)'](user1, customId)).to.be.bignumber.equal(value);
+      expect(await easyStaking.methods['getDepositDate(address,string)'](user1, customId)).to.be.bignumber.equal(timestamp);
       expect(await easyStaking.numberOfParticipants()).to.be.bignumber.equal(new BN(1));
     });
     it('should accrue emission', async () => {
@@ -186,7 +189,8 @@ contract('PoaMania', accounts => {
         expectEvent(receipt, 'Deposited', {
           sender: user1,
           amount: value,
-          customId: ethers.utils.solidityKeccak256(['string'], ['']),
+          customIdHash: ethers.utils.solidityKeccak256(['string'], ['']),
+          customId: '',
           balance: value.add(value).add(userAccruedEmission),
           prevDepositDuration: new BN(timePassed),
         });
@@ -219,7 +223,8 @@ contract('PoaMania', accounts => {
       expectEvent(receipt, 'Withdrawn', {
         sender: user1,
         amount: oneEther,
-        customId: ethers.utils.solidityKeccak256(['string'], ['']),
+        customIdHash: ethers.utils.solidityKeccak256(['string'], ['']),
+        customId: '',
         balance: value.sub(oneEther),
         lastDepositDuration: timestampAfter.sub(timestampBefore),
       });
@@ -232,7 +237,8 @@ contract('PoaMania', accounts => {
       expectEvent(receipt, 'Withdrawn', {
         sender: user1,
         amount: value.sub(oneEther),
-        customId: ethers.utils.solidityKeccak256(['string'], ['']),
+        customIdHash: ethers.utils.solidityKeccak256(['string'], ['']),
+        customId: '',
         balance: new BN(0),
         lastDepositDuration: timestampAfter.sub(timestampBefore),
       });
@@ -319,7 +325,8 @@ contract('PoaMania', accounts => {
       expectEvent(receipt, 'Withdrawn', {
         sender: user1,
         amount: value.add(userAccruedEmission),
-        customId: ethers.utils.solidityKeccak256(['string'], ['']),
+        customIdHash: ethers.utils.solidityKeccak256(['string'], ['']),
+        customId: '',
         balance: new BN(0),
         lastDepositDuration: timePassed,
       });

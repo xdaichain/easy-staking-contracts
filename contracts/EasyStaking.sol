@@ -24,6 +24,7 @@ contract EasyStaking is Ownable {
     /**
      * @dev Emitted when a user deposits tokens.
      * @param sender User address.
+     * @param customIdHash Hash of custom identifier (for exchanges only).
      * @param customId Custom identifier (for exchanges only).
      * @param amount The amount of deposited tokens.
      * @param balance Current user balance.
@@ -31,7 +32,8 @@ contract EasyStaking is Ownable {
      */
     event Deposited(
         address indexed sender,
-        string indexed customId,
+        string indexed customIdHash,
+        string customId,
         uint256 amount,
         uint256 balance,
         uint256 prevDepositDuration
@@ -40,6 +42,7 @@ contract EasyStaking is Ownable {
     /**
      * @dev Emitted when a user withdraws tokens.
      * @param sender User address.
+     * @param customIdHash Hash of custom identifier (for exchanges only).
      * @param customId Custom identifier (for exchanges only).
      * @param amount The amount of withdrawn tokens.
      * @param fee The withdrawal fee.
@@ -48,7 +51,8 @@ contract EasyStaking is Ownable {
      */
     event Withdrawn(
         address indexed sender,
-        string indexed customId,
+        string indexed customIdHash,
+        string customId,
         uint256 amount,
         uint256 fee,
         uint256 balance,
@@ -409,7 +413,7 @@ contract EasyStaking is Ownable {
         }
         uint256 timePassed = _mint(userHash);
         balances[userHash] = balances[userHash].add(_amount);
-        emit Deposited(_sender, _customId, _amount, balances[userHash], timePassed);
+        emit Deposited(_sender, _customId, _customId, _amount, balances[userHash], timePassed);
     }
 
     /**
@@ -441,7 +445,7 @@ contract EasyStaking is Ownable {
             token.transfer(liquidityProvidersRewardContract, feeValue);
         }
         token.transfer(_sender, amount);
-        emit Withdrawn(_sender, _customId, amount, feeValue, balances[userHash], timePassed);
+        emit Withdrawn(_sender, _customId, _customId, amount, feeValue, balances[userHash], timePassed);
     }
 
     /**
