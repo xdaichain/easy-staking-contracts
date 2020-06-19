@@ -170,7 +170,7 @@ contract EasyStaking is Ownable {
      * @param _amount The amount to withdraw (0 - to withdraw all).
      * @param _depositId User's unique deposit ID.
      */
-    function makeForcedWithdrawal(uint256 _amount, uint256 _depositId) public {
+    function makeForcedWithdrawal(uint256 _amount, uint256 _depositId) external {
         _withdraw(msg.sender, _amount, _depositId, true);
     }
 
@@ -182,7 +182,7 @@ contract EasyStaking is Ownable {
      *
      * @param _depositId User's unique deposit ID.
      */
-    function requestWithdrawal(uint256 _depositId) public {
+    function requestWithdrawal(uint256 _depositId) external {
         require(_depositId > 0 && _depositId <= lastDepositIds[msg.sender], "wrong deposit id");
         // solium-disable-next-line security/no-block-members
         withdrawalRequestsDates[msg.sender][_depositId] = block.timestamp;
@@ -198,7 +198,7 @@ contract EasyStaking is Ownable {
      * @param _amount The amount to withdraw (0 - to withdraw all).
      * @param _depositId User's unique deposit ID.
      */
-    function makeRequestedWithdrawal(uint256 _amount, uint256 _depositId) public {
+    function makeRequestedWithdrawal(uint256 _amount, uint256 _depositId) external {
         uint256 requestDate = withdrawalRequestsDates[msg.sender][_depositId];
         require(requestDate > 0, "withdrawal wasn't requested");
         // solium-disable-next-line security/no-block-members
@@ -290,7 +290,7 @@ contract EasyStaking is Ownable {
      * @param _depositId User's unique deposit ID.
      * @return User's current accrued emission.
      */
-    function getCurrentAccruedEmission(address _user, uint256 _depositId) public view returns (uint256) {
+    function getCurrentAccruedEmission(address _user, uint256 _depositId) external view returns (uint256) {
         (, uint256 userAccruedEmission, ) = _getCurrentAccruedEmission(_user, _depositId);
         return userAccruedEmission;
     }
