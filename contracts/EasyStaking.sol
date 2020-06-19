@@ -24,16 +24,14 @@ contract EasyStaking is Ownable {
     /**
      * @dev Emitted when a user deposits tokens.
      * @param sender User address.
-     * @param customIdHash Hash of custom identifier (for exchanges only).
-     * @param customId Custom identifier (for exchanges only).
+     * @param id User's unique deposit ID.
      * @param amount The amount of deposited tokens.
      * @param balance Current user balance.
      * @param prevDepositDuration Duration of the previous deposit in seconds.
      */
     event Deposited(
         address indexed sender,
-        string indexed customIdHash,
-        string customId,
+        uint256 indexed id,
         uint256 amount,
         uint256 balance,
         uint256 prevDepositDuration
@@ -42,8 +40,7 @@ contract EasyStaking is Ownable {
     /**
      * @dev Emitted when a user withdraws tokens.
      * @param sender User address.
-     * @param customIdHash Hash of custom identifier (for exchanges only).
-     * @param customId Custom identifier (for exchanges only).
+     * @param id User's unique deposit ID.
      * @param amount The amount of withdrawn tokens.
      * @param fee The withdrawal fee.
      * @param balance Current user balance.
@@ -51,8 +48,7 @@ contract EasyStaking is Ownable {
      */
     event Withdrawn(
         address indexed sender,
-        string indexed customIdHash,
-        string customId,
+        uint256 indexed id,
         uint256 amount,
         uint256 fee,
         uint256 balance,
@@ -76,14 +72,14 @@ contract EasyStaking is Ownable {
     uint256 public withdrawalUnlockDuration;
 
     // The deposit balances of users
-    mapping (bytes32 => uint256) internal balances;
+    mapping (address => mapping (uint256 => uint256)) public balances;
     // The dates of users' deposits
-    mapping (bytes32 => uint256) internal depositDates;
+    mapping (address => mapping (uint256 => uint256)) public depositDates;
     // The dates of users' withdrawal requests
-    mapping (bytes32 => uint256) internal withdrawalRequestsDates;
+    mapping (address => mapping (uint256 => uint256)) public withdrawalRequestsDates;
+    // The last deposit id
+    mapping (address => uint256) public lastDepositIds;
 
-    // The number of participants with positive deposit balance
-    uint256 public numberOfParticipants;
     // Variable that prevents reentrance
     bool private locked;
     // The library that is used to calculate user's current emission rate
@@ -127,7 +123,9 @@ contract EasyStaking is Ownable {
      * @param _amount The amount to deposit.
      */
     function deposit(uint256 _amount) public {
-        deposit(_amount, "");
+        lastDepositIds[msg.sender] += 1;
+        uint256 id = lastDepositIds[msg.sender];
+        deposit(_amount, id);
     }
 
     /**
@@ -135,17 +133,17 @@ contract EasyStaking is Ownable {
      * It calls the internal "_deposit" method and transfer tokens from sender to contract.
      * Sender must approve tokens first.
      *
-     * In addition, if sender doesn't need to use a custom id,
-     * they can use the simple "transfer" method of STAKE token contract to make a deposit.
+     * User can use the simple "transfer" method of STAKE token contract to make a deposit.
      * Sender's approval is not needed in this case.
      *
      * Note: each call updates the deposit date so be careful if you want to make a long staking.
      *
      * @param _amount The amount to deposit.
-     * @param _customId Custom identifier (for exchanges only).
+     * @param _depositId User's unique deposit ID.
      */
-    function deposit(uint256 _amount, string memory _customId) public {
-        _deposit(msg.sender, _amount, _customId);
+    function deposit(uint256 _amount, uint256 _depositId) public {
+        require(_depositId > 0 && _depositId <= lastDepositIds[msg.sender], "wrong deposit id");
+        _deposit(msg.sender, _amount, _depositId);
         _setLocked(true);
         token.transferFrom(msg.sender, address(this), _amount);
         _setLocked(false);
@@ -160,35 +158,20 @@ contract EasyStaking is Ownable {
     function onTokenTransfer(address _sender, uint256 _amount, bytes calldata) external {
         require(msg.sender == address(token), "only token contract is allowed");
         if (!locked) {
-            _deposit(_sender, _amount, "");
+            lastDepositIds[_sender] += 1;
+            uint256 id = lastDepositIds[_sender];
+            _deposit(_sender, _amount, id);
         }
-    }
-
-    /**
-     * @dev This method is used to make a forced withdrawal with a fee.
-     * It calls another public "makeForcedWithdrawal" method.
-     * @param _amount The amount to withdraw (0 - to withdraw all).
-     */
-    function makeForcedWithdrawal(uint256 _amount) public {
-        makeForcedWithdrawal(_amount, "");
     }
 
     /**
      * @dev This method is used to make a forced withdrawal with a fee.
      * It calls the internal "_withdraw" method.
      * @param _amount The amount to withdraw (0 - to withdraw all).
-     * @param _customId Custom identifier (for exchanges only).
+     * @param _depositId User's unique deposit ID.
      */
-    function makeForcedWithdrawal(uint256 _amount, string memory _customId) public {
-        _withdraw(msg.sender, _amount, _customId, true);
-    }
-
-    /**
-     * @dev This method is used to request a withdrawal without a fee.
-     * It call another public "requestWithdrawal" method (see its description).
-     */
-    function requestWithdrawal() public {
-        requestWithdrawal("");
+    function makeForcedWithdrawal(uint256 _amount, uint256 _depositId) public {
+        _withdraw(msg.sender, _amount, _depositId, true);
     }
 
     /**
@@ -197,21 +180,12 @@ contract EasyStaking is Ownable {
      *
      * Note: each call updates the date of the request so don't call this method twice during the lock.
      *
-     * @param _customId Custom identifier (for exchanges only).
+     * @param _depositId User's unique deposit ID.
      */
-    function requestWithdrawal(string memory _customId) public {
-        bytes32 userHash = _getUserHash(msg.sender, _customId);
+    function requestWithdrawal(uint256 _depositId) public {
+        require(_depositId > 0 && _depositId <= lastDepositIds[msg.sender], "wrong deposit id");
         // solium-disable-next-line security/no-block-members
-        withdrawalRequestsDates[userHash] = block.timestamp;
-    }
-
-    /**
-     * @dev This method is used to make a requested withdrawal.
-     * It calls another public "makeRequestedWithdrawal" method (see its description).
-     * @param _amount The amount to withdraw (0 - to withdraw all).
-     */
-    function makeRequestedWithdrawal(uint256 _amount) public {
-        makeRequestedWithdrawal(_amount, "");
+        withdrawalRequestsDates[msg.sender][_depositId] = block.timestamp;
     }
 
     /**
@@ -222,19 +196,18 @@ contract EasyStaking is Ownable {
      * they have to call "requestWithdrawal" one more time.
      *
      * @param _amount The amount to withdraw (0 - to withdraw all).
-     * @param _customId Custom identifier (for exchanges only).
+     * @param _depositId User's unique deposit ID.
      */
-    function makeRequestedWithdrawal(uint256 _amount, string memory _customId) public {
-        bytes32 userHash = _getUserHash(msg.sender, _customId);
-        uint256 requestDate = withdrawalRequestsDates[userHash];
+    function makeRequestedWithdrawal(uint256 _amount, uint256 _depositId) public {
+        uint256 requestDate = withdrawalRequestsDates[msg.sender][_depositId];
         require(requestDate > 0, "withdrawal wasn't requested");
         // solium-disable-next-line security/no-block-members
         uint256 timestamp = block.timestamp;
         uint256 lockEnd = requestDate.add(withdrawalLockDuration);
         require(timestamp >= lockEnd, "too early");
         require(timestamp < lockEnd.add(withdrawalUnlockDuration), "too late");
-        withdrawalRequestsDates[userHash] = 0;
-        _withdraw(msg.sender, _amount, _customId, false);
+        withdrawalRequestsDates[msg.sender][_depositId] = 0;
+        _withdraw(msg.sender, _amount, _depositId, false);
     }
 
     /**
@@ -314,74 +287,11 @@ contract EasyStaking is Ownable {
 
     /**
      * @param _user The address of the user.
-     * @return The deposit balance of the user.
-     */
-    function getBalance(address _user) public view returns (uint256) {
-        return getBalance(_user, "");
-    }
-
-    /**
-     * @param _user The address of the user.
-     * @param _customId Custom identifier (for exchanges only).
-     * @return The deposit balance of the user.
-     */
-    function getBalance(address _user, string memory _customId) public view returns (uint256) {
-        bytes32 userHash = _getUserHash(_user, _customId);
-        return balances[userHash];
-    }
-
-    /**
-     * @param _user The address of the user.
-     * @return The deposit date of the user (unix timestamp in UTC).
-     */
-    function getDepositDate(address _user) public view returns (uint256) {
-        return getDepositDate(_user, "");
-    }
-
-    /**
-     * @param _user The address of the user.
-     * @param _customId Custom identifier (for exchanges only).
-     * @return The deposit date of the user (unix timestamp in UTC).
-     */
-    function getDepositDate(address _user, string memory _customId) public view returns (uint256) {
-        bytes32 userHash = _getUserHash(_user, _customId);
-        return depositDates[userHash];
-    }
-
-    /**
-     * @param _user The address of the user.
-     * @return The date of user's withdrawal request (unix timestamp in UTC).
-     */
-    function getWithdrawalRequestDate(address _user) public view returns (uint256) {
-        return getWithdrawalRequestDate(_user, "");
-    }
-
-    /**
-     * @param _user The address of the user.
-     * @param _customId Custom identifier (for exchanges only).
-     * @return The date of user's withdrawal request (unix timestamp in UTC).
-     */
-    function getWithdrawalRequestDate(address _user, string memory _customId) public view returns (uint256) {
-        bytes32 userHash = _getUserHash(_user, _customId);
-        return withdrawalRequestsDates[userHash];
-    }
-
-    /**
-     * @param _user The address of the user.
-     * @return Current accrued emission.
-     */
-    function getCurrentAccruedEmission(address _user) public view returns (uint256) {
-        return getCurrentAccruedEmission(_user, "");
-    }
-
-    /**
-     * @param _user The address of the user.
-     * @param _customId Custom identifier (for exchanges only).
+     * @param _depositId User's unique deposit ID.
      * @return User's current accrued emission.
      */
-    function getCurrentAccruedEmission(address _user, string memory _customId) public view returns (uint256) {
-        bytes32 userHash = _getUserHash(_user, _customId);
-        (, uint256 userAccruedEmission, ) = _getCurrentAccruedEmission(userHash);
+    function getCurrentAccruedEmission(address _user, uint256 _depositId) public view returns (uint256) {
+        (, uint256 userAccruedEmission, ) = _getCurrentAccruedEmission(_user, _depositId);
         return userAccruedEmission;
     }
 
@@ -403,40 +313,33 @@ contract EasyStaking is Ownable {
      * @dev Calls internal "_mint" method and increases the user balance.
      * @param _sender The address of the sender.
      * @param _amount The amount to deposit.
-     * @param _customId Custom identifier (for exchanges only).
+     * @param _id User's unique deposit ID.
      */
-    function _deposit(address _sender, uint256 _amount, string memory _customId) internal {
+    function _deposit(address _sender, uint256 _amount, uint256 _id) internal {
         require(_amount > 0, "deposit amount should be more than 0");
-        bytes32 userHash = _getUserHash(_sender, _customId);
-        if (balances[userHash] == 0) {
-            numberOfParticipants = numberOfParticipants.add(1);
-        }
-        uint256 timePassed = _mint(userHash);
-        balances[userHash] = balances[userHash].add(_amount);
-        emit Deposited(_sender, _customId, _customId, _amount, balances[userHash], timePassed);
+        uint256 timePassed = _mint(_sender, _id);
+        balances[_sender][_id] = balances[_sender][_id].add(_amount);
+        emit Deposited(_sender, _id, _amount, balances[_sender][_id], timePassed);
     }
 
     /**
      * @dev Calls internal "_mint" method and then transfers tokens to the sender.
      * @param _sender The address of the sender.
      * @param _amount The amount to withdraw.
-     * @param _customId Custom identifier (for exchanges only).
+     * @param _id User's unique deposit ID.
      * @param _forced With or without commission.
      */
-    function _withdraw(address _sender, uint256 _amount, string memory _customId, bool _forced) internal {
-        bytes32 userHash = _getUserHash(_sender, _customId);
-        require(balances[userHash] > 0, "zero balance");
-        uint256 timePassed = _mint(userHash);
+    function _withdraw(address _sender, uint256 _amount, uint256 _id, bool _forced) internal {
+        require(_id > 0 && _id <= lastDepositIds[_sender], "wrong deposit id");
+        require(balances[_sender][_id] > 0, "zero balance");
+        uint256 timePassed = _mint(_sender, _id);
         uint256 amount = _amount;
         if (amount == 0) {
-            amount = balances[userHash];
+            amount = balances[_sender][_id];
         }
-        balances[userHash] = balances[userHash].sub(amount);
-        if (balances[userHash] == 0) {
-            depositDates[userHash] = 0;
-            if (numberOfParticipants > 0) {
-                numberOfParticipants--;
-            }
+        balances[_sender][_id] = balances[_sender][_id].sub(amount);
+        if (balances[_sender][_id] == 0) {
+            depositDates[_sender][_id] = 0;
         }
         uint256 feeValue = 0;
         if (_forced) {
@@ -445,23 +348,24 @@ contract EasyStaking is Ownable {
             token.transfer(liquidityProvidersRewardContract, feeValue);
         }
         token.transfer(_sender, amount);
-        emit Withdrawn(_sender, _customId, _customId, amount, feeValue, balances[userHash], timePassed);
+        emit Withdrawn(_sender, _id, amount, feeValue, balances[_sender][_id], timePassed);
     }
 
     /**
      * @dev Mints 15% per annum and distributes the emission between the user and Liquidity Providers in proportion.
      * Also it updates the deposit date of the user.
-     * @param _user The hash of the user.
+     * @param _user User's address.
+     * @param _id User's unique deposit ID.
      */
-    function _mint(bytes32 _user) internal returns (uint256) {
-        (uint256 total, uint256 userShare, uint256 timePassed) = _getCurrentAccruedEmission(_user);
+    function _mint(address _user, uint256 _id) internal returns (uint256) {
+        (uint256 total, uint256 userShare, uint256 timePassed) = _getCurrentAccruedEmission(_user, _id);
         if (total > 0) {
             token.mint(address(this), total);
-            balances[_user] = balances[_user].add(userShare);
+            balances[_user][_id] = balances[_user][_id].add(userShare);
             token.transfer(liquidityProvidersRewardContract, total.sub(userShare));
         }
         // solium-disable-next-line security/no-block-members
-        depositDates[_user] = block.timestamp;
+        depositDates[_user][_id] = block.timestamp;
         return timePassed;
     }
 
@@ -527,21 +431,13 @@ contract EasyStaking is Ownable {
     }
 
     /**
-     * @param _sender The address of the sender.
-     * @param _customId Custom identifier (for exchanges only).
-     * @return The unique hash of the user.
-     */
-    function _getUserHash(address _sender, string memory _customId) internal pure returns (bytes32) {
-        return keccak256(abi.encode(_sender, _customId));
-    }
-
-    /**
-     * @param _user The hash of the user.
+     * @param _user User's address.
+     * @param _id User's unique deposit ID.
      * @return Total accrued emission (for the user and Liquidity Providers) and user share.
      */
-    function _getCurrentAccruedEmission(bytes32 _user) internal view returns (uint256, uint256, uint256) {
-        uint256 balance = balances[_user];
-        uint256 lastDepositDate = depositDates[_user];
+    function _getCurrentAccruedEmission(address _user, uint256 _id) internal view returns (uint256, uint256, uint256) {
+        uint256 balance = balances[_user][_id];
+        uint256 lastDepositDate = depositDates[_user][_id];
         if (balance == 0 || lastDepositDate == 0) return (0, 0, 0);
         // solium-disable-next-line security/no-block-members
         uint256 timePassed = block.timestamp.sub(lastDepositDate);

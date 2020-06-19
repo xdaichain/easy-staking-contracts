@@ -81,13 +81,10 @@ If a user requests a timed withdrawal but fails to execute within the allotted t
 
 ### Anyone
 1. `deposit(uint256)`
-2. `deposit(uint256,string)`
-3. `requestWithdrawal()`
-4. `requestWithdrawal(string)`
-5. `makeRequestedWithdrawal(uint256)`
-6. `makeRequestedWithdrawal(uint256,string)`
-7. `makeForcedWithdrawal(uint256)`
-8. `makeForcedWithdrawal(uint256,string)`
+2. `deposit(uint256,uint256)`
+3. `requestWithdrawal(uint256)`
+4. `makeRequestedWithdrawal(uint256,uint256)`
+5. `makeForcedWithdrawal(uint256,uint256)`
 
 ### Owner
 The owner can only change the contract parameters and claim unsupported tokens accidentally sent to the contract.
