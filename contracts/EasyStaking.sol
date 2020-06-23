@@ -6,7 +6,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/SafeERC20.sol";
 import "./IERC20Mintable.sol";
 import "./Sacrifice.sol";
-import "./Sigmoid.sol";
+import "./lib/Sigmoid.sol";
 
 /**
  * @title EasyStaking
