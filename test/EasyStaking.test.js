@@ -247,9 +247,9 @@ contract('PoaMania', accounts => {
       await easyStaking.makeForcedWithdrawal(oneEther, 1, { from: user1 });
       const timestampAfter = await time.latest();
       const timePassed = timestampAfter.sub(timestampBefore);
-      const userAccruedEmission = calculateUserAccruedEmission(value, timePassed);
-      expect(await easyStaking.balances(user1, 1)).to.be.bignumber.equal(value.sub(oneEther).add(userAccruedEmission));
-      expect(await stakeToken.balanceOf(user1)).to.be.bignumber.equal(oneEther);
+      const userAccruedEmission = calculateUserAccruedEmission(oneEther, timePassed);
+      expect(await easyStaking.balances(user1, 1)).to.be.bignumber.equal(value.sub(oneEther));
+      expect(await stakeToken.balanceOf(user1)).to.be.bignumber.equal(oneEther.add(userAccruedEmission));
     });
     it('should accrue emission for different users from 1 address', async () => {
       const exchange = user1;

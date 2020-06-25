@@ -291,7 +291,7 @@ contract EasyStaking is Ownable {
      * @return User's current accrued emission.
      */
     function getCurrentAccruedEmission(address _user, uint256 _depositId) external view returns (uint256) {
-        (, uint256 userAccruedEmission, ) = _getCurrentAccruedEmission(_user, _depositId);
+        (, uint256 userAccruedEmission, ) = _getAccruedEmission(depositDates[_user][_depositId], balances[_user][_depositId]);
         return userAccruedEmission;
     }
 
@@ -317,8 +317,10 @@ contract EasyStaking is Ownable {
      */
     function _deposit(address _sender, uint256 _amount, uint256 _id) internal {
         require(_amount > 0, "deposit amount should be more than 0");
-        uint256 timePassed = _mint(_sender, _id);
+        (, uint256 timePassed) = _mint(_sender, _id, 0);
         balances[_sender][_id] = balances[_sender][_id].add(_amount);
+        // solium-disable-next-line security/no-block-members
+        depositDates[_sender][_id] = block.timestamp;
         emit Deposited(_sender, _id, _amount, balances[_sender][_id], timePassed);
     }
 
@@ -332,11 +334,8 @@ contract EasyStaking is Ownable {
     function _withdraw(address _sender, uint256 _amount, uint256 _id, bool _forced) internal {
         require(_id > 0 && _id <= lastDepositIds[_sender], "wrong deposit id");
         require(balances[_sender][_id] > 0, "zero balance");
-        uint256 timePassed = _mint(_sender, _id);
-        uint256 amount = _amount;
-        if (amount == 0) {
-            amount = balances[_sender][_id];
-        }
+        (uint256 accruedEmission, uint256 timePassed) = _mint(_sender, _id, _amount);
+        uint256 amount = _amount == 0 ? balances[_sender][_id] : _amount.add(accruedEmission);
         balances[_sender][_id] = balances[_sender][_id].sub(amount);
         if (balances[_sender][_id] == 0) {
             depositDates[_sender][_id] = 0;
@@ -356,17 +355,18 @@ contract EasyStaking is Ownable {
      * Also it updates the deposit date of the user.
      * @param _user User's address.
      * @param _id User's unique deposit ID.
+     * @param _amount Amount to accrue emission.
      */
-    function _mint(address _user, uint256 _id) internal returns (uint256) {
-        (uint256 total, uint256 userShare, uint256 timePassed) = _getCurrentAccruedEmission(_user, _id);
+    function _mint(address _user, uint256 _id, uint256 _amount) internal returns (uint256, uint256) {
+        uint256 currentBalance = balances[_user][_id];
+        uint256 amount = _amount == 0 ? currentBalance : _amount;
+        (uint256 total, uint256 userShare, uint256 timePassed) = _getAccruedEmission(depositDates[_user][_id], amount);
         if (total > 0) {
             token.mint(address(this), total);
-            balances[_user][_id] = balances[_user][_id].add(userShare);
+            balances[_user][_id] = currentBalance.add(userShare);
             token.transfer(liquidityProvidersRewardContract, total.sub(userShare));
         }
-        // solium-disable-next-line security/no-block-members
-        depositDates[_user][_id] = block.timestamp;
-        return timePassed;
+        return (userShare, timePassed);
     }
 
     /**
@@ -431,20 +431,18 @@ contract EasyStaking is Ownable {
     }
 
     /**
-     * @param _user User's address.
-     * @param _id User's unique deposit ID.
+     * @param depositDate Deposit date.
+     * @param _amount Amount to accrue emission.
      * @return Total accrued emission (for the user and Liquidity Providers) and user share.
      */
-    function _getCurrentAccruedEmission(address _user, uint256 _id) internal view returns (uint256, uint256, uint256) {
-        uint256 balance = balances[_user][_id];
-        uint256 lastDepositDate = depositDates[_user][_id];
-        if (balance == 0 || lastDepositDate == 0) return (0, 0, 0);
+    function _getAccruedEmission(uint256 depositDate, uint256 _amount) internal view returns (uint256, uint256, uint256) {
+        if (_amount == 0 || depositDate == 0) return (0, 0, 0);
         // solium-disable-next-line security/no-block-members
-        uint256 timePassed = block.timestamp.sub(lastDepositDate);
+        uint256 timePassed = block.timestamp.sub(depositDate);
         if (timePassed == 0) return (0, 0, 0);
         uint256 userEmissionRate = sigmoid.calculate(timePassed);
-        uint256 total = balance.mul(MAX_EMISSION_RATE).div(1 ether).mul(timePassed).div(YEAR);
-        uint256 userShare = balance.mul(userEmissionRate).div(1 ether).mul(timePassed).div(YEAR);
+        uint256 total = _amount.mul(MAX_EMISSION_RATE).div(1 ether).mul(timePassed).div(YEAR);
+        uint256 userShare = _amount.mul(userEmissionRate).div(1 ether).mul(timePassed).div(YEAR);
         return (total, userShare, timePassed);
     }
 }
