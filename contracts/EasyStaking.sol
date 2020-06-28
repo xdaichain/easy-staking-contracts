@@ -79,6 +79,8 @@ contract EasyStaking is Ownable {
     mapping (address => mapping (uint256 => uint256)) public withdrawalRequestsDates;
     // The last deposit id
     mapping (address => uint256) public lastDepositIds;
+    // The total staked amount
+    uint256 public totalStaked;
 
     // Variable that prevents reentrance
     bool private locked;
@@ -319,6 +321,7 @@ contract EasyStaking is Ownable {
         require(_amount > 0, "deposit amount should be more than 0");
         (, uint256 timePassed) = _mint(_sender, _id, 0);
         balances[_sender][_id] = balances[_sender][_id].add(_amount);
+        totalStaked = totalStaked.add(_amount);
         // solium-disable-next-line security/no-block-members
         depositDates[_sender][_id] = block.timestamp;
         emit Deposited(_sender, _id, _amount, balances[_sender][_id], timePassed);
@@ -337,6 +340,7 @@ contract EasyStaking is Ownable {
         (uint256 accruedEmission, uint256 timePassed) = _mint(_sender, _id, _amount);
         uint256 amount = _amount == 0 ? balances[_sender][_id] : _amount.add(accruedEmission);
         balances[_sender][_id] = balances[_sender][_id].sub(amount);
+        totalStaked = totalStaked.sub(amount);
         if (balances[_sender][_id] == 0) {
             depositDates[_sender][_id] = 0;
         }
@@ -364,6 +368,7 @@ contract EasyStaking is Ownable {
         if (total > 0) {
             token.mint(address(this), total);
             balances[_user][_id] = currentBalance.add(userShare);
+            totalStaked = totalStaked.add(userShare);
             token.transfer(liquidityProvidersRewardContract, total.sub(userShare));
         }
         return (userShare, timePassed);
@@ -410,7 +415,7 @@ contract EasyStaking is Ownable {
      * @param _c Sigmoid parameter C.
      */
     function _setSigmoidParameters(uint256 _a, uint256 _b, uint256 _c) internal {
-        require(_a <= MAX_EMISSION_RATE, "should be less than or equal to the maximum emission rate");
+        require(_a <= MAX_EMISSION_RATE.div(2), "should be less than or equal to the maximum emission rate");
         sigmoid.setParameters(_a, _b, _c);
     }
 
@@ -441,8 +446,18 @@ contract EasyStaking is Ownable {
         uint256 timePassed = block.timestamp.sub(depositDate);
         if (timePassed == 0) return (0, 0, 0);
         uint256 userEmissionRate = sigmoid.calculate(timePassed);
+        userEmissionRate = userEmissionRate.add(_getEmissionRateBasedOnTotalStakedAmount());
+        require(userEmissionRate <= MAX_EMISSION_RATE, "should be less than or equal to the maximum emission rate");
         uint256 total = _amount.mul(MAX_EMISSION_RATE).div(1 ether).mul(timePassed).div(YEAR);
         uint256 userShare = _amount.mul(userEmissionRate).div(1 ether).mul(timePassed).div(YEAR);
         return (total, userShare, timePassed);
+    }
+
+    /**
+     * @return Emission rate based on total staked amount.
+     */
+    function _getEmissionRateBasedOnTotalStakedAmount() internal view returns (uint256) {
+        uint256 totalSupply = token.totalSupply();
+        return MAX_EMISSION_RATE.div(2).mul(totalStaked).div(totalSupply); // max 7.5%
     }
 }
