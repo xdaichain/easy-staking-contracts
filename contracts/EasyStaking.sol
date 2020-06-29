@@ -107,7 +107,7 @@ contract EasyStaking is Ownable {
         uint256 _withdrawalLockDuration,
         uint256 _withdrawalUnlockDuration,
         uint256 _sigmoidParamA,
-        uint256 _sigmoidParamB,
+        int256 _sigmoidParamB,
         uint256 _sigmoidParamC
     ) public initializer {
         require(_owner != address(0), "zero address");
@@ -274,7 +274,7 @@ contract EasyStaking is Ownable {
      * @param _b Sigmoid parameter B.
      * @param _c Sigmoid parameter C.
      */
-    function setSigmoidParameters(uint256 _a, uint256 _b, uint256 _c) external onlyOwner {
+    function setSigmoidParameters(uint256 _a, int256 _b, uint256 _c) external onlyOwner {
         _setSigmoidParameters(_a, _b, _c);
     }
 
@@ -307,7 +307,7 @@ contract EasyStaking is Ownable {
     /**
      * @return Sigmoid parameters.
      */
-    function getSigmoidParameters() external view returns (uint256 a, uint256 b, uint256 c) {
+    function getSigmoidParameters() external view returns (uint256 a, int256 b, uint256 c) {
         return sigmoid.getParameters();
     }
 
@@ -414,7 +414,7 @@ contract EasyStaking is Ownable {
      * @param _b Sigmoid parameter B.
      * @param _c Sigmoid parameter C.
      */
-    function _setSigmoidParameters(uint256 _a, uint256 _b, uint256 _c) internal {
+    function _setSigmoidParameters(uint256 _a, int256 _b, uint256 _c) internal {
         require(_a <= MAX_EMISSION_RATE.div(2), "should be less than or equal to the maximum emission rate");
         sigmoid.setParameters(_a, _b, _c);
     }
@@ -445,7 +445,7 @@ contract EasyStaking is Ownable {
         // solium-disable-next-line security/no-block-members
         uint256 timePassed = block.timestamp.sub(depositDate);
         if (timePassed == 0) return (0, 0, 0);
-        uint256 userEmissionRate = sigmoid.calculate(timePassed);
+        uint256 userEmissionRate = sigmoid.calculate(int256(timePassed));
         userEmissionRate = userEmissionRate.add(_getEmissionRateBasedOnTotalStakedAmount());
         require(userEmissionRate <= MAX_EMISSION_RATE, "should be less than or equal to the maximum emission rate");
         uint256 total = _amount.mul(MAX_EMISSION_RATE).div(1 ether).mul(timePassed).div(YEAR);

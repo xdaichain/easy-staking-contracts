@@ -9,7 +9,7 @@ library Sigmoid {
 
     struct State {
         uint256 a;
-        uint256 b;
+        int256 b;
         uint256 c;
     }
 
@@ -19,7 +19,7 @@ library Sigmoid {
      * @param _b Sigmoid parameter B.
      * @param _c Sigmoid parameter C.
      */
-    function setParameters(State storage self, uint256 _a, uint256 _b, uint256 _c) internal {
+    function setParameters(State storage self, uint256 _a, int256 _b, uint256 _c) internal {
         self.a = _a;
         self.b = _b;
         self.c = _c;
@@ -28,14 +28,15 @@ library Sigmoid {
     /**
      * @return Sigmoid parameters
      */
-    function getParameters(State storage self) internal view returns (uint256, uint256, uint256) {
+    function getParameters(State storage self) internal view returns (uint256, int256, uint256) {
         return (self.a, self.b, self.c);
     }
 
     /**
      * @return The corresponding Y value for a given X value
      */
-    function calculate(State storage self, uint256 _x) internal view returns (uint256) {
-        return self.a.mul(_x.sub(self.b)).div(_x.sub(self.b).pow2().add(self.c).sqrt());
+    function calculate(State storage self, int256 _x) internal view returns (uint256) {
+        if (_x - self.b < 0) return 0;
+        return self.a.mul(uint256(_x - self.b)).div(uint256(_x - self.b).pow2().add(self.c).sqrt());
     }
 }

@@ -23,7 +23,7 @@ contract('PoaMania', accounts => {
   let stakeToken;
   let liquidityProvidersRewardContract;
 
-  const initializeMethod = 'initialize(address,address,address,uint256,uint256,uint256,uint256,uint256,uint256)';
+  const initializeMethod = 'initialize(address,address,address,uint256,uint256,uint256,uint256,int256,uint256)';
 
   function initialize(...params) {
     if (params.length === 0) {
@@ -59,6 +59,9 @@ contract('PoaMania', accounts => {
 
   function calculateUserAccruedEmission(deposit, timePassed, totalSupply, totalStaked) {
     let userEmissionRate = sigmoidParamA.mul(timePassed.sub(sigmoidParamB)).div(squareRoot(timePassed.sub(sigmoidParamB).sqr().add(sigmoidParamC)));
+    if (userEmissionRate.lt(new BN(0))) {
+      userEmissionRate = new BN(0);
+    }
     const emissionRateBasedOnTotalStakedAmount = MAX_EMISSION_RATE.div(new BN(2)).mul(totalStaked).div(totalSupply);
     userEmissionRate = userEmissionRate.add(emissionRateBasedOnTotalStakedAmount);
     return deposit.mul(userEmissionRate).div(oneEther).mul(timePassed).div(YEAR);
