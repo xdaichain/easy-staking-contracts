@@ -127,7 +127,7 @@ contract EasyStaking is Ownable {
     function deposit(uint256 _amount) public {
         lastDepositIds[msg.sender] += 1;
         uint256 id = lastDepositIds[msg.sender];
-        deposit(_amount, id);
+        deposit(id, _amount);
     }
 
     /**
@@ -140,12 +140,12 @@ contract EasyStaking is Ownable {
      *
      * Note: each call updates the deposit date so be careful if you want to make a long staking.
      *
-     * @param _amount The amount to deposit.
      * @param _depositId User's unique deposit ID.
+     * @param _amount The amount to deposit.
      */
-    function deposit(uint256 _amount, uint256 _depositId) public {
+    function deposit(uint256 _depositId, uint256 _amount) public {
         require(_depositId > 0 && _depositId <= lastDepositIds[msg.sender], "wrong deposit id");
-        _deposit(msg.sender, _amount, _depositId);
+        _deposit(msg.sender, _depositId, _amount);
         _setLocked(true);
         token.transferFrom(msg.sender, address(this), _amount);
         _setLocked(false);
@@ -162,18 +162,18 @@ contract EasyStaking is Ownable {
         if (!locked) {
             lastDepositIds[_sender] += 1;
             uint256 id = lastDepositIds[_sender];
-            _deposit(_sender, _amount, id);
+            _deposit(_sender, id, _amount);
         }
     }
 
     /**
      * @dev This method is used to make a forced withdrawal with a fee.
      * It calls the internal "_withdraw" method.
-     * @param _amount The amount to withdraw (0 - to withdraw all).
      * @param _depositId User's unique deposit ID.
+     * @param _amount The amount to withdraw (0 - to withdraw all).
      */
-    function makeForcedWithdrawal(uint256 _amount, uint256 _depositId) external {
-        _withdraw(msg.sender, _amount, _depositId, true);
+    function makeForcedWithdrawal(uint256 _depositId, uint256 _amount) external {
+        _withdraw(msg.sender, _depositId, _amount, true);
     }
 
     /**
@@ -197,10 +197,10 @@ contract EasyStaking is Ownable {
      * If sender didn't call this method during the unlock period (if timestamp >= lockEnd.add(withdrawalUnlockDuration))
      * they have to call "requestWithdrawal" one more time.
      *
-     * @param _amount The amount to withdraw (0 - to withdraw all).
      * @param _depositId User's unique deposit ID.
+     * @param _amount The amount to withdraw (0 - to withdraw all).
      */
-    function makeRequestedWithdrawal(uint256 _amount, uint256 _depositId) external {
+    function makeRequestedWithdrawal(uint256 _depositId, uint256 _amount) external {
         uint256 requestDate = withdrawalRequestsDates[msg.sender][_depositId];
         require(requestDate > 0, "withdrawal wasn't requested");
         // solium-disable-next-line security/no-block-members
@@ -209,7 +209,7 @@ contract EasyStaking is Ownable {
         require(timestamp >= lockEnd, "too early");
         require(timestamp < lockEnd.add(withdrawalUnlockDuration), "too late");
         withdrawalRequestsDates[msg.sender][_depositId] = 0;
-        _withdraw(msg.sender, _amount, _depositId, false);
+        _withdraw(msg.sender, _depositId, _amount, false);
     }
 
     /**
@@ -314,10 +314,10 @@ contract EasyStaking is Ownable {
     /**
      * @dev Calls internal "_mint" method and increases the user balance.
      * @param _sender The address of the sender.
-     * @param _amount The amount to deposit.
      * @param _id User's unique deposit ID.
+     * @param _amount The amount to deposit.
      */
-    function _deposit(address _sender, uint256 _amount, uint256 _id) internal {
+    function _deposit(address _sender, uint256 _id, uint256 _amount) internal {
         require(_amount > 0, "deposit amount should be more than 0");
         (, uint256 timePassed) = _mint(_sender, _id, 0);
         balances[_sender][_id] = balances[_sender][_id].add(_amount);
@@ -330,11 +330,11 @@ contract EasyStaking is Ownable {
     /**
      * @dev Calls internal "_mint" method and then transfers tokens to the sender.
      * @param _sender The address of the sender.
-     * @param _amount The amount to withdraw.
      * @param _id User's unique deposit ID.
+     * @param _amount The amount to withdraw.
      * @param _forced With or without commission.
      */
-    function _withdraw(address _sender, uint256 _amount, uint256 _id, bool _forced) internal {
+    function _withdraw(address _sender, uint256 _id, uint256 _amount, bool _forced) internal {
         require(_id > 0 && _id <= lastDepositIds[_sender], "wrong deposit id");
         require(balances[_sender][_id] > 0, "zero balance");
         (uint256 accruedEmission, uint256 timePassed) = _mint(_sender, _id, _amount);
