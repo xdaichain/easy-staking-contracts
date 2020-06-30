@@ -57,7 +57,7 @@ Data for examples:
 
 User deposits `1000 tokens` then makes an instant withdrawal in or near this block. In this case, eccrued emission is close to 0 with a fee of about `30 tokens`. User receives `970 tokens` back.
 
-**2nd example:** 2.67
+**2nd example:**
 
 User deposits `1000 tokens`. After `2 weeks` (14 days), the user makes a 2nd deposit of `1000 tokens`. The personal APR is `2.67%` (look at the graph of the sigmoid function), the general APR is `(1500000 + 1000) / 8537500 * 0.075 * 100 = 1.32%` and accrued emission is `1000 * (2.67 + 1.32) / 100 * 14 / 365 = 1.53 tokens`. The new balance is `1000 + 1.53 + 1000 = 2001.53 tokens` and deposit date is reset.
 
