@@ -2,9 +2,9 @@
 
 [![built-with openzeppelin](https://img.shields.io/badge/built%20with-OpenZeppelin-3677FF)](https://docs.openzeppelin.com/)
 
-**Easy Staking** provides an alternative interest-earning application for [POSDAO](https://forum.poa.network/t/posdao-white-paper/2208) participants. Users can deposit [STAKE](https://github.com/xdaichain/stake-token) tokens deployed on the Ethereum mainnet and earn a pre-determined interest rate while tokens are locked in the contract.
+**Easy Staking** provides an alternative emission-accruing application for [POSDAO](https://forum.poa.network/t/posdao-white-paper/2208) participants. Users can deposit [STAKE](https://github.com/xdaichain/stake-token) tokens deployed on the Ethereum mainnet and get a pre-determined emission rate while tokens are locked in the contract.
 
-Easy Staking gives users an additional choice for STAKE token usage. There are no minimum deposit requirements (vs minimum 1000K for POSDAO delegated staking) and several withdrawal options available for users. While the overall APR is set lower in Easy Staking than for POSDAO stakers, effective earnings will vary between the two methods based on POSDAO reward distribution percentages.
+Easy Staking gives users an additional choice for STAKE token usage. There are no minimum deposit requirements (vs minimum 1000K for POSDAO delegated staking) and several withdrawal options available for users. While the overall APR is set lower in Easy Staking than for POSDAO stakers, effective emission accruing will vary between the two methods based on POSDAO reward distribution percentages.
 
 Easy Staking serves to reduce the overall amount of STAKE in active circulation and acts as a mechanism to limit available liquidity and supply. Limited supply in the open market increases security for POSDAO chains such as the xDai stable chain.
 
@@ -34,47 +34,44 @@ $ npx oz create
 ```
 
 ## How it works
-Users can deposit [STAKE](https://github.com/xdaichain/stake-token) tokens to the contract and withdraw them along with earned interest at any time.
+Users can deposit [STAKE](https://github.com/xdaichain/stake-token) tokens to the contract and withdraw them along with accrued emission at any time.
 
 There are 2 types of withdrawal:
-1. _Timed Withdrawal:_ user submits a withdrawal request, and after a specified time period, tokens and interest may be withdrawn with no fee.
-2. _Instant Withdrawal:_ user requests an instant withdrawal and pays a small fee to withdraw tokens and interest.
+1. _Timed Withdrawal:_ user submits a withdrawal request, and after a specified time period, tokens and accrued emission may be withdrawn with no fee.
+2. _Instant Withdrawal:_ user requests an instant withdrawal and pays a small fee to withdraw tokens and accrued emission.
 
-*Note:* each deposit and withdrawal operation adds current earned interest to the user balance and updates (resets to current) the deposit date. If the desire is to stake for a longer period of time, user should make a single deposit and shouldn't deposit/withdraw for that period.
+*Note:* if user deposits more tokens to the already created deposit it will update (reset to current) the deposit date.
 
-### Examples of earning interest
+### Examples of accruing emission
 
-The contract has an array of staking intervals (for example: `[1 month, 2 months, 3 months, 6 months]`), an array of interest rates (for example: `[5%, 6%, 7%, 8%, 10%]`) and a fee for the instant withdrawal (for example: `3%`).
+There are 2 parts of emission rate:
+1. personal, that is calculated using sigmoid function and depends on the staking period (max 7.5%)
+2. general, that is calculated using linear function and depends on the total amount of staked tokens in relation to the total supply of STAKE token (max 7.5%)
 
-```
-if (staking_period < 1 month) interest_rate = 5%
-else if (staking_period < (1 month + 2 months)) interest_rate = 6%
-else if (staking_period < (1 month + 2 months + 3 months)) interest_rate = 7%
-else if (staking_period < (1 month + 2 months + 3 months + 6 months)) interest_rate = 8%
-else interest_rate = 10%
-```
+Data for examples:
+1. sigmoid function: https://www.desmos.com/calculator/2xtimbnzqw
+2. total supply: `8537500 STAKE`
+3. total staked: `1500000 STAKE`
 
 **1st example:**
 
-User deposits `1000 tokens` then makes an instant withdrawal in or near this block. In this case, earned interest will be close to 0 with a fee of about `30 tokens`. User will receive `970 tokens` back.
+User deposits `1000 tokens` then makes an instant withdrawal in or near this block. In this case, eccrued emission is close to 0 with a fee of about `30 tokens`. User receives `970 tokens` back.
 
-**2nd example:**
+**2nd example:** 2.67
 
-User deposits `1000 tokens`. After `2 weeks` (14 days), the user makes a 2nd deposit of `1000 tokens`. This is within the 1st interval, so the contract will pay `5%` annual interest `(1000 * 0.05) / 365 * 14 = 1.92` and will update the deposit date to the current date. The new balance will be `1000 + 1.92 + 1000 = 2001.92 tokens`.
+User deposits `1000 tokens`. After `2 weeks` (14 days), the user makes a 2nd deposit of `1000 tokens`. The personal APR is `2.67%` (look at the graph of the sigmoid function), the general APR is `(1500000 + 1000) / 8537500 * 0.075 * 100 = 1.32%` and accrued emission is `1000 * (2.67 + 1.32) / 100 * 14 / 365 = 1.53 tokens`. The new balance is `1000 + 1.53 + 1000 = 2001.53 tokens` and deposit date is reset.
 
-`3 months` (90 days) later the user makes a timed withdawal for the total amount. `3 months >= (1 month + 2 months)` which corresponds to the 3rd interval. In this case, the contract will pay `7%` annual interest `(2001.92 * 0.07) / 365 * 90 = 34.55` and the user will receive `2001.92 + 34.55 = 2036.47 tokens`.
+`3 months` (90 days) later the user makes a timed withdawal for the total amount. The personal APR is `6.94%`, the general APR is `(1500000 + 2001.53) / 8537500 * 0.075 * 100 = 1.32%` and accrued emission is `1000 * (6.94 + 1.32) / 100 * 90 / 365 = 20.37 tokens`. User receives `2001.53 + 20.37 = 2,021.9 tokens`.
 
 **3rd example**
 
-User deposits `1000 tokens`. They make a timed withdraw for half after `6 months` (180 days). This is the 4th interval corresponding to `8%` annual interest `(1000 * 0.08) / 365 * 180 = 39.45` . User receives `500 tokens`, the remaining half + interest remains in the contract and the deposit date is updated to the current date. 
-
-User has `500 + 39.45 = 539.45 tokens`, and `1 year` later they decide to withdraw all. This staking period is greater than the sum of staking intervals so the contract pays `10%` annual interest `(539.45 * 0.1) = 53.95` and user receives `539.45 + 53.95 = 593.4 tokens`.
+User deposits `1000 tokens`. Then they make a timed withdraw for half after `6 months` (180 days). The personal APR is `7.35%`, the general APR is `1.32%` and accrued emission is `1000 * (7.35 + 1.32) / 100 * 180 / 365 = 42.76 tokens`. User receives `542.76 tokens`, the new balance is `500 tokens` and the deposit date isn't reset (that is, the APR remained equal to 7.35%).
 
 ### Withdrawal Window
 
 When a user requests a timed withdrawal, they must wait to withdraw their tokens within a set window of time. There is a lock period (e.g., 7 days) before they can withdraw, then there is a set withdrawal window during which they can execute their withdrawal (e.g., 24 hours).
 
-If a user requests a timed withdrawal but fails to execute within the allotted time, their STAKE tokens are relocked into the contract. This does not update their deposit date. Tokens are relocked and accrue interest according to the initial deposit timestamp.
+If a user requests a timed withdrawal but fails to execute within the allotted time, their STAKE tokens are relocked into the contract. This does not update their deposit date. Tokens are relocked and accrue emission according to the initial deposit timestamp.
 
 
 ## Roles and methods available to each role
@@ -90,10 +87,11 @@ If a user requests a timed withdrawal but fails to execute within the allotted t
 The owner can only change the contract parameters and claim unsupported tokens accidentally sent to the contract.
 1. `claimTokens(address,address)`
 2. `setToken(address)`
-3. `setIntervalsAndInterestRates(uint256[],uint256[])`
-4. `setFee(uint256)`
-5. `setWithdrawalLockDuration(uint256)`
-6. `setWithdrawalUnlockDuration(uint256)`
+3. `setFee(uint256)`
+4. `setWithdrawalLockDuration(uint256)`
+5. `setWithdrawalUnlockDuration(uint256)`
+6. `setSigmoidParameters(uint256,int256,uint256)`
+7. `setLiquidityProvidersRewardContract(address)`
 
 ### Proxy Admin
 The Proxy Admin can upgrade the contract logic. This role will be abolished following an audit and sufficient testing.
