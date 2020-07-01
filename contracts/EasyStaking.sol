@@ -125,9 +125,7 @@ contract EasyStaking is Ownable {
      * @param _amount The amount to deposit.
      */
     function deposit(uint256 _amount) public {
-        lastDepositIds[msg.sender] += 1;
-        uint256 id = lastDepositIds[msg.sender];
-        deposit(id, _amount);
+        deposit(++lastDepositIds[msg.sender], _amount);
     }
 
     /**
@@ -160,9 +158,7 @@ contract EasyStaking is Ownable {
     function onTokenTransfer(address _sender, uint256 _amount, bytes calldata) external {
         require(msg.sender == address(token), "only token contract is allowed");
         if (!locked) {
-            lastDepositIds[_sender] += 1;
-            uint256 id = lastDepositIds[_sender];
-            _deposit(_sender, id, _amount);
+            _deposit(_sender, ++lastDepositIds[_sender], _amount);
         }
     }
 
