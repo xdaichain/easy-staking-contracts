@@ -111,8 +111,9 @@ contract EasyStaking is Ownable {
         uint256 _sigmoidParamC
     ) public initializer {
         require(_owner != address(0), "zero address");
+        require(_tokenAddress.isContract(), "not a contract address");
         Ownable.initialize(_owner);
-        _setToken(_tokenAddress);
+        token = IERC20Mintable(_tokenAddress);
         _setFee(_fee);
         _setWithdrawalLockDuration(_withdrawalLockDuration);
         _setWithdrawalUnlockDuration(_withdrawalUnlockDuration);
@@ -227,14 +228,6 @@ contract EasyStaking is Ownable {
             uint256 balance = customToken.balanceOf(address(this));
             customToken.safeTransfer(_to, balance);
         }
-    }
-
-    /**
-     * @dev Sets the staking token address. Can only be called by owner.
-     * @param _tokenAddress The new address of the token.
-     */
-    function setToken(address _tokenAddress) external onlyOwner {
-        _setToken(_tokenAddress);
     }
 
     /**
@@ -361,15 +354,6 @@ contract EasyStaking is Ownable {
             token.transfer(liquidityProvidersRewardAddress, total.sub(userShare));
         }
         return (userShare, timePassed);
-    }
-
-    /**
-     * @dev Sets the staking token address.
-     * @param _tokenAddress The new address of the token.
-     */
-    function _setToken(address _tokenAddress) internal {
-        require(_tokenAddress.isContract(), "not a contract address");
-        token = IERC20Mintable(_tokenAddress);
     }
 
     /**
