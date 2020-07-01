@@ -356,10 +356,9 @@ contract EasyStaking is Ownable {
 
     /**
      * @dev Mints 15% per annum and distributes the emission between the user and Liquidity Providers in proportion.
-     * Also it updates the deposit date of the user.
      * @param _user User's address.
      * @param _id User's unique deposit ID.
-     * @param _amount Amount to accrue emission.
+     * @param _amount Amount based on which emission is calculated and accrued. When 0, current deposit balance is used.
      */
     function _mint(address _user, uint256 _id, uint256 _amount) internal returns (uint256, uint256) {
         uint256 currentBalance = balances[_user][_id];
@@ -436,14 +435,14 @@ contract EasyStaking is Ownable {
     }
 
     /**
-     * @param depositDate Deposit date.
-     * @param _amount Amount to accrue emission.
-     * @return Total accrued emission (for the user and Liquidity Providers) and user share.
+     * @param _depositDate Deposit date.
+     * @param _amount Amount based on which emission is calculated and accrued.
+     * @return Total accrued emission (for the user and Liquidity Providers), user share, and time passed since the previous deposit started.
      */
-    function _getAccruedEmission(uint256 depositDate, uint256 _amount) internal view returns (uint256, uint256, uint256) {
-        if (_amount == 0 || depositDate == 0) return (0, 0, 0);
+    function _getAccruedEmission(uint256 _depositDate, uint256 _amount) internal view returns (uint256, uint256, uint256) {
+        if (_amount == 0 || _depositDate == 0) return (0, 0, 0);
         // solium-disable-next-line security/no-block-members
-        uint256 timePassed = block.timestamp.sub(depositDate);
+        uint256 timePassed = block.timestamp.sub(_depositDate);
         if (timePassed == 0) return (0, 0, 0);
         uint256 userEmissionRate = sigmoid.calculate(int256(timePassed));
         userEmissionRate = userEmissionRate.add(_getEmissionRateBasedOnTotalStakedAmount());
