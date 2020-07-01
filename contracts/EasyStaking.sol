@@ -125,8 +125,8 @@ contract EasyStaking is Ownable {
      * @param _amount The amount to deposit.
      */
     function deposit(uint256 _amount) public {
-        lastDepositIds[msg.sender] += 1;
-        uint256 id = lastDepositIds[msg.sender];
+        uint256 id = lastDepositIds[msg.sender] + 1;
+        lastDepositIds[msg.sender] = id;
         deposit(id, _amount);
     }
 
