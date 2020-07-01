@@ -413,7 +413,7 @@ contract EasyStaking is Ownable {
      * @param _c Sigmoid parameter C.
      */
     function _setSigmoidParameters(uint256 _a, int256 _b, uint256 _c) internal {
-        require(_a <= MAX_EMISSION_RATE.div(2), "should be less than or equal to the maximum emission rate");
+        require(_a <= MAX_EMISSION_RATE.div(2), "should be less than or equal to a half of the maximum emission rate");
         sigmoid.setParameters(_a, _b, _c);
     }
 

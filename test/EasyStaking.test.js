@@ -121,11 +121,11 @@ contract('PoaMania', accounts => {
           fee.toString(),
           withdrawalLockDuration.toString(),
           withdrawalUnlockDuration.toString(),
-          ether('0.16').toString(),
+          ether('0.076').toString(),
           sigmoidParamB.toString(),
           sigmoidParamC.toString(),
         ),
-        'should be less than or equal to the maximum emission rate'
+        'should be less than or equal to a half of the maximum emission rate'
       );
       await expectRevert(
         initialize(
