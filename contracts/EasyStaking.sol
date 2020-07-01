@@ -393,6 +393,7 @@ contract EasyStaking is Ownable {
      * @param _withdrawalLockDuration The new duration value (in seconds).
      */
     function _setWithdrawalLockDuration(uint256 _withdrawalLockDuration) internal {
+        require(_withdrawalLockDuration > 0, "should be greater than 0");
         withdrawalLockDuration = _withdrawalLockDuration;
     }
 
@@ -401,6 +402,7 @@ contract EasyStaking is Ownable {
      * @param _withdrawalUnlockDuration The new duration value (in seconds).
      */
     function _setWithdrawalUnlockDuration(uint256 _withdrawalUnlockDuration) internal {
+        require(_withdrawalUnlockDuration > 0, "should be greater than 0");
         withdrawalUnlockDuration = _withdrawalUnlockDuration;
     }
 
