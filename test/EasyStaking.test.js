@@ -192,7 +192,7 @@ contract('PoaMania', accounts => {
       }
       expect(await easyStaking.balances(user1, 1)).to.be.bignumber.equal(value.add(value).add(userAccruedEmission));
       expect(await easyStaking.depositDates(user1, 1)).to.be.bignumber.equal(timestampAfter);
-      expect(await easyStaking.getTotalStakedAmount()).to.be.bignumber.equal(value.add(value).add(userAccruedEmission));
+      expect(await easyStaking.totalStaked()).to.be.bignumber.equal(value.add(value).add(userAccruedEmission));
     });
   }
   describe('deposit', () => testDeposit(true));
@@ -208,12 +208,12 @@ contract('PoaMania', accounts => {
       await easyStaking.setSigmoidParameters(0, 0, 0, { from: owner });
       await easyStaking.methods['deposit(uint256)'](value, { from: user1 });
       let timestampBefore = await time.latest();
-      expect(await easyStaking.getTotalStakedAmount()).to.be.bignumber.equal(value);
+      expect(await easyStaking.totalStaked()).to.be.bignumber.equal(value);
       let receipt = await easyStaking.makeForcedWithdrawal(1, oneEther, { from: user1 });
       let timestampAfter = await time.latest();
       expect(await easyStaking.balances(user1, 1)).to.be.bignumber.equal(value.sub(oneEther));
       expect(await easyStaking.depositDates(user1, 1)).to.be.bignumber.equal(timestampAfter);
-      expect(await easyStaking.getTotalStakedAmount()).to.be.bignumber.equal(value.sub(oneEther));
+      expect(await easyStaking.totalStaked()).to.be.bignumber.equal(value.sub(oneEther));
       expect(await stakeToken.balanceOf(user1)).to.be.bignumber.equal(oneEther);
       expectEvent(receipt, 'Withdrawn', {
         sender: user1,
@@ -227,7 +227,7 @@ contract('PoaMania', accounts => {
       timestampAfter = await time.latest();
       expect(await easyStaking.balances(user1, 1)).to.be.bignumber.equal(new BN(0));
       expect(await stakeToken.balanceOf(user1)).to.be.bignumber.equal(value);
-      expect(await easyStaking.getTotalStakedAmount()).to.be.bignumber.equal(new BN(0));
+      expect(await easyStaking.totalStaked()).to.be.bignumber.equal(new BN(0));
       expectEvent(receipt, 'Withdrawn', {
         sender: user1,
         amount: value.sub(oneEther),
@@ -270,7 +270,7 @@ contract('PoaMania', accounts => {
         await easyStaking.methods['deposit(uint256)'](values[i], { from: exchange });
         expect(await easyStaking.balances(exchange, i + 1)).to.be.bignumber.equal(values[i]);
       }
-      expect(await easyStaking.getTotalStakedAmount()).to.be.bignumber.equal(values.reduce((acc, cur) => acc.add(cur), new BN(0)));
+      expect(await easyStaking.totalStaked()).to.be.bignumber.equal(values.reduce((acc, cur) => acc.add(cur), new BN(0)));
       let exchangeBalance = await stakeToken.balanceOf(exchange);
       await time.increase(MONTH * 4);
       for (let i = 0; i < 3; i++) {
@@ -288,7 +288,7 @@ contract('PoaMania', accounts => {
         exchangeBalance = expectedExchangeBalance;
         await time.increase(MONTH * 4);
       }
-      expect(await easyStaking.getTotalStakedAmount()).to.be.bignumber.equal(new BN(0));
+      expect(await easyStaking.totalStaked()).to.be.bignumber.equal(new BN(0));
     });
   });
   describe('requestWithdrawal', () => {

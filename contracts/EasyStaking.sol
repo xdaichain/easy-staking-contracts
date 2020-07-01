@@ -294,13 +294,6 @@ contract EasyStaking is Ownable {
     }
 
     /**
-     * @return The amount of tokens that are staked on the contract.
-     */
-    function getTotalStakedAmount() external view returns (uint256) {
-        return token.balanceOf(address(this));
-    }
-
-    /**
      * @return Sigmoid parameters.
      */
     function getSigmoidParameters() external view returns (uint256 a, int256 b, uint256 c) {
