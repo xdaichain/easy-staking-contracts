@@ -160,8 +160,8 @@ contract EasyStaking is Ownable {
     function onTokenTransfer(address _sender, uint256 _amount, bytes calldata) external {
         require(msg.sender == address(token), "only token contract is allowed");
         if (!locked) {
-            lastDepositIds[_sender] += 1;
-            uint256 id = lastDepositIds[_sender];
+            uint256 id = lastDepositIds[_sender] + 1;
+            lastDepositIds[_sender] = id;
             _deposit(_sender, id, _amount);
         }
     }
