@@ -320,11 +320,12 @@ contract EasyStaking is Ownable {
     function _deposit(address _sender, uint256 _id, uint256 _amount) internal {
         require(_amount > 0, "deposit amount should be more than 0");
         (, uint256 timePassed) = _mint(_sender, _id, 0);
-        balances[_sender][_id] = balances[_sender][_id].add(_amount);
+        uint256 newBalance = balances[_sender][_id].add(_amount);
+        balances[_sender][_id] = newBalance;
         totalStaked = totalStaked.add(_amount);
         // solium-disable-next-line security/no-block-members
         depositDates[_sender][_id] = block.timestamp;
-        emit Deposited(_sender, _id, _amount, balances[_sender][_id], timePassed);
+        emit Deposited(_sender, _id, _amount, newBalance, timePassed);
     }
 
     /**
