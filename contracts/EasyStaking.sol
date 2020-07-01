@@ -61,8 +61,8 @@ contract EasyStaking is Ownable {
 
     // STAKE token
     IERC20Mintable public token;
-    // The address of the LiquidityProvidersReward contract
-    address public liquidityProvidersRewardContract;
+    // The address for the Liquidity Providers reward
+    address public liquidityProvidersRewardAddress;
 
     // The fee of the forced withdrawal (in percentage)
     uint256 public fee;
@@ -91,7 +91,7 @@ contract EasyStaking is Ownable {
      * @dev Initializes the contract.
      * @param _owner The owner of the contract.
      * @param _tokenAddress The address of the STAKE token contract.
-     * @param _liquidityProvidersRewardContract The address of the LiquidityProvidersReward contract
+     * @param _liquidityProvidersRewardAddress The address for the Liquidity Providers reward
      * @param _fee The fee of the forced withdrawal (in percentage).
      * @param _withdrawalLockDuration The time from the request after which the withdrawal will be available (in seconds).
      * @param _withdrawalUnlockDuration The time during which the withdrawal will be available from the moment of unlocking (in seconds).
@@ -102,7 +102,7 @@ contract EasyStaking is Ownable {
     function initialize(
         address _owner,
         address _tokenAddress,
-        address _liquidityProvidersRewardContract,
+        address _liquidityProvidersRewardAddress,
         uint256 _fee,
         uint256 _withdrawalLockDuration,
         uint256 _withdrawalUnlockDuration,
@@ -117,7 +117,7 @@ contract EasyStaking is Ownable {
         _setWithdrawalLockDuration(_withdrawalLockDuration);
         _setWithdrawalUnlockDuration(_withdrawalUnlockDuration);
         _setSigmoidParameters(_sigmoidParamA, _sigmoidParamB, _sigmoidParamC);
-        _setLiquidityProvidersRewardContract(_liquidityProvidersRewardContract);
+        _setLiquidityProvidersRewardAddress(_liquidityProvidersRewardAddress);
     }
 
     /**
@@ -275,12 +275,12 @@ contract EasyStaking is Ownable {
     }
 
     /**
-     * @dev Sets the Liquidity Providers Reward contract address
+     * @dev Sets the address for the Liquidity Providers reward
      * Can only be called by owner.
-     * @param _contractAddress The new contract address
+     * @param _address The new address
      */
-    function setLiquidityProvidersRewardContract(address _contractAddress) external onlyOwner {
-        _setLiquidityProvidersRewardContract(_contractAddress);
+    function setLiquidityProvidersRewardAddress(address _address) external onlyOwner {
+        _setLiquidityProvidersRewardAddress(_address);
     }
 
     /**
@@ -345,7 +345,7 @@ contract EasyStaking is Ownable {
         if (_forced) {
             feeValue = amount.mul(fee).div(1 ether);
             amount = amount.sub(feeValue);
-            token.transfer(liquidityProvidersRewardContract, feeValue);
+            token.transfer(liquidityProvidersRewardAddress, feeValue);
         }
         token.transfer(_sender, amount);
         emit Withdrawn(_sender, _id, amount, feeValue, balances[_sender][_id], timePassed);
@@ -365,7 +365,7 @@ contract EasyStaking is Ownable {
             token.mint(address(this), total);
             balances[_user][_id] = currentBalance.add(userShare);
             totalStaked = totalStaked.add(userShare);
-            token.transfer(liquidityProvidersRewardContract, total.sub(userShare));
+            token.transfer(liquidityProvidersRewardAddress, total.sub(userShare));
         }
         return (userShare, timePassed);
     }
@@ -416,12 +416,12 @@ contract EasyStaking is Ownable {
     }
 
     /**
-     * @dev Sets the Liquidity Providers Reward contract address
-     * @param _contractAddress The new contract address
+     * @dev Sets the address for the Liquidity Providers reward
+     * @param _address The new address
      */
-    function _setLiquidityProvidersRewardContract(address _contractAddress) internal {
-        require(_contractAddress.isContract(), "not a contract address");
-        liquidityProvidersRewardContract = _contractAddress;
+    function _setLiquidityProvidersRewardAddress(address _address) internal {
+        require(_address != address(0), "zero address");
+        liquidityProvidersRewardAddress = _address;
     }
 
     /**

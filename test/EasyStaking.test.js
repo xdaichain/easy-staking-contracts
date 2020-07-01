@@ -21,7 +21,7 @@ contract('PoaMania', accounts => {
 
   let easyStaking;
   let stakeToken;
-  let liquidityProvidersRewardContract;
+  let liquidityProvidersRewardAddress = user2;
 
   const initializeMethod = 'initialize(address,address,address,uint256,uint256,uint256,uint256,int256,uint256)';
 
@@ -30,7 +30,7 @@ contract('PoaMania', accounts => {
       params = [
         owner,
         stakeToken.address,
-        liquidityProvidersRewardContract.address,
+        liquidityProvidersRewardAddress,
         fee.toString(),
         withdrawalLockDuration.toString(),
         withdrawalUnlockDuration.toString(),
@@ -89,7 +89,7 @@ contract('PoaMania', accounts => {
         initialize(
           constants.ZERO_ADDRESS,
           stakeToken.address,
-          liquidityProvidersRewardContract.address,
+          liquidityProvidersRewardAddress,
           fee.toString(),
           withdrawalLockDuration.toString(),
           withdrawalUnlockDuration.toString(),
@@ -103,7 +103,7 @@ contract('PoaMania', accounts => {
         initialize(
           owner,
           constants.ZERO_ADDRESS,
-          liquidityProvidersRewardContract.address,
+          liquidityProvidersRewardAddress,
           fee.toString(),
           withdrawalLockDuration.toString(),
           withdrawalUnlockDuration.toString(),
@@ -117,7 +117,7 @@ contract('PoaMania', accounts => {
         initialize(
           owner,
           stakeToken.address,
-          liquidityProvidersRewardContract.address,
+          liquidityProvidersRewardAddress,
           fee.toString(),
           withdrawalLockDuration.toString(),
           withdrawalUnlockDuration.toString(),
@@ -131,7 +131,7 @@ contract('PoaMania', accounts => {
         initialize(
           owner,
           stakeToken.address,
-          owner,
+          constants.ZERO_ADDRESS,
           fee.toString(),
           withdrawalLockDuration.toString(),
           withdrawalUnlockDuration.toString(),
@@ -139,7 +139,7 @@ contract('PoaMania', accounts => {
           sigmoidParamB.toString(),
           sigmoidParamC.toString(),
         ),
-        'not a contract address'
+        'zero address'
       );
     });
   });
