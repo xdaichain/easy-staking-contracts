@@ -48,13 +48,21 @@ There are 2 types of withdrawal:
 
 In order to make a deposit, a user can call `deposit(uint256 _amount)` function of the `EasyStaking` contract or directly send STAKE tokens to the `EasyStaking` contract using `transfer` or `transferFrom` ERC20 function of the [STAKE token contract](https://etherscan.io/address/0x0Ae055097C6d159879521C384F1D2123D1f195e6). The contract will generate a unique ID of the new deposit and accept tokens. The `deposit(uint256 _amount)` function requires tokens to be approved by the user first (using `approve` ERC20 function of the STAKE token).
 
+The easiest way to make a new deposit is to call the `transfer` function of the STAKE token.
+
+In order to replenish an existing deposit, the user can call `deposit(uint256 _depositId, uint256 _amount)` function specifying ID of the existing deposit. In this case, EasyStaking contract will accrue emission, add the specified `_amount` to the deposit, and reset deposit's timestamp to the current one. This function can be useful for exchanges.
+
 ### Making timed withdrawal
 
 To withdraw tokens from the `EasyStaking` contract without fee, a user needs to submit a withdrawal request using `requestWithdrawal(uint256 _depositId)` function. After `withdrawalLockDuration` time has elapsed, the user need to call `makeRequestedWithdrawal(uint256 _depositId, uint256 _amount)` within a withdrawal window defined in `withdrawalUnlockDuration`. If the user missed the withdrawal window time period, they can repeat the steps (calling `requestWithdrawal` again and then wait for `withdrawalLockDuration` time before calling `makeRequestedWithdrawal`).
 
+The `_amount` parameter allows user to define the amount of tokens to withdraw from their deposit which balance can be got with `balances(address _holder, uint256 _depositId)` public getter. The `_amount` can be passed as `0` which means the user wants to withdraw all their tokens with accrued emission.
+
+When withdrawing deposit (fully or partly) the user will receive the specified amount of tokens and accrued emission.
+
 ### Making instant withdrawal
 
-To withdraw tokens from the `EasyStaking` contract immediately with fee, a user needs to call `makeForcedWithdrawal(uint256 _depositId, uint256 _amount)`.
+To withdraw tokens from the `EasyStaking` contract immediately, a user needs to call `makeForcedWithdrawal(uint256 _depositId, uint256 _amount)`. In this case, the fee will be subtracted from the deposit.
 
 ### Examples of accruing emission
 
