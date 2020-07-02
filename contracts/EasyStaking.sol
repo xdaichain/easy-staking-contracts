@@ -216,13 +216,16 @@ contract EasyStaking is Ownable {
      * @param _to The address of the tokens receiver.
      */
     function claimTokens(address _token, address payable _to) public onlyOwner {
-        require(_token != address(token), "cannot be the main token");
         require(_to != address(0) && _to != address(this), "not a valid recipient");
         if (_token == address(0)) {
             uint256 value = address(this).balance;
             if (!_to.send(value)) { // solium-disable-line security/no-send
                 (new Sacrifice).value(value)(_to);
             }
+        } else if (_token == address(token)) {
+            uint256 amount = token.balanceOf(address(this)).sub(totalStaked);
+            require(amount > 0, "nothing to claim");
+            token.transfer(_to, amount);
         } else {
             IERC20 customToken = IERC20(_token);
             uint256 balance = customToken.balanceOf(address(this));
