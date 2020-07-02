@@ -8,6 +8,8 @@ Easy Staking gives users an additional choice for STAKE token usage. There are n
 
 Easy Staking serves to reduce the overall amount of STAKE in active circulation and acts as a mechanism to limit available liquidity and supply. Limited supply in the open market increases security for POSDAO chains such as the xDai stable chain.
 
+See also: https://www.xdaichain.com/for-stakers/easy-staking
+
 
 ## How to run
 ### Setup
