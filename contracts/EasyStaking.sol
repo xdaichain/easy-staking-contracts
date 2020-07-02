@@ -34,6 +34,7 @@ contract EasyStaking is Ownable {
         uint256 indexed id,
         uint256 amount,
         uint256 balance,
+        uint256 accruedEmission,
         uint256 prevDepositDuration
     );
 
@@ -52,6 +53,7 @@ contract EasyStaking is Ownable {
         uint256 amount,
         uint256 fee,
         uint256 balance,
+        uint256 accruedEmission,
         uint256 lastDepositDuration
     );
 
@@ -316,13 +318,13 @@ contract EasyStaking is Ownable {
      */
     function _deposit(address _sender, uint256 _id, uint256 _amount) internal {
         require(_amount > 0, "deposit amount should be more than 0");
-        (, uint256 timePassed) = _mint(_sender, _id, 0);
+        (uint256 userShare, uint256 timePassed) = _mint(_sender, _id, 0);
         uint256 newBalance = balances[_sender][_id].add(_amount);
         balances[_sender][_id] = newBalance;
         totalStaked = totalStaked.add(_amount);
         // solium-disable-next-line security/no-block-members
         depositDates[_sender][_id] = block.timestamp;
-        emit Deposited(_sender, _id, _amount, newBalance, timePassed);
+        emit Deposited(_sender, _id, _amount, newBalance, userShare, timePassed);
     }
 
     /**
@@ -349,7 +351,7 @@ contract EasyStaking is Ownable {
             token.transfer(liquidityProvidersRewardAddress, feeValue);
         }
         token.transfer(_sender, amount);
-        emit Withdrawn(_sender, _id, amount, feeValue, balances[_sender][_id], timePassed);
+        emit Withdrawn(_sender, _id, amount, feeValue, balances[_sender][_id], accruedEmission, timePassed);
     }
 
     /**

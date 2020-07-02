@@ -157,6 +157,7 @@ contract('PoaMania', accounts => {
           amount: value,
           id: new BN(1),
           balance: value,
+          accruedEmission: new BN(0),
           prevDepositDuration: new BN(0),
         });
       } else {
@@ -187,6 +188,7 @@ contract('PoaMania', accounts => {
           amount: value,
           id: new BN(1),
           balance: value.add(value).add(userAccruedEmission),
+          accruedEmission: userAccruedEmission,
           prevDepositDuration: new BN(timePassed),
         });
       }
@@ -223,6 +225,7 @@ contract('PoaMania', accounts => {
         amount: oneEther.add(userAccruedEmission1),
         id: new BN(1),
         balance: value.sub(oneEther),
+        accruedEmission: userAccruedEmission1,
         lastDepositDuration: timestampAfter.sub(timestampBefore),
       });
       timestampAfter = timestampBefore;
@@ -240,6 +243,7 @@ contract('PoaMania', accounts => {
         amount: value.sub(oneEther).add(userAccruedEmission2),
         id: new BN(1),
         balance: new BN(0),
+        accruedEmission: userAccruedEmission2,
         lastDepositDuration: timestampAfter.sub(timestampBefore),
       });
     });
@@ -333,6 +337,7 @@ contract('PoaMania', accounts => {
         amount: value.add(userAccruedEmission),
         id: new BN(1),
         balance: new BN(0),
+        accruedEmission: userAccruedEmission,
         lastDepositDuration: timePassed,
       });
     });
