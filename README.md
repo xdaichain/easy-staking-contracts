@@ -86,9 +86,11 @@ User deposits `1000 tokens` then makes an instant withdrawal near this block. In
 
 **2nd example:**
 
-User deposits `1000 tokens`. After `2 weeks` (14 days), the user replenishes the deposit by other `1000 tokens`. The personal APR is `2.67%` (see the graph of the sigmoid function), the general APR is `(1500000 + 1000) / 8537500 * 0.075 * 100 = 1.32%` and accrued emission is `1000 * (2.67 + 1.32) / 100 * 14 / 365 = 1.53 tokens` (we assume a year has 365 days). The new balance is `1000 + 1.53 + 1000 = 2001.53 tokens` and deposit date is reset (starts from the replenishment point).
+User deposits `1000 tokens`. After `2 weeks` (14 days), the user replenishes the deposit by adding an additional `1000 tokens`. The personal APR is `2.67%` (see the graph of the sigmoid function), the general APR is `(1500000 + 1000) / 8537500 * 0.075 * 100 = 1.32%` and accrued emission is `1000 * (2.67 + 1.32) / 100 * 14 / 365 = 1.53 tokens` (we assume a year has 365 days). The new user balance is `1000 + 1.53 + 1000 = 2001.53 tokens` and the deposit date is reset (restarts at the replenishment time point). The LP also receives accrued emission from the deposit replenishment:  `1000 * (15-(2.67 + 1.32)) / 100 * 14 / 365 = 4.22 tokens`. 
 
-`3 months` (90 days) later the user makes a timed withdrawal for the total amount of `2001.53` tokens. The personal APR is `6.94%`, the general APR is `(1500000 + 2001.53) / 8537501.53 * 0.075 * 100 = 1.32%` and accrued emission is `2001.53 * (6.94 + 1.32) / 100 * 90 / 365 = 40.76 tokens`. 
+_Note: The user could have instead chosen to create a 2nd deposit, which would have created a new deposit id and not reset the deposit date or generated accrued emissions for the initial 1000 token deposit._ 
+
+`3 months` (90 days) later the user makes a timed withdrawal for the total amount of `2001.53` tokens. The personal APR is `6.94%`, the general APR is `(1500000 + 2001.53) / 8537501.53 * 0.075 * 100 = 1.32%` and accrued emission is `2001.53 * (6.94 + 1.32) / 100 * 90 / 365 = 40.76 tokens`. On timed withdrawal:
 
 - User receives `2001.53 + 40.76 = 2,042.29 tokens`.
 - LP receives `2001.53 * (15-(6.94 + 1.32)) / 100 * 90 / 365 = 33.26 tokens`.
