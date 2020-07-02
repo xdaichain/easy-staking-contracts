@@ -408,6 +408,21 @@ contract('PoaMania', accounts => {
       expect(await anotherToken.balanceOf(easyStaking.address)).to.be.bignumber.equal(new BN(0));
       expect(await anotherToken.balanceOf(owner)).to.be.bignumber.equal(value);
     });
+    it('should claim STAKE tokens', async () => {
+      await stakeToken.mint(easyStaking.address, ether('10'), { from: owner });
+      await stakeToken.mint(user1, ether('100'), { from: owner });
+      expect(await stakeToken.balanceOf(easyStaking.address)).to.be.bignumber.equal(ether('10'));
+      expect(await stakeToken.balanceOf(user1)).to.be.bignumber.equal(ether('100'));
+      await stakeToken.transfer(easyStaking.address, ether('100'), { from: user1 });
+      expect(await stakeToken.balanceOf(easyStaking.address)).to.be.bignumber.equal(ether('110'));
+      expect(await stakeToken.balanceOf(owner)).to.be.bignumber.equal(new BN(0));
+      expect(await easyStaking.balances(user1, 1)).to.be.bignumber.equal(ether('100'));
+      await easyStaking.claimTokens(stakeToken.address, owner, { from: owner });
+      expect(await stakeToken.balanceOf(easyStaking.address)).to.be.bignumber.equal(ether('100'));
+      expect(await stakeToken.balanceOf(owner)).to.be.bignumber.equal(ether('10'));
+      expect(await easyStaking.balances(user1, 1)).to.be.bignumber.equal(ether('100'));
+      await expectRevert(easyStaking.claimTokens(stakeToken.address, owner, { from: owner }), 'nothing to claim');
+    });
     async function claimEtherAndSend(to) {
       easyStaking = await EasyStakingMock.new();
       await initialize();
@@ -441,12 +456,6 @@ contract('PoaMania', accounts => {
       await expectRevert(
         easyStaking.claimTokens(constants.ZERO_ADDRESS, easyStaking.address, { from: owner }),
         'not a valid recipient',
-      );
-    });
-    it('fails if wrong token address', async () => {
-      await expectRevert(
-        easyStaking.claimTokens(stakeToken.address, owner, { from: owner }),
-        'cannot be the main token',
       );
     });
   });
