@@ -27,6 +27,7 @@ contract EasyStaking is Ownable {
      * @param id User's unique deposit ID.
      * @param amount The amount of deposited tokens.
      * @param balance Current user balance.
+     * @param accruedEmission User's accrued emission.
      * @param prevDepositDuration Duration of the previous deposit in seconds.
      */
     event Deposited(
@@ -45,6 +46,7 @@ contract EasyStaking is Ownable {
      * @param amount The amount of withdrawn tokens.
      * @param fee The withdrawal fee.
      * @param balance Current user balance.
+     * @param accruedEmission User's accrued emission.
      * @param lastDepositDuration Duration of the last deposit in seconds.
      */
     event Withdrawn(
