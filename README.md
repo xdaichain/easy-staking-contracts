@@ -44,6 +44,10 @@ There are 2 types of withdrawal:
 
 *Note:* if user deposits more tokens to the already created deposit it will update (reset to current) the deposit date and accrue emission for the previous deposit amount.
 
+### Making a deposit
+
+In order to make a deposit, a user can call `deposit(uint256 _amount)` function of the `EasyStaking` contract or directly send STAKE tokens to the EasyStaking contract using `transfer` or `transferFrom` ERC20 function of the [STAKE token contract](https://etherscan.io/address/0x0Ae055097C6d159879521C384F1D2123D1f195e6). The contract will generate a unique ID of the new deposit and accept tokens. The `deposit(uint256 _amount)` function requires tokens to be approved by the user first (using `approve` ERC20 function of the STAKE token).
+
 ### Examples of accruing emission
 
 There are 2 parts of emission rate:
