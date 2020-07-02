@@ -6,3 +6,4 @@ coverage.json
 coverage
 .env
 .openzeppelin/kovan.json
+flat
