@@ -20,6 +20,7 @@ library Sigmoid {
      * @param _c Sigmoid parameter C.
      */
     function setParameters(State storage self, uint256 _a, int256 _b, uint256 _c) internal {
+        require(_c != 0); // prevent division by zero
         self.a = _a;
         self.b = _b;
         self.c = _c;
@@ -36,7 +37,9 @@ library Sigmoid {
      * @return The corresponding Y value for a given X value
      */
     function calculate(State storage self, int256 _x) internal view returns (uint256) {
-        if (_x - self.b < 0) return 0;
-        return self.a.mul(uint256(_x - self.b)).div(uint256(_x - self.b).pow2().add(self.c).sqrt());
+        int256 k = _x - self.b;
+        if (k < 0) return 0;
+        uint256 uk = uint256(k);
+        return self.a.mul(uk).div(uk.pow2().add(self.c).sqrt());
     }
 }
