@@ -91,7 +91,7 @@ contract EasyStaking is Ownable {
      * @dev Initializes the contract.
      * @param _owner The owner of the contract.
      * @param _tokenAddress The address of the STAKE token contract.
-     * @param _liquidityProvidersRewardAddress The address for the Liquidity Providers reward
+     * @param _liquidityProvidersRewardAddress The address for the Liquidity Providers reward.
      * @param _fee The fee of the forced withdrawal (in percentage).
      * @param _withdrawalLockDuration The time from the request after which the withdrawal will be available (in seconds).
      * @param _withdrawalUnlockDuration The time during which the withdrawal will be available from the moment of unlocking (in seconds).
@@ -109,7 +109,7 @@ contract EasyStaking is Ownable {
         uint256 _sigmoidParamA,
         int256 _sigmoidParamB,
         uint256 _sigmoidParamC
-    ) public initializer {
+    ) external initializer {
         require(_owner != address(0), "zero address");
         require(_tokenAddress.isContract(), "not a contract address");
         Ownable.initialize(_owner);
@@ -122,19 +122,20 @@ contract EasyStaking is Ownable {
     }
 
     /**
-     * @dev This method is used to deposit tokens. It calls another public "deposit" method. See its description.
+     * @dev This method is used to deposit tokens to a new deposit.
+     * It generates a new deposit ID and calls another public "deposit" method. See its description.
      * @param _amount The amount to deposit.
      */
-    function deposit(uint256 _amount) public {
+    function deposit(uint256 _amount) external {
         deposit(++lastDepositIds[msg.sender], _amount);
     }
 
     /**
-     * @dev This method is used to deposit tokens.
-     * It calls the internal "_deposit" method and transfer tokens from sender to contract.
+     * @dev This method is used to deposit tokens to the deposit opened before.
+     * It calls the internal "_deposit" method and transfers tokens from sender to contract.
      * Sender must approve tokens first.
      *
-     * User can use the simple "transfer" method of STAKE token contract to make a deposit.
+     * Instead this, user can use the simple "transfer" method of STAKE token contract to make a deposit.
      * Sender's approval is not needed in this case.
      *
      * Note: each call updates the deposit date so be careful if you want to make a long staking.
@@ -151,8 +152,9 @@ contract EasyStaking is Ownable {
     }
 
     /**
-     * @dev This method is called when tokens are transferred to this contract.
-     * using "transfer" method of STAKE token contract. It calls the internal "_deposit" method.
+     * @dev This method is called when STAKE tokens are transferred to this contract.
+     * using "transfer", "transferFrom", or "transferAndCall" method of STAKE token contract.
+     * It generates a new deposit ID and calls the internal "_deposit" method.
      * @param _sender The sender of tokens.
      * @param _amount The transferred amount.
      */
@@ -191,7 +193,7 @@ contract EasyStaking is Ownable {
      * @dev This method is used to make a requested withdrawal.
      * It calls the internal "_withdraw" method and resets the date of the request.
      *
-     * If sender didn't call this method during the unlock period (if timestamp >= lockEnd.add(withdrawalUnlockDuration))
+     * If sender didn't call this method during the unlock period (if timestamp >= lockEnd + withdrawalUnlockDuration)
      * they have to call "requestWithdrawal" one more time.
      *
      * @param _depositId User's unique deposit ID.
@@ -212,10 +214,10 @@ contract EasyStaking is Ownable {
     /**
      * @dev This method is used to claim unsupported tokens accidentally sent to the contract.
      * It can only be called by the owner.
-     * @param _token The address of the token contract (zero address for native tokens).
-     * @param _to The address of the tokens receiver.
+     * @param _token The address of the token contract (zero address for claiming native coins).
+     * @param _to The address of the tokens/coins receiver.
      */
-    function claimTokens(address _token, address payable _to) public onlyOwner {
+    function claimTokens(address _token, address payable _to) external onlyOwner {
         require(_token != address(token), "cannot be the main token");
         require(_to != address(0) && _to != address(this), "not a valid recipient");
         if (_token == address(0)) {
@@ -257,20 +259,20 @@ contract EasyStaking is Ownable {
     }
 
     /**
-     * @dev Sets parameters of the sigmoid that is used to calculate the user's current emission rate
+     * @dev Sets parameters of the sigmoid that is used to calculate the user's current emission rate.
      * Can only be called by owner.
-     * @param _a Sigmoid parameter A.
-     * @param _b Sigmoid parameter B.
-     * @param _c Sigmoid parameter C.
+     * @param _a Sigmoid parameter A. Unsigned integer.
+     * @param _b Sigmoid parameter B. Signed integer.
+     * @param _c Sigmoid parameter C. Unsigned integer. Cannot be zero.
      */
     function setSigmoidParameters(uint256 _a, int256 _b, uint256 _c) external onlyOwner {
         _setSigmoidParameters(_a, _b, _c);
     }
 
     /**
-     * @dev Sets the address for the Liquidity Providers reward
+     * @dev Sets the address for the Liquidity Providers reward.
      * Can only be called by owner.
-     * @param _address The new address
+     * @param _address The new address.
      */
     function setLiquidityProvidersRewardAddress(address _address) external onlyOwner {
         _setLiquidityProvidersRewardAddress(_address);
@@ -279,7 +281,7 @@ contract EasyStaking is Ownable {
     /**
      * @param _depositDate Deposit date.
      * @param _amount Amount based on which emission is calculated and accrued.
-     * @return Total accrued emission (for the user and Liquidity Providers), user share, and time passed since the previous deposit started.
+     * @return Total accrued emission (for the user and Liquidity Providers), user share, and seconds passed since the previous deposit started.
      */
     function getAccruedEmission(
         uint256 _depositDate,
@@ -304,7 +306,7 @@ contract EasyStaking is Ownable {
     }
 
     /**
-     * @dev Calls internal "_mint" method and increases the user balance.
+     * @dev Calls internal "_mint" method, increases the user balance, and updates the deposit date.
      * @param _sender The address of the sender.
      * @param _id User's unique deposit ID.
      * @param _amount The amount to deposit.
@@ -325,7 +327,7 @@ contract EasyStaking is Ownable {
      * @param _sender The address of the sender.
      * @param _id User's unique deposit ID.
      * @param _amount The amount to withdraw.
-     * @param _forced With or without commission.
+     * @param _forced Defines whether to apply fee (true), or not (false).
      */
     function _withdraw(address _sender, uint256 _id, uint256 _amount, bool _forced) internal {
         require(_id > 0 && _id <= lastDepositIds[_sender], "wrong deposit id");
@@ -348,7 +350,7 @@ contract EasyStaking is Ownable {
     }
 
     /**
-     * @dev Mints 15% per annum and distributes the emission between the user and Liquidity Providers in proportion.
+     * @dev Mints MAX_EMISSION_RATE per annum and distributes the emission between the user and Liquidity Providers in proportion.
      * @param _user User's address.
      * @param _id User's unique deposit ID.
      * @param _amount Amount based on which emission is calculated and accrued. When 0, current deposit balance is used.
@@ -394,7 +396,7 @@ contract EasyStaking is Ownable {
     }
 
     /**
-     * @dev Sets parameters of the sigmoid that is used to calculate the user's current emission rate
+     * @dev Sets parameters of the sigmoid that is used to calculate the user's current emission rate.
      * @param _a Sigmoid parameter A.
      * @param _b Sigmoid parameter B.
      * @param _c Sigmoid parameter C.
@@ -405,8 +407,8 @@ contract EasyStaking is Ownable {
     }
 
     /**
-     * @dev Sets the address for the Liquidity Providers reward
-     * @param _address The new address
+     * @dev Sets the address for the Liquidity Providers reward.
+     * @param _address The new address.
      */
     function _setLiquidityProvidersRewardAddress(address _address) internal {
         require(_address != address(0), "zero address");
