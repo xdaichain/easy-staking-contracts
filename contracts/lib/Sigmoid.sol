@@ -20,6 +20,7 @@ library Sigmoid {
      * @param _c Sigmoid parameter C.
      */
     function setParameters(State storage self, uint256 _a, int256 _b, uint256 _c) internal {
+        require(_c != 0); // prevent division by zero
         self.a = _a;
         self.b = _b;
         self.c = _c;
