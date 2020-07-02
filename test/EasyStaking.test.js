@@ -196,6 +196,46 @@ contract('PoaMania', accounts => {
       expect(await easyStaking.depositDates(user1, 1)).to.be.bignumber.equal(timestampAfter);
       expect(await easyStaking.totalStaked()).to.be.bignumber.equal(value.add(value).add(userAccruedEmission));
     });
+    it('should deposit using an old id', async () => {
+      await easyStaking.setFee(0, { from: owner });
+      const value = ether('100');
+      if (directly) {
+        await easyStaking.methods['deposit(uint256)'](value, { from: user1 });
+        await easyStaking.methods['deposit(uint256)'](value, { from: user1 });
+      } else {
+        await stakeToken.transfer(easyStaking.address, value, { from: user1 });
+        await stakeToken.transfer(easyStaking.address, value, { from: user1 });
+      }
+      await time.increase(YEAR);
+      await easyStaking.makeForcedWithdrawal(1, 0, { from: user1 });
+      await easyStaking.makeForcedWithdrawal(2, 0, { from: user1 });
+      expect(await easyStaking.balances(user1, 1)).to.be.bignumber.equal(new BN(0));
+      expect(await easyStaking.balances(user1, 2)).to.be.bignumber.equal(new BN(0));
+      expect(await easyStaking.depositDates(user1, 1)).to.be.bignumber.equal(new BN(0));
+      expect(await easyStaking.depositDates(user1, 2)).to.be.bignumber.equal(new BN(0));
+
+      await easyStaking.methods['deposit(uint256,uint256)'](1, value, { from: user1 });
+      expect(await easyStaking.balances(user1, 1)).to.be.bignumber.equal(value);
+      const timestampBefore = await time.latest();
+      const totalSupply = await stakeToken.totalSupply();
+      const totalStaked = await easyStaking.totalStaked();
+      const balanceBefore = await stakeToken.balanceOf(user1);
+      await time.increase(YEAR);
+      const receipt = await easyStaking.makeForcedWithdrawal(1, 0, { from: user1 });
+      const timestampAfter = await time.latest();
+      const timePassed = timestampAfter.sub(timestampBefore);
+      const userAccruedEmission = calculateUserAccruedEmission(value, timePassed, totalSupply, totalStaked);
+      const balanceAfter = await stakeToken.balanceOf(user1);
+      expectEvent(receipt, 'Withdrawn', {
+        sender: user1,
+        amount: value.add(userAccruedEmission),
+        id: new BN(1),
+        balance: new BN(0),
+        accruedEmission: userAccruedEmission,
+        lastDepositDuration: timePassed,
+      });
+      expect(balanceAfter).to.be.bignumber.equal(balanceBefore.add(value.add(userAccruedEmission)));
+    });
   }
   describe('deposit', () => testDeposit(true));
   describe('onTokenTransfer', () => testDeposit(false));
