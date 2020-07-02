@@ -69,8 +69,8 @@ To withdraw tokens from the `EasyStaking` contract immediately, a user needs to 
 ### Examples of accruing emission
 
 There are 2 parts that make up the emission rate:
-1. Personal (time-based): Calculated using a sigmoid function based on the staking period and amount of time a deposit is staked (max 7.5%)
-2. General (supply-based): Calculated using a linear function and based on the total amount of staked tokens in relation to the total supply of STAKE tokens (max 7.5%)
+1. Personal (time-based): Calculated using a sigmoid function based on the staking period and amount of time a deposit is staked (max 7.5%).
+2. General (supply-based): Calculated using a linear function and based on the total amount of staked tokens in relation to the total supply of STAKE tokens (max 7.5%).
 
 Accrued emissions are calculated for the user (`userShare`), and the remaining accrued amount (15% APR - `userShare`) is sent to the assigned Liquidity Pool (LP) `_liquidityProvidersRewardAddress`.
 
