@@ -341,6 +341,15 @@ contract('PoaMania', accounts => {
       }
       expect(await easyStaking.totalStaked()).to.be.bignumber.equal(new BN(0));
     });
+    it('should fail if trying to withdraw more than deposited', async () => {
+      await easyStaking.methods['deposit(uint256)'](ether('10'), { from: user1 });
+      await time.increase(YEAR);
+      await expectRevert(
+        easyStaking.makeForcedWithdrawal(1, ether('10.000000000000000001'), { from: user1 }),
+        'SafeMath: subtraction overflow'
+      );
+      await easyStaking.makeForcedWithdrawal(1, ether('10'), { from: user1 });
+    });
   });
   describe('requestWithdrawal', () => {
     it('should request', async () => {
