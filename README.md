@@ -87,13 +87,15 @@ If a user requests a timed withdrawal but fails to execute within the allotted t
 5. `makeForcedWithdrawal(uint256,uint256)`
 
 ### Owner
-The owner can only change the contract parameters and claim unsupported tokens accidentally sent to the contract.
+The owner can change the contract parameters and claim unsupported tokens accidentally sent to the contract.
 1. `claimTokens(address,address)`
 2. `setFee(uint256)`
 3. `setWithdrawalLockDuration(uint256)`
 4. `setWithdrawalUnlockDuration(uint256)`
 5. `setSigmoidParameters(uint256,int256,uint256)`
 6. `setLiquidityProvidersRewardAddress(address)`
+7. `transferOwnership(address)`
+8. `renounceOwnership()`
 
 ### Proxy Admin
 The Proxy Admin can upgrade the contract logic. This role will be abolished following an audit and sufficient testing.
