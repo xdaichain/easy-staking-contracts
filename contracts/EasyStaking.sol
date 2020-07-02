@@ -277,13 +277,23 @@ contract EasyStaking is Ownable {
     }
 
     /**
-     * @param _user The address of the user.
-     * @param _depositId User's unique deposit ID.
-     * @return User's current accrued emission.
+     * @param _depositDate Deposit date.
+     * @param _amount Amount based on which emission is calculated and accrued.
+     * @return Total accrued emission (for the user and Liquidity Providers), user share, and time passed since the previous deposit started.
      */
-    function getCurrentAccruedEmission(address _user, uint256 _depositId) external view returns (uint256) {
-        (, uint256 userAccruedEmission, ) = _getAccruedEmission(depositDates[_user][_depositId], balances[_user][_depositId]);
-        return userAccruedEmission;
+    function getAccruedEmission(
+        uint256 _depositDate,
+        uint256 _amount
+    ) public view returns (uint256 total, uint256 userShare, uint256 timePassed) {
+        if (_amount == 0 || _depositDate == 0) return (0, 0, 0);
+        // solium-disable-next-line security/no-block-members
+        timePassed = block.timestamp.sub(_depositDate);
+        if (timePassed == 0) return (0, 0, 0);
+        uint256 userEmissionRate = sigmoid.calculate(int256(timePassed));
+        userEmissionRate = userEmissionRate.add(_getEmissionRateBasedOnTotalStakedAmount());
+        require(userEmissionRate <= MAX_EMISSION_RATE, "should be less than or equal to the maximum emission rate");
+        total = _amount.mul(MAX_EMISSION_RATE).div(1 ether).mul(timePassed).div(YEAR);
+        userShare = _amount.mul(userEmissionRate).div(1 ether).mul(timePassed).div(YEAR);
     }
 
     /**
@@ -346,7 +356,7 @@ contract EasyStaking is Ownable {
     function _mint(address _user, uint256 _id, uint256 _amount) internal returns (uint256, uint256) {
         uint256 currentBalance = balances[_user][_id];
         uint256 amount = _amount == 0 ? currentBalance : _amount;
-        (uint256 total, uint256 userShare, uint256 timePassed) = _getAccruedEmission(depositDates[_user][_id], amount);
+        (uint256 total, uint256 userShare, uint256 timePassed) = getAccruedEmission(depositDates[_user][_id], amount);
         if (total > 0) {
             token.mint(address(this), total);
             balances[_user][_id] = currentBalance.add(userShare);
@@ -408,24 +418,6 @@ contract EasyStaking is Ownable {
      */
     function _setLocked(bool _locked) internal {
         locked = _locked;
-    }
-
-    /**
-     * @param _depositDate Deposit date.
-     * @param _amount Amount based on which emission is calculated and accrued.
-     * @return Total accrued emission (for the user and Liquidity Providers), user share, and time passed since the previous deposit started.
-     */
-    function _getAccruedEmission(uint256 _depositDate, uint256 _amount) internal view returns (uint256, uint256, uint256) {
-        if (_amount == 0 || _depositDate == 0) return (0, 0, 0);
-        // solium-disable-next-line security/no-block-members
-        uint256 timePassed = block.timestamp.sub(_depositDate);
-        if (timePassed == 0) return (0, 0, 0);
-        uint256 userEmissionRate = sigmoid.calculate(int256(timePassed));
-        userEmissionRate = userEmissionRate.add(_getEmissionRateBasedOnTotalStakedAmount());
-        require(userEmissionRate <= MAX_EMISSION_RATE, "should be less than or equal to the maximum emission rate");
-        uint256 total = _amount.mul(MAX_EMISSION_RATE).div(1 ether).mul(timePassed).div(YEAR);
-        uint256 userShare = _amount.mul(userEmissionRate).div(1 ether).mul(timePassed).div(YEAR);
-        return (total, userShare, timePassed);
     }
 
     /**

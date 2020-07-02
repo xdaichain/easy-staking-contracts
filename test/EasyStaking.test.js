@@ -450,7 +450,7 @@ contract('PoaMania', accounts => {
       );
     });
   });
-  describe('getCurrentAccruedEmission', () => {
+  describe('getAccruedEmission', () => {
     it('should be calculated correctly', async () => {
       const value = ether('100');
       await stakeToken.mint(user1, value, { from: owner });
@@ -463,8 +463,9 @@ contract('PoaMania', accounts => {
       const timePassed = timestampAfter.sub(timestampBefore);
       const totalSupply = await stakeToken.totalSupply();
       const totalStaked = await easyStaking.totalStaked();
+      const depositDate = await easyStaking.depositDates(user1, 1);
       const userAccruedEmission = calculateUserAccruedEmission(value, timePassed, totalSupply, totalStaked);
-      expect(await easyStaking.getCurrentAccruedEmission(user1, 1)).to.be.bignumber.equal(userAccruedEmission);
+      expect((await easyStaking.getAccruedEmission(depositDate, value)).userShare).to.be.bignumber.equal(userAccruedEmission);
     });
   });
 });
