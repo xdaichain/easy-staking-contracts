@@ -1,12 +1,15 @@
-# Smart contracts for Easy Staking
+# Smart contracts for EasyStaking
 
 [![built-with openzeppelin](https://img.shields.io/badge/built%20with-OpenZeppelin-3677FF)](https://docs.openzeppelin.com/)
 
-**Easy Staking** provides an alternative emission-accruing application for [POSDAO](https://forum.poa.network/t/posdao-white-paper/2208) participants. Users can deposit [STAKE](https://github.com/xdaichain/stake-token) tokens deployed on the Ethereum mainnet and get a pre-determined emission rate while tokens are locked in the contract.
+**EasyStaking** provides an alternative emission-accruing application for [POSDAO](https://forum.poa.network/t/posdao-white-paper/2208) participants and STAKE liquidity providers. Users can deposit [STAKE](https://github.com/xdaichain/stake-token) tokens deployed on the Ethereum mainnet and receive a pre-determined emission rate while tokens are locked in the contract.
 
-Easy Staking gives users an additional choice for STAKE token usage. There are no minimum deposit requirements (vs minimum 1000K for POSDAO delegated staking) and several withdrawal options available for users. While the overall APR is set lower in Easy Staking than for POSDAO stakers, effective emission accruing will vary between the two methods based on POSDAO reward distribution percentages.
+EasyStaking gives users an additional choice for STAKE token usage. There are no minimum deposit requirements (vs minimum 1000K for POSDAO delegated staking) and several withdrawal options available for users. While the overall APR is set lower in EasyStaking than for POSDAO stakers, effective emission accrual will vary between the two methods based on POSDAO reward distribution percentages.
 
-Easy Staking serves to reduce the overall amount of STAKE in active circulation and acts as a mechanism to limit available liquidity and supply. Limited supply in the open market increases security for POSDAO chains such as the xDai stable chain.
+EasyStaking also provides emission distribution options for STAKE liquidity providers. A specified liquidity pool receives a % of emissions on every withdrawal event.
+
+EasyStaking serves to reduce the overall amount of STAKE in active circulation, provides options for STAKE holders on Ethereum, and acts as a mechanism to limit available liquidity and supply. Limited supply in the open market increases security for POSDAO chains such as the xDai stable chain.
+
 
 See also: https://www.xdaichain.com/for-stakers/easy-staking
 
@@ -42,7 +45,6 @@ There are 2 types of withdrawal:
 1. _Timed Withdrawal:_ user submits a withdrawal request, and after a specified time period, tokens and accrued emission may be withdrawn with no fee.
 2. _Instant Withdrawal:_ user requests an instant withdrawal and pays a small fee to withdraw tokens and accrued emission.
 
-*Note:* if user deposits more tokens to the already created deposit it will update (reset to current) the deposit date and accrue emission for the previous deposit amount.
 
 ### Making a deposit
 
@@ -50,25 +52,27 @@ In order to make a deposit, a user can call `deposit(uint256 _amount)` function 
 
 The easiest way to make a new deposit is to call the `transfer` function of the STAKE token.
 
-In order to replenish an existing deposit, the user can call `deposit(uint256 _depositId, uint256 _amount)` function specifying ID of the existing deposit. In this case, EasyStaking contract will accrue emission, add the specified `_amount` to the deposit, and reset deposit's timestamp to the current one. This function can be useful for exchanges.
+To replenish an existing deposit, the user can call `deposit(uint256 _depositId, uint256 _amount)` function specifying the ID of the existing deposit. In this case, the EasyStaking contract will accrue emission, add the specified `_amount` to the deposit, and reset the deposit's timestamp to the current one. This function can be useful for exchanges.
 
-### Making timed withdrawal
+### Making a timed withdrawal
 
-To withdraw tokens from the `EasyStaking` contract without fee, a user needs to submit a withdrawal request using `requestWithdrawal(uint256 _depositId)` function. After `withdrawalLockDuration` time has elapsed, the user need to call `makeRequestedWithdrawal(uint256 _depositId, uint256 _amount)` within a withdrawal window defined in `withdrawalUnlockDuration`. If the user missed the withdrawal window time period, they can repeat the steps (calling `requestWithdrawal` again and then wait for `withdrawalLockDuration` time before calling `makeRequestedWithdrawal`).
+To withdraw tokens from the `EasyStaking` contract without a fee, a user needs to submit a withdrawal request using `requestWithdrawal(uint256 _depositId)` function. After `withdrawalLockDuration` time has elapsed, the user must call `makeRequestedWithdrawal(uint256 _depositId, uint256 _amount)` within the withdrawal window defined in `withdrawalUnlockDuration`. If the user misses the withdrawal window time period, they can repeat the steps (calling `requestWithdrawal` again and then wait for the `withdrawalLockDuration` time before calling `makeRequestedWithdrawal`).
 
-The `_amount` parameter allows user to define the amount of tokens to withdraw from their deposit which balance can be got with `balances(address _holder, uint256 _depositId)` public getter. The `_amount` can be passed as `0` which means the user wants to withdraw all their tokens with accrued emission.
+The `_amount` parameter allows the user to define the amount of tokens to withdraw from their deposit. The balance can be obtained using the `balances(address _holder, uint256 _depositId)` public getter. The `_amount` can be passed as `0` which means the user wants to withdraw all of their tokens with accrued emission.
 
-When withdrawing deposit (fully or partly) the user will receive the specified amount of tokens and accrued emission.
+When withdrawing a deposit (fully or partly) the user will receive the specified amount of tokens and accrued emission.
 
-### Making instant withdrawal
+### Making an instant withdrawal
 
 To withdraw tokens from the `EasyStaking` contract immediately, a user needs to call `makeForcedWithdrawal(uint256 _depositId, uint256 _amount)`. In this case, the fee will be subtracted from the deposit.
 
 ### Examples of accruing emission
 
-There are 2 parts of emission rate:
-1. personal, that is calculated using sigmoid function and depends on the staking period (max 7.5%)
-2. general, that is calculated using linear function and depends on the total amount of staked tokens in relation to the total supply of STAKE token (max 7.5%)
+There are 2 parts that make up the emission rate:
+1. Personal (time-based): Calculated using a sigmoid function based on the staking period and amount of time a deposit is staked (max 7.5%)
+2. General (supply-based): Calculated using a linear function and based on the total amount of staked tokens in relation to the total supply of STAKE tokens (max 7.5%)
+
+Accrued emissions are calculated for the user (`userShare`), and the remaining accrued amount (15% APR - `userShare`) is sent to the assigned Liquidity Pool (LP) `_liquidityProvidersRewardAddress`.
 
 Data for examples:
 1. sigmoid function: https://www.desmos.com/calculator/2xtimbnzqw
@@ -78,17 +82,24 @@ Data for examples:
 
 **1st example:**
 
-User deposits `1000 tokens` then makes an instant withdrawal near this block. In this case, accrued emission is close to 0 with a fee of about `30 tokens`. User receives about `970 tokens` back.
+User deposits `1000 tokens` then makes an instant withdrawal near this block. In this case, accrued emission is close to 0 with a fee of about `30 tokens`. User receives about `970 tokens` back. The LP also receives close to 0 in accrued emissions.
 
 **2nd example:**
 
-User deposits `1000 tokens`. After `2 weeks` (14 days), the user replenishes the deposit by other `1000 tokens`. The personal APR is `2.67%` (look at the graph of the sigmoid function), the general APR is `(1500000 + 1000) / 8537500 * 0.075 * 100 = 1.32%` and accrued emission is `1000 * (2.67 + 1.32) / 100 * 14 / 365 = 1.53 tokens` (we assume a year has 365 days). The new balance is `1000 + 1.53 + 1000 = 2001.53 tokens` and deposit date is reset (starts from the replenishment point).
+User deposits `1000 tokens`. After `2 weeks` (14 days), the user replenishes the deposit by other `1000 tokens`. The personal APR is `2.67%` (see the graph of the sigmoid function), the general APR is `(1500000 + 1000) / 8537500 * 0.075 * 100 = 1.32%` and accrued emission is `1000 * (2.67 + 1.32) / 100 * 14 / 365 = 1.53 tokens` (we assume a year has 365 days). The new balance is `1000 + 1.53 + 1000 = 2001.53 tokens` and deposit date is reset (starts from the replenishment point).
 
-`3 months` (90 days) later the user makes a timed withdrawal for the total amount of `2001.53` tokens. The personal APR is `6.94%`, the general APR is `(1500000 + 2001.53) / 8537501.53 * 0.075 * 100 = 1.32%` and accrued emission is `2001.53 * (6.94 + 1.32) / 100 * 90 / 365 = 40.76 tokens`. User receives `2001.53 + 40.76 = 2,042.29 tokens`.
+`3 months` (90 days) later the user makes a timed withdrawal for the total amount of `2001.53` tokens. The personal APR is `6.94%`, the general APR is `(1500000 + 2001.53) / 8537501.53 * 0.075 * 100 = 1.32%` and accrued emission is `2001.53 * (6.94 + 1.32) / 100 * 90 / 365 = 40.76 tokens`. 
+
+- User receives `2001.53 + 40.76 = 2,042.29 tokens`.
+- LP receives `2001.53 * (15-(6.94 + 1.32)) / 100 * 90 / 365 = 33.26 tokens`.
 
 **3rd example**
 
-User deposits `1000 tokens`. Then they make a timed withdrawal for half after `6 months` (180 days). The personal APR is `7.35%`, the general APR is `(1500000 + 1000) / 8537500 * 0.075 * 100 = 1.32%` and accrued emission is `500 * (7.35 + 1.32) / 100 * 180 / 365 = 21.37 tokens`. User receives `521.37 tokens`, the new balance is `500 tokens` and the deposit date isn't reset (that is, the personal APR remained equal to 7.35%).
+User deposits `1000 tokens`. Then they make a timed withdrawal for half after `6 months` (180 days). The personal APR is `7.35%`, the general APR is `(1500000 + 1000) / 8537500 * 0.075 * 100 = 1.32%` and accrued emission is `500 * (7.35 + 1.32) / 100 * 180 / 365 = 21.37 tokens`. 
+
+- User receives `521.37 tokens`, the new balance is `500 tokens` and the deposit date is not reset (that is, the personal APR remains equal to 7.35% and continues to grow). 
+
+- On withdrawal, the LP receives `500 * (15-(7.35 + 1.32)) / 100 * 180 / 365 = 15.61 tokens`.
 
 ### Withdrawal Window
 
