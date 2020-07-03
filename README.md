@@ -72,7 +72,7 @@ There are 2 parts that make up the emission rate:
 1. Personal (time-based): Calculated using a sigmoid function based on the staking period and amount of time a deposit is staked (max 7.5%).
 2. General (supply-based): Calculated using a linear function and based on the total amount of staked tokens in relation to the total supply of STAKE tokens (max 7.5%).
 
-Accrued emissions are calculated for the user (`userShare`), and the remaining accrued amount (15% APR - `userShare`) is sent to the assigned Liquidity Pool (LP) `_liquidityProvidersRewardAddress`.
+Accrued emissions are calculated for the user (`userShare`), and the remaining accrued amount (15% APR - `userShare`) is sent to the assigned Liquidity Pool (LP) `liquidityProvidersRewardAddress`.
 
 Data for examples:
 1. sigmoid function: https://www.desmos.com/calculator/2xtimbnzqw
@@ -86,14 +86,14 @@ User deposits `1000 tokens` then makes an instant withdrawal near this block. In
 
 **2nd example:**
 
-User deposits `1000 tokens`. After `2 weeks` (14 days), the user replenishes the deposit by adding an additional `1000 tokens`. The personal APR is `2.67%` (see the graph of the sigmoid function), the general APR is `(1500000 + 1000) / 8537500 * 0.075 * 100 = 1.32%` and accrued emission is `1000 * (2.67 + 1.32) / 100 * 14 / 365 = 1.53 tokens` (we assume a year has 365 days). The new user balance is `1000 + 1.53 + 1000 = 2001.53 tokens` and the deposit date is reset (restarts at the replenishment time point). The LP also receives accrued emission from the deposit replenishment:  `1000 * (15-(2.67 + 1.32)) / 100 * 14 / 365 = 4.22 tokens`. 
+User deposits `1000 tokens`. After `2 weeks` (14 days), the user replenishes the deposit by adding an additional `1000 tokens`. The personal APR is `2.67%` (see the graph of the sigmoid function), the general APR is `(1500000 + 1000) / 8537500 * 0.075 * 100 = 1.32%` and accrued emission is `1000 * (2.67 + 1.32) / 100 * 14 / 365 = 1.53 tokens` (we assume a year has 365 days). The new user balance is `1000 + 1.53 + 1000 = 2001.53 tokens` and the deposit date is reset (restarts at the replenishment time point). The LP also receives accrued emission from the deposit replenishment: `1000 * (15-(2.67 + 1.32)) / 100 * 14 / 365 = 4.22 tokens`.
 
 _Note: The user could have instead chosen to create a 2nd deposit, which would have created a new deposit id and not reset the deposit date or generated accrued emissions for the initial 1000 token deposit._ 
 
-`3 months` (90 days) later the user makes a timed withdrawal for the total amount of `2001.53` tokens. The personal APR is `6.94%`, the general APR is `(1500000 + 2001.53) / 8537501.53 * 0.075 * 100 = 1.32%` and accrued emission is `2001.53 * (6.94 + 1.32) / 100 * 90 / 365 = 40.76 tokens`. On timed withdrawal:
+`3 months` (90 days) later the user makes a timed withdrawal for the total amount of `2001.53` tokens. The personal APR is `6.94%`, the general APR is `(1500000 + 2001.53) / (8537500 + 1.53 + 4.22) * 0.075 * 100 = 1.32%` and accrued emission for the user is `2001.53 * (6.94 + 1.32) / 100 * 90 / 365 = 40.76 tokens`. The LP also receives accrued emission from the timed withdrawal: `2001.53 * (15-(6.94 + 1.32)) / 100 * 90 / 365 = 33.26 tokens`. On timed withdrawal:
 
 - User receives `2001.53 + 40.76 = 2,042.29 tokens`.
-- LP receives `2001.53 * (15-(6.94 + 1.32)) / 100 * 90 / 365 = 33.26 tokens`.
+- LP receives `33.26 tokens`.
 
 **3rd example**
 
@@ -101,7 +101,7 @@ User deposits `1000 tokens`. Then they make a timed withdrawal for half after `6
 
 - User receives `521.37 tokens`, the new balance is `500 tokens` and the deposit date is not reset (that is, the personal APR remains equal to 7.35% and continues to grow). 
 
-- On withdrawal, the LP receives `500 * (15-(7.35 + 1.32)) / 100 * 180 / 365 = 15.61 tokens`.
+- On withdrawal, the LP receives `500 * (15-(7.35 + 1.32)) / 100 * 180 / 365 = 15.6 tokens`.
 
 ### Withdrawal Window
 
