@@ -6,6 +6,7 @@ const EasyStaking = artifacts.require('EasyStaking');
 const EasyStakingMock = artifacts.require('EasyStakingMock');
 const ReceiverMock = artifacts.require('ReceiverMock');
 const Token = artifacts.require('ERC677Mock');
+const ExtendedMathMock = artifacts.require('ExtendedMathMock');
 
 contract('PoaMania', accounts => {
   const [owner, user1, user2] = accounts;
@@ -602,6 +603,15 @@ contract('PoaMania', accounts => {
       const depositDate = await easyStaking.depositDates(user1, 1);
       const userAccruedEmission = calculateUserAccruedEmission(value, timePassed, totalSupply, totalStaked);
       expect((await easyStaking.getAccruedEmission(depositDate, value)).userShare).to.be.bignumber.equal(userAccruedEmission);
+    });
+  });
+  describe('ExtendedMath.sqrt', () => {
+    it('should be within the gas limit and calculated correctly', async () => {
+      const extendedMath = await ExtendedMathMock.new();
+      const { receipt } = await extendedMath.sqrt(constants.MAX_UINT256);
+      const expectedValue = squareRoot(constants.MAX_UINT256);
+      expect(receipt.gasUsed).to.be.lt(100000);
+      expect(await extendedMath.squareRoot()).to.be.bignumber.equal(expectedValue);
     });
   });
 });
