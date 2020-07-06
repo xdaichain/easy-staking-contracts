@@ -125,10 +125,11 @@ The owner can change the contract parameters and claim unsupported tokens accide
 2. `setFee(uint256)`
 3. `setWithdrawalLockDuration(uint256)`
 4. `setWithdrawalUnlockDuration(uint256)`
-5. `setSigmoidParameters(uint256,int256,uint256)`
-6. `setLiquidityProvidersRewardAddress(address)`
-7. `transferOwnership(address)`
-8. `renounceOwnership()`
+5. `setTotalSupplyFactor(uint256)`
+6. `setSigmoidParameters(uint256,int256,uint256)`
+7. `setLiquidityProvidersRewardAddress(address)`
+8. `transferOwnership(address)`
+9. `renounceOwnership()`
 
 ### Proxy Admin
 The Proxy Admin can upgrade the contract logic. This role will be abolished following an audit and sufficient testing.
