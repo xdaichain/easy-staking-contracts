@@ -120,14 +120,15 @@ contract EasyStaking is Ownable {
     ) external initializer {
         require(_owner != address(0), "zero address");
         require(_tokenAddress.isContract(), "not a contract address");
-        Ownable.initialize(_owner);
+        Ownable.initialize(msg.sender);
         token = IERC20Mintable(_tokenAddress);
-        _setFee(_fee);
-        _setWithdrawalLockDuration(_withdrawalLockDuration);
-        _setWithdrawalUnlockDuration(_withdrawalUnlockDuration);
-        _setTotalSupplyFactor(_totalSupplyFactor);
-        _setSigmoidParameters(_sigmoidParamA, _sigmoidParamB, _sigmoidParamC);
-        _setLiquidityProvidersRewardAddress(_liquidityProvidersRewardAddress);
+        setFee(_fee);
+        setWithdrawalLockDuration(_withdrawalLockDuration);
+        setWithdrawalUnlockDuration(_withdrawalUnlockDuration);
+        setTotalSupplyFactor(_totalSupplyFactor);
+        setSigmoidParameters(_sigmoidParamA, _sigmoidParamB, _sigmoidParamC);
+        setLiquidityProvidersRewardAddress(_liquidityProvidersRewardAddress);
+        Ownable.transferOwnership(_owner);
     }
 
     /**
@@ -248,8 +249,9 @@ contract EasyStaking is Ownable {
      * @dev Sets the fee for forced withdrawals. Can only be called by owner.
      * @param _fee The new fee value (in percentage).
      */
-    function setFee(uint256 _fee) external onlyOwner {
-        _setFee(_fee);
+    function setFee(uint256 _fee) public onlyOwner {
+        require(_fee <= 1 ether, "should be less than or equal to 1 ether");
+        fee = _fee;
     }
 
     /**
@@ -257,8 +259,9 @@ contract EasyStaking is Ownable {
      * Can only be called by owner.
      * @param _withdrawalLockDuration The new duration value (in seconds).
      */
-    function setWithdrawalLockDuration(uint256 _withdrawalLockDuration) external onlyOwner {
-        _setWithdrawalLockDuration(_withdrawalLockDuration);
+    function setWithdrawalLockDuration(uint256 _withdrawalLockDuration) public onlyOwner {
+        require(_withdrawalLockDuration > 0, "should be greater than 0");
+        withdrawalLockDuration = _withdrawalLockDuration;
     }
 
     /**
@@ -266,8 +269,9 @@ contract EasyStaking is Ownable {
      * Can only be called by owner.
      * @param _withdrawalUnlockDuration The new duration value (in seconds).
      */
-    function setWithdrawalUnlockDuration(uint256 _withdrawalUnlockDuration) external onlyOwner {
-        _setWithdrawalUnlockDuration(_withdrawalUnlockDuration);
+    function setWithdrawalUnlockDuration(uint256 _withdrawalUnlockDuration) public onlyOwner {
+        require(_withdrawalUnlockDuration > 0, "should be greater than 0");
+        withdrawalUnlockDuration = _withdrawalUnlockDuration;
     }
 
     /**
@@ -275,8 +279,9 @@ contract EasyStaking is Ownable {
      * Can only be called by owner.
      * @param _totalSupplyFactor The new factor value (in percentage).
      */
-    function setTotalSupplyFactor(uint256 _totalSupplyFactor) external onlyOwner {
-        _setTotalSupplyFactor(_totalSupplyFactor);
+    function setTotalSupplyFactor(uint256 _totalSupplyFactor) public onlyOwner {
+        require(_totalSupplyFactor <= 1 ether, "should be less than or equal to 1 ether");
+        totalSupplyFactor = _totalSupplyFactor;
     }
 
     /**
@@ -286,8 +291,9 @@ contract EasyStaking is Ownable {
      * @param _b Sigmoid parameter B. Signed integer.
      * @param _c Sigmoid parameter C. Unsigned integer. Cannot be zero.
      */
-    function setSigmoidParameters(uint256 _a, int256 _b, uint256 _c) external onlyOwner {
-        _setSigmoidParameters(_a, _b, _c);
+    function setSigmoidParameters(uint256 _a, int256 _b, uint256 _c) public onlyOwner {
+        require(_a <= MAX_EMISSION_RATE.div(2), "should be less than or equal to a half of the maximum emission rate");
+        sigmoid.setParameters(_a, _b, _c);
     }
 
     /**
@@ -295,8 +301,9 @@ contract EasyStaking is Ownable {
      * Can only be called by owner.
      * @param _address The new address.
      */
-    function setLiquidityProvidersRewardAddress(address _address) external onlyOwner {
-        _setLiquidityProvidersRewardAddress(_address);
+    function setLiquidityProvidersRewardAddress(address _address) public onlyOwner {
+        require(_address != address(0), "zero address");
+        liquidityProvidersRewardAddress = _address;
     }
 
     /**
@@ -400,62 +407,6 @@ contract EasyStaking is Ownable {
             token.transfer(liquidityProvidersRewardAddress, total.sub(userShare));
         }
         return (userShare, timePassed);
-    }
-
-    /**
-     * @dev Sets the fee of the forced withdrawals.
-     * @param _fee The new fee value (in percentage).
-     */
-    function _setFee(uint256 _fee) internal {
-        require(_fee <= 1 ether, "should be less than or equal to 1 ether");
-        fee = _fee;
-    }
-
-    /**
-     * @dev Sets the time from the request after which the withdrawal will be available.
-     * @param _withdrawalLockDuration The new duration value (in seconds).
-     */
-    function _setWithdrawalLockDuration(uint256 _withdrawalLockDuration) internal {
-        require(_withdrawalLockDuration > 0, "should be greater than 0");
-        withdrawalLockDuration = _withdrawalLockDuration;
-    }
-
-    /**
-     * @dev Sets the time during which the withdrawal will be available from the moment of unlocking.
-     * @param _withdrawalUnlockDuration The new duration value (in seconds).
-     */
-    function _setWithdrawalUnlockDuration(uint256 _withdrawalUnlockDuration) internal {
-        require(_withdrawalUnlockDuration > 0, "should be greater than 0");
-        withdrawalUnlockDuration = _withdrawalUnlockDuration;
-    }
-
-    /**
-     * @dev Sets total supply factor for calculating emission rate.
-     * @param _totalSupplyFactor The new factor value (in percentage).
-     */
-    function _setTotalSupplyFactor(uint256 _totalSupplyFactor) internal {
-        require(_totalSupplyFactor <= 1 ether, "should be less than or equal to 1 ether");
-        totalSupplyFactor = _totalSupplyFactor;
-    }
-
-    /**
-     * @dev Sets parameters of the sigmoid that is used to calculate the user's current emission rate.
-     * @param _a Sigmoid parameter A.
-     * @param _b Sigmoid parameter B.
-     * @param _c Sigmoid parameter C.
-     */
-    function _setSigmoidParameters(uint256 _a, int256 _b, uint256 _c) internal {
-        require(_a <= MAX_EMISSION_RATE.div(2), "should be less than or equal to a half of the maximum emission rate");
-        sigmoid.setParameters(_a, _b, _c);
-    }
-
-    /**
-     * @dev Sets the address for the Liquidity Providers reward.
-     * @param _address The new address.
-     */
-    function _setLiquidityProvidersRewardAddress(address _address) internal {
-        require(_address != address(0), "zero address");
-        liquidityProvidersRewardAddress = _address;
     }
 
     /**
