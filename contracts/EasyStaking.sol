@@ -300,6 +300,19 @@ contract EasyStaking is Ownable {
     }
 
     /**
+     * @return Emission rate based on the ratio of total staked to total supply.
+     */
+    function getSupplyBasedEmissionRate() public view returns (uint256) {
+        uint256 totalSupply = token.totalSupply();
+        uint256 target = totalSupply.mul(totalSupplyFactor).div(1 ether);
+        uint256 maxSupplyBasedEmissionRate = MAX_EMISSION_RATE.div(2); // 7.5%
+        if (totalStaked >= target) {
+            return maxSupplyBasedEmissionRate;
+        }
+        return maxSupplyBasedEmissionRate.mul(totalStaked).div(target);
+    }
+
+    /**
      * @param _depositDate Deposit date.
      * @param _amount Amount based on which emission is calculated and accrued.
      * @return Total accrued emission (for the user and Liquidity Providers), user share, and seconds passed since the previous deposit started.
@@ -313,7 +326,7 @@ contract EasyStaking is Ownable {
         timePassed = block.timestamp.sub(_depositDate);
         if (timePassed == 0) return (0, 0, 0);
         uint256 userEmissionRate = sigmoid.calculate(int256(timePassed));
-        userEmissionRate = userEmissionRate.add(_getEmissionRateBasedOnTotalStakedAmount());
+        userEmissionRate = userEmissionRate.add(getSupplyBasedEmissionRate());
         require(userEmissionRate <= MAX_EMISSION_RATE, "should be less than or equal to the maximum emission rate");
         total = _amount.mul(MAX_EMISSION_RATE).div(1 ether).mul(timePassed).div(YEAR);
         userShare = _amount.mul(userEmissionRate).div(1 ether).mul(timePassed).div(YEAR);
@@ -450,18 +463,5 @@ contract EasyStaking is Ownable {
      */
     function _setLocked(bool _locked) internal {
         locked = _locked;
-    }
-
-    /**
-     * @return Emission rate based on total staked amount.
-     */
-    function _getEmissionRateBasedOnTotalStakedAmount() internal view returns (uint256) {
-        uint256 totalSupply = token.totalSupply();
-        uint256 target = totalSupply.mul(totalSupplyFactor).div(1 ether);
-        uint256 maxSupplyBasedEmissionRate = MAX_EMISSION_RATE.div(2); // 7.5%
-        if (totalStaked >= target) {
-            return maxSupplyBasedEmissionRate;
-        }
-        return maxSupplyBasedEmissionRate.mul(totalStaked).div(target);
     }
 }
