@@ -74,6 +74,8 @@ contract EasyStaking is Ownable {
     uint256 public withdrawalLockDuration;
     // The time during which the withdrawal will be available from the moment of unlocking (in seconds)
     uint256 public withdrawalUnlockDuration;
+    // Total supply factor for calculating emission rate (in percentage)
+    uint256 public totalSupplyFactor;
 
     // The deposit balances of users
     mapping (address => mapping (uint256 => uint256)) public balances;
@@ -99,6 +101,7 @@ contract EasyStaking is Ownable {
      * @param _fee The fee of the forced withdrawal (in percentage).
      * @param _withdrawalLockDuration The time from the request after which the withdrawal will be available (in seconds).
      * @param _withdrawalUnlockDuration The time during which the withdrawal will be available from the moment of unlocking (in seconds).
+     * @param _totalSupplyFactor Total supply factor for calculating emission rate (in percentage).
      * @param _sigmoidParamA Sigmoid parameter A.
      * @param _sigmoidParamB Sigmoid parameter B.
      * @param _sigmoidParamC Sigmoid parameter C.
@@ -110,6 +113,7 @@ contract EasyStaking is Ownable {
         uint256 _fee,
         uint256 _withdrawalLockDuration,
         uint256 _withdrawalUnlockDuration,
+        uint256 _totalSupplyFactor,
         uint256 _sigmoidParamA,
         int256 _sigmoidParamB,
         uint256 _sigmoidParamC
@@ -121,6 +125,7 @@ contract EasyStaking is Ownable {
         _setFee(_fee);
         _setWithdrawalLockDuration(_withdrawalLockDuration);
         _setWithdrawalUnlockDuration(_withdrawalUnlockDuration);
+        _setTotalSupplyFactor(_totalSupplyFactor);
         _setSigmoidParameters(_sigmoidParamA, _sigmoidParamB, _sigmoidParamC);
         _setLiquidityProvidersRewardAddress(_liquidityProvidersRewardAddress);
     }
@@ -266,6 +271,15 @@ contract EasyStaking is Ownable {
     }
 
     /**
+     * @dev Sets total supply factor for calculating emission rate.
+     * Can only be called by owner.
+     * @param _totalSupplyFactor The new factor value (in percentage).
+     */
+    function setTotalSupplyFactor(uint256 _totalSupplyFactor) external onlyOwner {
+        _setTotalSupplyFactor(_totalSupplyFactor);
+    }
+
+    /**
      * @dev Sets parameters of the sigmoid that is used to calculate the user's current emission rate.
      * Can only be called by owner.
      * @param _a Sigmoid parameter A. Unsigned integer.
@@ -403,6 +417,15 @@ contract EasyStaking is Ownable {
     }
 
     /**
+     * @dev Sets total supply factor for calculating emission rate.
+     * @param _totalSupplyFactor The new factor value (in percentage).
+     */
+    function _setTotalSupplyFactor(uint256 _totalSupplyFactor) internal {
+        require(_totalSupplyFactor <= 1 ether, "should be less than or equal to 1 ether");
+        totalSupplyFactor = _totalSupplyFactor;
+    }
+
+    /**
      * @dev Sets parameters of the sigmoid that is used to calculate the user's current emission rate.
      * @param _a Sigmoid parameter A.
      * @param _b Sigmoid parameter B.
@@ -434,6 +457,11 @@ contract EasyStaking is Ownable {
      */
     function _getEmissionRateBasedOnTotalStakedAmount() internal view returns (uint256) {
         uint256 totalSupply = token.totalSupply();
-        return MAX_EMISSION_RATE.div(2).mul(totalStaked).div(totalSupply); // max 7.5%
+        uint256 target = totalSupply.mul(totalSupplyFactor).div(1 ether);
+        uint256 maxSupplyBasedEmissionRate = MAX_EMISSION_RATE.div(2); // 7.5%
+        if (totalStaked >= target) {
+            return maxSupplyBasedEmissionRate;
+        }
+        return maxSupplyBasedEmissionRate.mul(totalStaked).div(target);
     }
 }

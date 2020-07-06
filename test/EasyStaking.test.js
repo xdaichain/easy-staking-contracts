@@ -18,12 +18,13 @@ contract('PoaMania', accounts => {
   const sigmoidParamB = new BN(0);
   const sigmoidParamC = new BN(10000000000000);
   const oneEther = ether('1');
+  const totalSupplyFactor = ether('1');
 
   let easyStaking;
   let stakeToken;
   let liquidityProvidersRewardAddress = user2;
 
-  const initializeMethod = 'initialize(address,address,address,uint256,uint256,uint256,uint256,int256,uint256)';
+  const initializeMethod = 'initialize(address,address,address,uint256,uint256,uint256,uint256,uint256,int256,uint256)';
 
   function initialize(...params) {
     if (params.length === 0) {
@@ -34,6 +35,7 @@ contract('PoaMania', accounts => {
         fee.toString(),
         withdrawalLockDuration.toString(),
         withdrawalUnlockDuration.toString(),
+        totalSupplyFactor.toString(),
         sigmoidParamA.toString(),
         sigmoidParamB.toString(),
         sigmoidParamC.toString(),
@@ -93,6 +95,7 @@ contract('PoaMania', accounts => {
           fee.toString(),
           withdrawalLockDuration.toString(),
           withdrawalUnlockDuration.toString(),
+          totalSupplyFactor.toString(),
           sigmoidParamA.toString(),
           sigmoidParamB.toString(),
           sigmoidParamC.toString(),
@@ -107,6 +110,7 @@ contract('PoaMania', accounts => {
           fee.toString(),
           withdrawalLockDuration.toString(),
           withdrawalUnlockDuration.toString(),
+          totalSupplyFactor.toString(),
           sigmoidParamA.toString(),
           sigmoidParamB.toString(),
           sigmoidParamC.toString(),
@@ -118,9 +122,70 @@ contract('PoaMania', accounts => {
           owner,
           stakeToken.address,
           liquidityProvidersRewardAddress,
+          ether('1.01').toString(),
+          withdrawalLockDuration.toString(),
+          withdrawalUnlockDuration.toString(),
+          totalSupplyFactor.toString(),
+          sigmoidParamA.toString(),
+          sigmoidParamB.toString(),
+          sigmoidParamC.toString(),
+        ),
+        'should be less than or equal to 1 ether'
+      );
+      await expectRevert(
+        initialize(
+          owner,
+          stakeToken.address,
+          liquidityProvidersRewardAddress,
           fee.toString(),
           withdrawalLockDuration.toString(),
           withdrawalUnlockDuration.toString(),
+          ether('1.01').toString(),
+          sigmoidParamA.toString(),
+          sigmoidParamB.toString(),
+          sigmoidParamC.toString(),
+        ),
+        'should be less than or equal to 1 ether'
+      );
+      await expectRevert(
+        initialize(
+          owner,
+          stakeToken.address,
+          liquidityProvidersRewardAddress,
+          fee.toString(),
+          0,
+          withdrawalUnlockDuration.toString(),
+          totalSupplyFactor.toString(),
+          sigmoidParamA.toString(),
+          sigmoidParamB.toString(),
+          sigmoidParamC.toString(),
+        ),
+        'should be greater than 0'
+      );
+      await expectRevert(
+        initialize(
+          owner,
+          stakeToken.address,
+          liquidityProvidersRewardAddress,
+          fee.toString(),
+          withdrawalLockDuration.toString(),
+          0,
+          totalSupplyFactor.toString(),
+          sigmoidParamA.toString(),
+          sigmoidParamB.toString(),
+          sigmoidParamC.toString(),
+        ),
+        'should be greater than 0'
+      );
+      await expectRevert(
+        initialize(
+          owner,
+          stakeToken.address,
+          liquidityProvidersRewardAddress,
+          fee.toString(),
+          withdrawalLockDuration.toString(),
+          withdrawalUnlockDuration.toString(),
+          totalSupplyFactor.toString(),
           ether('0.076').toString(),
           sigmoidParamB.toString(),
           sigmoidParamC.toString(),
@@ -135,6 +200,7 @@ contract('PoaMania', accounts => {
           fee.toString(),
           withdrawalLockDuration.toString(),
           withdrawalUnlockDuration.toString(),
+          totalSupplyFactor.toString(),
           sigmoidParamA.toString(),
           sigmoidParamB.toString(),
           sigmoidParamC.toString(),
