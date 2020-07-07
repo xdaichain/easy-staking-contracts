@@ -336,7 +336,15 @@ contract('PoaMania', accounts => {
     }
   }
   describe('deposit', () => testDeposit(true));
-  describe('onTokenTransfer', () => testDeposit(false));
+  describe('onTokenTransfer', () => {
+    testDeposit(false);
+    it('fails if not a token address', async () => {
+      await expectRevert(
+        easyStaking.onTokenTransfer(user1, ether('1'), '0x', { from: owner }),
+        'only token contract is allowed'
+      );
+    });
+  });
   describe('makeForcedWithdrawal', () => {
     const value = ether('1000');
     beforeEach(async () => {
