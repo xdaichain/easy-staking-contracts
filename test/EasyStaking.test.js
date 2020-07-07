@@ -60,12 +60,16 @@ contract('PoaMania', accounts => {
     return z;
   }
 
+  function calculateSupplyBasedEmissionRate(totalSupply, totalStaked, factor = totalSupplyFactor) {
+    return MAX_EMISSION_RATE.div(new BN(2)).mul(totalStaked).div(totalSupply.mul(factor).div(oneEther));
+  }
+
   function calculateUserAccruedEmission(deposit, timePassed, totalSupply, totalStaked) {
     let userEmissionRate = sigmoidParamA.mul(timePassed.sub(sigmoidParamB)).div(squareRoot(timePassed.sub(sigmoidParamB).sqr().add(sigmoidParamC)));
     if (userEmissionRate.lt(new BN(0))) {
       userEmissionRate = new BN(0);
     }
-    const emissionRateBasedOnTotalStakedAmount = MAX_EMISSION_RATE.div(new BN(2)).mul(totalStaked).div(totalSupply);
+    const emissionRateBasedOnTotalStakedAmount = calculateSupplyBasedEmissionRate(totalSupply, totalStaked);
     userEmissionRate = userEmissionRate.add(emissionRateBasedOnTotalStakedAmount);
     return deposit.mul(userEmissionRate).div(oneEther).mul(timePassed).div(YEAR);
   }
@@ -661,6 +665,24 @@ contract('PoaMania', accounts => {
         easyStaking.claimTokens(constants.ZERO_ADDRESS, easyStaking.address, { from: owner }),
         'not a valid recipient',
       );
+    });
+  });
+  describe('getSupplyBasedEmissionRate', () => {
+    it('should be calculated correctly', async () => {
+      const value = ether('3000000');
+      const totalSupply = ether('8537500');
+      await stakeToken.mint(owner, totalSupply, { from: owner });
+      await stakeToken.transfer(user1, value, { from: owner });
+      await stakeToken.approve(easyStaking.address, value, { from: user1 });
+      await easyStaking.methods['deposit(uint256)'](value, { from: user1 });
+      const totalStaked = value;
+      const supplyBasedEmissionRate1 = calculateSupplyBasedEmissionRate(totalSupply, totalStaked);
+      expect(await easyStaking.getSupplyBasedEmissionRate()).to.be.bignumber.equal(supplyBasedEmissionRate1);
+      const newTotalSupplyFactor = ether('0.7');
+      await easyStaking.setTotalSupplyFactor(newTotalSupplyFactor);
+      const supplyBasedEmissionRate2 = calculateSupplyBasedEmissionRate(totalSupply, totalStaked, newTotalSupplyFactor);
+      expect(await easyStaking.getSupplyBasedEmissionRate()).to.be.bignumber.equal(supplyBasedEmissionRate2);
+      expect(supplyBasedEmissionRate1).to.be.bignumber.equal(supplyBasedEmissionRate2.mul(newTotalSupplyFactor).div(oneEther))
     });
   });
   describe('getAccruedEmission', () => {
