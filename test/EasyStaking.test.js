@@ -225,8 +225,9 @@ contract('PoaMania', accounts => {
     });
     it('should deposit', async () => {
       const value = ether('100');
+      let receipt;
       if (directly) {
-        const receipt = await easyStaking.methods['deposit(uint256)'](value, { from: user1 });
+        receipt = await easyStaking.methods['deposit(uint256)'](value, { from: user1 });
         expectEvent(receipt, 'Deposited', {
           sender: user1,
           amount: value,
@@ -236,25 +237,26 @@ contract('PoaMania', accounts => {
           prevDepositDuration: new BN(0),
         });
       } else {
-        await stakeToken.transfer(easyStaking.address, value, { from: user1 });
+        receipt = await stakeToken.transfer(easyStaking.address, value, { from: user1 });
       }
-      const timestamp = await time.latest();
+      const timestamp = await getBlockTimestamp(receipt);
       expect(await easyStaking.balances(user1, 1)).to.be.bignumber.equal(value);
       expect(await easyStaking.depositDates(user1, 1)).to.be.bignumber.equal(timestamp);
     });
     it('should accrue emission', async () => {
       const value = ether('100');
+      let receipt;
       if (directly) {
-        await easyStaking.methods['deposit(uint256)'](value, { from: user1 });
+        receipt = await easyStaking.methods['deposit(uint256)'](value, { from: user1 });
       } else {
-        await stakeToken.transfer(easyStaking.address, value, { from: user1 });
+        receipt = await stakeToken.transfer(easyStaking.address, value, { from: user1 });
       }
-      const timestampBefore = await time.latest();
+      const timestampBefore = await getBlockTimestamp(receipt);
       await time.increase(YEAR.div(new BN(8)));
       const totalSupply = await stakeToken.totalSupply();
       const totalStaked = await easyStaking.totalStaked();
-      const receipt = await easyStaking.methods['deposit(uint256,uint256)'](1, value, { from: user1 });
-      const timestampAfter = await time.latest();
+      receipt = await easyStaking.methods['deposit(uint256,uint256)'](1, value, { from: user1 });
+      const timestampAfter = await getBlockTimestamp(receipt);
       const timePassed = timestampAfter.sub(timestampBefore);
       const userAccruedEmission = calculateUserAccruedEmission(value, timePassed, totalSupply, totalStaked);
       if (directly) {
@@ -289,15 +291,15 @@ contract('PoaMania', accounts => {
       expect(await easyStaking.depositDates(user1, 1)).to.be.bignumber.equal(new BN(0));
       expect(await easyStaking.depositDates(user1, 2)).to.be.bignumber.equal(new BN(0));
 
-      await easyStaking.methods['deposit(uint256,uint256)'](1, value, { from: user1 });
+      let receipt = await easyStaking.methods['deposit(uint256,uint256)'](1, value, { from: user1 });
       expect(await easyStaking.balances(user1, 1)).to.be.bignumber.equal(value);
-      const timestampBefore = await time.latest();
+      const timestampBefore = await getBlockTimestamp(receipt);
       const totalSupply = await stakeToken.totalSupply();
       const totalStaked = await easyStaking.totalStaked();
       const balanceBefore = await stakeToken.balanceOf(user1);
       await time.increase(YEAR);
-      const receipt = await easyStaking.makeForcedWithdrawal(1, 0, { from: user1 });
-      const timestampAfter = await time.latest();
+      receipt = await easyStaking.makeForcedWithdrawal(1, 0, { from: user1 });
+      const timestampAfter = await getBlockTimestamp(receipt);
       const timePassed = timestampAfter.sub(timestampBefore);
       const userAccruedEmission = calculateUserAccruedEmission(value, timePassed, totalSupply, totalStaked);
       const balanceAfter = await stakeToken.balanceOf(user1);
@@ -438,8 +440,8 @@ contract('PoaMania', accounts => {
       const value = ether('1000');
       await stakeToken.mint(user1, value, { from: owner });
       await stakeToken.transfer(easyStaking.address, value, { from: user1 });
-      await easyStaking.requestWithdrawal(1, { from: user1 });
-      const timestamp = await time.latest();
+      const receipt = await easyStaking.requestWithdrawal(1, { from: user1 });
+      const timestamp = await getBlockTimestamp(receipt);
       expect(await easyStaking.withdrawalRequestsDates(user1, 1)).to.be.bignumber.equal(timestamp);
     });
   });
@@ -450,14 +452,14 @@ contract('PoaMania', accounts => {
       await stakeToken.approve(easyStaking.address, ether('10000'), { from: user1 });
     });
     it('should withdraw', async () => {
-      await easyStaking.methods['deposit(uint256)'](value, { from: user1 });
-      const timestampBefore = await time.latest();
+      let receipt = await easyStaking.methods['deposit(uint256)'](value, { from: user1 });
+      const timestampBefore = await getBlockTimestamp(receipt);
       await easyStaking.requestWithdrawal(1, { from: user1 });
       await time.increase(withdrawalLockDuration);
       const totalSupply = await stakeToken.totalSupply();
       const totalStaked = await easyStaking.totalStaked();
-      const receipt = await easyStaking.makeRequestedWithdrawal(1, 0, { from: user1 });
-      const timestampAfter = await time.latest();
+      receipt = await easyStaking.makeRequestedWithdrawal(1, 0, { from: user1 });
+      const timestampAfter = await getBlockTimestamp(receipt);
       const timePassed = timestampAfter.sub(timestampBefore);
       const userAccruedEmission = calculateUserAccruedEmission(value, timePassed, totalSupply, totalStaked);
       expect(await easyStaking.withdrawalRequestsDates(user1, 1)).to.be.bignumber.equal(new BN(0));
@@ -701,8 +703,8 @@ contract('PoaMania', accounts => {
       const value = ether('100');
       await stakeToken.mint(user1, value, { from: owner });
       await stakeToken.approve(easyStaking.address, value, { from: user1 });
-      await easyStaking.methods['deposit(uint256)'](value, { from: user1 });
-      const timestampBefore = await time.latest();
+      const receipt = await easyStaking.methods['deposit(uint256)'](value, { from: user1 });
+      const timestampBefore = await getBlockTimestamp(receipt);
       await time.increase(YEAR.div(new BN(8)));
       await time.advanceBlock();
       const timestampAfter = await time.latest();
