@@ -716,13 +716,28 @@ contract('PoaMania', accounts => {
       expect((await easyStaking.getAccruedEmission(depositDate, value)).userShare).to.be.bignumber.equal(userAccruedEmission);
     });
   });
-  describe('ExtendedMath.sqrt', () => {
-    it('should be within the gas limit and calculated correctly', async () => {
-      const extendedMath = await ExtendedMathMock.new();
+  describe('ExtendedMath', () => {
+    let extendedMath;
+    beforeEach(async () => {
+      extendedMath = await ExtendedMathMock.new();
+    });
+    it('sqrt should be within the gas limit and calculated correctly', async () => {
       const { receipt } = await extendedMath.sqrt(constants.MAX_UINT256);
       const expectedValue = squareRoot(constants.MAX_UINT256);
       expect(receipt.gasUsed).to.be.lt(100000);
       expect(await extendedMath.squareRoot()).to.be.bignumber.equal(expectedValue);
+    });
+    it('sqrt of 0-3', async () => {
+      await extendedMath.sqrt(0);
+      expect(await extendedMath.squareRoot()).to.be.bignumber.equal(new BN(0));
+      for(let i = 1; i < 4; i++) {
+        await extendedMath.sqrt(i);
+        expect(await extendedMath.squareRoot()).to.be.bignumber.equal(new BN(1));
+      }
+    });
+    it('pow2 of 0', async () => {
+      await extendedMath.pow2(0);
+      expect(await extendedMath.squaredValue()).to.be.bignumber.equal(new BN(0));
     });
   });
 });
