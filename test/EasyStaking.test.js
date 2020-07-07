@@ -506,6 +506,9 @@ contract('PoaMania', accounts => {
         'Ownable: caller is not the owner',
       );
     });
+    it('fails if equal to zero', async () => {
+      await expectRevert(easyStaking.setWithdrawalLockDuration(0, { from: owner }), 'should be greater than 0');
+    });
   });
   describe('setWithdrawalUnlockDuration', () => {
     it('should set', async () => {
@@ -519,6 +522,79 @@ contract('PoaMania', accounts => {
       await expectRevert(
         easyStaking.setWithdrawalUnlockDuration(new BN(100), { from: user1 }),
         'Ownable: caller is not the owner',
+      );
+    });
+    it('fails if equal to zero', async () => {
+      await expectRevert(easyStaking.setWithdrawalUnlockDuration(0, { from: owner }), 'should be greater than 0');
+    });
+  });
+  describe('setTotalSupplyFactor', () => {
+    it('should set', async () => {
+      const newTotalSupplyFactor = ether('0.9');
+      expect(await easyStaking.totalSupplyFactor()).to.be.bignumber.equal(totalSupplyFactor);
+      expect(newTotalSupplyFactor).to.be.bignumber.not.equal(totalSupplyFactor);
+      await easyStaking.setTotalSupplyFactor(newTotalSupplyFactor, { from: owner });
+      expect(await easyStaking.totalSupplyFactor()).to.be.bignumber.equal(newTotalSupplyFactor);
+    });
+    it('fails if not an owner', async () => {
+      await expectRevert(
+        easyStaking.setTotalSupplyFactor(ether('0.9'), { from: user1 }),
+        'Ownable: caller is not the owner',
+      );
+    });
+    it('fails if greater than 1 ether', async () => {
+      await expectRevert(
+        easyStaking.setTotalSupplyFactor(ether('1.01'), { from: owner }),
+        'should be less than or equal to 1 ether'
+      );
+    });
+  });
+  describe('setSigmoidParameters', () => {
+    it('should set', async () => {
+      const newSigmoidParams = { a: ether('0.065'), b: new BN(10000), c: new BN(999999) };
+      let sigmoidParams = await easyStaking.getSigmoidParameters();
+      expect(sigmoidParams.a).to.be.bignumber.equal(sigmoidParamA);
+      expect(sigmoidParams.b).to.be.bignumber.equal(sigmoidParamB);
+      expect(sigmoidParams.c).to.be.bignumber.equal(sigmoidParamC);
+      await easyStaking.setSigmoidParameters(newSigmoidParams.a, newSigmoidParams.b, newSigmoidParams.c, { from: owner });
+      sigmoidParams = await easyStaking.getSigmoidParameters();
+      expect(sigmoidParams.a).to.be.bignumber.equal(newSigmoidParams.a);
+      expect(sigmoidParams.b).to.be.bignumber.equal(newSigmoidParams.b);
+      expect(sigmoidParams.c).to.be.bignumber.equal(newSigmoidParams.c);
+    });
+    it('fails if not an owner', async () => {
+      const newSigmoidParams = { a: ether('0.065'), b: new BN(10000), c: new BN(999999) };
+      await expectRevert(
+        easyStaking.setSigmoidParameters(newSigmoidParams.a, newSigmoidParams.b, newSigmoidParams.c, { from: user1 }),
+        'Ownable: caller is not the owner',
+      );
+    });
+    it('fails if wrong values', async () => {
+      await expectRevert(
+        easyStaking.setSigmoidParameters(ether('0.076'), sigmoidParamB, sigmoidParamC),
+        'should be less than or equal to a half of the maximum emission rate'
+      );
+      await expectRevert(easyStaking.setSigmoidParameters(sigmoidParamA, sigmoidParamB, 0), 'should be greater than 0');
+    });
+  });
+  describe('setLiquidityProvidersRewardAddress', () => {
+    it('should set', async () => {
+      const newLiquidityProvidersRewardAddress = user1;
+      expect(await easyStaking.liquidityProvidersRewardAddress()).to.be.bignumber.equal(liquidityProvidersRewardAddress);
+      expect(newLiquidityProvidersRewardAddress).to.be.bignumber.not.equal(liquidityProvidersRewardAddress);
+      await easyStaking.setLiquidityProvidersRewardAddress(newLiquidityProvidersRewardAddress, { from: owner });
+      expect(await easyStaking.liquidityProvidersRewardAddress()).to.be.bignumber.equal(newLiquidityProvidersRewardAddress);
+    });
+    it('fails if not an owner', async () => {
+      await expectRevert(
+        easyStaking.setLiquidityProvidersRewardAddress(user1, { from: user1 }),
+        'Ownable: caller is not the owner',
+      );
+    });
+    it('fails if equal to zero', async () => {
+      await expectRevert(
+        easyStaking.setLiquidityProvidersRewardAddress(constants.ZERO_ADDRESS, { from: owner }),
+        'zero address'
       );
     });
   });
