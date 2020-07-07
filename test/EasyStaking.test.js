@@ -334,7 +334,7 @@ contract('PoaMania', accounts => {
       const userAccruedEmission1 = calculateUserAccruedEmission(oneEther, timePassed, totalSupply, totalStaked);
       const feeValue1 = oneEther.add(userAccruedEmission1).mul(fee).div(oneEther);
       expect(await easyStaking.balances(user1, 1)).to.be.bignumber.equal(value.sub(oneEther));
-      expect(await easyStaking.depositDates(user1, 1)).to.be.bignumber.equal(timestampAfter);
+      expect(await easyStaking.depositDates(user1, 1)).to.be.bignumber.equal(timestampBefore);
       expect(await easyStaking.totalStaked()).to.be.bignumber.equal(value.sub(oneEther));
       expect(await stakeToken.balanceOf(user1)).to.be.bignumber.equal(oneEther.add(userAccruedEmission1).sub(feeValue1));
       expectEvent(receipt, 'Withdrawn', {
@@ -343,7 +343,7 @@ contract('PoaMania', accounts => {
         id: new BN(1),
         balance: value.sub(oneEther),
         accruedEmission: userAccruedEmission1,
-        lastDepositDuration: timestampAfter.sub(timestampBefore),
+        lastDepositDuration: timePassed,
         fee: feeValue1,
       });
       timestampAfter = timestampBefore;
