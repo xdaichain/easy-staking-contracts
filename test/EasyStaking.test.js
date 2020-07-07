@@ -454,7 +454,7 @@ contract('PoaMania', accounts => {
       }
       expect(await easyStaking.totalStaked()).to.be.bignumber.equal(new BN(0));
     });
-    it('should fail if trying to withdraw more than deposited', async () => {
+    it('fails if trying to withdraw more than deposited', async () => {
       await easyStaking.methods['deposit(uint256)'](ether('10'), { from: user1 });
       await time.increase(YEAR);
       await expectRevert(
@@ -462,6 +462,22 @@ contract('PoaMania', accounts => {
         'SafeMath: subtraction overflow'
       );
       await easyStaking.makeForcedWithdrawal(1, ether('10'), { from: user1 });
+    });
+    it('fails if wrong deposit id', async () => {
+      await easyStaking.methods['deposit(uint256)'](ether('10'), { from: user1 });
+      await expectRevert(
+        easyStaking.makeForcedWithdrawal(2, ether('10'), { from: user1 }),
+        'wrong deposit id'
+      );
+      await easyStaking.makeForcedWithdrawal(1, ether('10'), { from: user1 });
+    });
+    it('fails if zero balance', async () => {
+      await easyStaking.methods['deposit(uint256)'](ether('10'), { from: user1 });
+      await easyStaking.makeForcedWithdrawal(1, ether('10'), { from: user1 });
+      await expectRevert(
+        easyStaking.makeForcedWithdrawal(1, ether('10'), { from: user1 }),
+        'zero balance'
+      );
     });
   });
   describe('requestWithdrawal', () => {
@@ -472,6 +488,9 @@ contract('PoaMania', accounts => {
       const receipt = await easyStaking.requestWithdrawal(1, { from: user1 });
       const timestamp = await getBlockTimestamp(receipt);
       expect(await easyStaking.withdrawalRequestsDates(user1, 1)).to.be.bignumber.equal(timestamp);
+    });
+    it('fails if wrong deposit id', async () => {
+      await expectRevert(easyStaking.requestWithdrawal(1, { from: user1 }), 'wrong deposit id');
     });
   });
   describe('makeRequestedWithdrawal', () => {
