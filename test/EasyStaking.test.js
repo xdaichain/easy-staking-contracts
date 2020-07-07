@@ -326,16 +326,16 @@ contract('PoaMania', accounts => {
         );
       }
     });
-    if (directly) {
-      it('fails if wrong deposit id', async () => {
-        await expectRevert(
-          easyStaking.methods['deposit(uint256,uint256)'](1, ether('100'), { from: user1 }),
-          'wrong deposit id'
-        );
-      });
-    }
   }
-  describe('deposit', () => testDeposit(true));
+  describe('deposit', () => {
+    testDeposit(true);
+    it('fails if wrong deposit id', async () => {
+      await expectRevert(
+        easyStaking.methods['deposit(uint256,uint256)'](1, ether('100'), { from: user1 }),
+        'wrong deposit id'
+      );
+    });
+  });
   describe('onTokenTransfer', () => {
     testDeposit(false);
     it('fails if not a token address', async () => {
