@@ -83,7 +83,7 @@ contract('PoaMania', accounts => {
     easyStaking = await EasyStaking.new();
     liquidityProvidersRewardContract = await ReceiverMock.new();
     await initialize();
-    await stakeToken.initialize('Stake', 'STAKE', 18, 0, owner, [owner, easyStaking.address], []);
+    await stakeToken.initialize('Stake', 'STAKE', 18, 0, owner, [owner, easyStaking.address], [], easyStaking.address);
   });
 
   describe('initialize', () => {
@@ -313,6 +313,27 @@ contract('PoaMania', accounts => {
       });
       expect(balanceAfter).to.be.bignumber.equal(balanceBefore.add(value.add(userAccruedEmission)));
     });
+    it('fails if deposit value is zero', async () => {
+      if (directly) {
+        await expectRevert(
+          easyStaking.methods['deposit(uint256)'](0, { from: user1 }),
+          'deposit amount should be more than 0'
+        );
+      } else {
+        await expectRevert(
+          stakeToken.transfer(easyStaking.address, 0, { from: user1 }),
+          `you can't transfer to bridge contract` // if onTokenTransfer() fails
+        );
+      }
+    });
+    if (directly) {
+      it('fails if wrong deposit id', async () => {
+        await expectRevert(
+          easyStaking.methods['deposit(uint256,uint256)'](1, ether('100'), { from: user1 }),
+          'wrong deposit id'
+        );
+      });
+    }
   }
   describe('deposit', () => testDeposit(true));
   describe('onTokenTransfer', () => testDeposit(false));
