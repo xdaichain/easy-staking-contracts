@@ -415,6 +415,8 @@ contract('EasyStaking', accounts => {
       const timePassed = timestampAfter.sub(timestampBefore);
       const userAccruedEmission = calculateUserAccruedEmission(value, timePassed, totalSupply, totalStaked);
       const feeValue = value.add(userAccruedEmission).mul(fee).div(oneEther);
+      expect(userAccruedEmission).to.be.bignumber.gt(new BN(0));
+      expect(feeValue).to.be.bignumber.gt(new BN(0));
       expect(await easyStaking.balances(user1, 1)).to.be.bignumber.equal(new BN(0));
       expect(await stakeToken.balanceOf(user1)).to.be.bignumber.equal(value.add(userAccruedEmission).sub(feeValue));
     });
@@ -429,6 +431,8 @@ contract('EasyStaking', accounts => {
       const timePassed = timestampAfter.sub(timestampBefore);
       const userAccruedEmission = calculateUserAccruedEmission(oneEther, timePassed, totalSupply, totalStaked);
       const feeValue = oneEther.add(userAccruedEmission).mul(fee).div(oneEther);
+      expect(userAccruedEmission).to.be.bignumber.gt(new BN(0));
+      expect(feeValue).to.be.bignumber.gt(new BN(0));
       expect(await easyStaking.balances(user1, 1)).to.be.bignumber.equal(value.sub(oneEther));
       expect(await stakeToken.balanceOf(user1)).to.be.bignumber.equal(oneEther.add(userAccruedEmission).sub(feeValue));
     });
@@ -454,6 +458,7 @@ contract('EasyStaking', accounts => {
         const feeValue = values[i].add(userAccruedEmission).mul(fee).div(oneEther);
         const expectedExchangeBalance = exchangeBalance.add(values[i]).add(userAccruedEmission).sub(feeValue);
         expect(userAccruedEmission).to.be.bignumber.gt(new BN(0));
+        expect(feeValue).to.be.bignumber.gt(new BN(0));
         expect(await easyStaking.balances(exchange, i + 1)).to.be.bignumber.equal(new BN(0));
         expect(await stakeToken.balanceOf(exchange)).to.be.bignumber.equal(expectedExchangeBalance);
         exchangeBalance = expectedExchangeBalance;
@@ -542,7 +547,7 @@ contract('EasyStaking', accounts => {
     it('should fail if too late', async () => {
       await easyStaking.methods['deposit(uint256)'](value, { from: user1 });
       await easyStaking.requestWithdrawal(1, { from: user1 });
-      await time.increase(withdrawalLockDuration.add(new BN(86400)));
+      await time.increase(withdrawalLockDuration.add(withdrawalUnlockDuration).add(new BN(1)));
       await expectRevert(easyStaking.makeRequestedWithdrawal(1, 0, { from: user1 }), 'too late');
     });
   });
