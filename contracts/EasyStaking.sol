@@ -66,6 +66,44 @@ contract EasyStaking is Ownable {
         uint256 lastDepositDuration
     );
 
+    /**
+     * @dev Emitted when a new fee value is set.
+     * @param value A new fee value.
+     */
+    event FeeSet(uint256 value);
+
+    /**
+     * @dev Emitted when a new withdrawal lock duration value is set.
+     * @param value A new withdrawal lock duration value.
+     */
+    event WithdrawalLockDurationSet(uint256 value);
+
+    /**
+     * @dev Emitted when a new withdrawal unlock duration value is set.
+     * @param value A new withdrawal unlock duration value.
+     */
+    event WithdrawalUnlockDurationSet(uint256 value);
+
+    /**
+     * @dev Emitted when a new total supply factor value is set.
+     * @param value A new total supply factor value.
+     */
+    event TotalSupplyFactorSet(uint256 value);
+
+    /**
+     * @dev Emitted when new sigmoid parameters values are set.
+     * @param a A new parameter A value.
+     * @param b A new parameter B value.
+     * @param c A new parameter C value.
+     */
+    event SigmoidParametersSet(uint256 a, int256 b, uint256 c);
+
+    /**
+     * @dev Emitted when a new Liquidity Providers Reward address value is set.
+     * @param value A new address value.
+     */
+    event LiquidityProvidersRewardAddressSet(address value);
+
     uint256 private constant YEAR = 365 days;
     // The maximum emission rate (in percentage)
     uint256 public constant MAX_EMISSION_RATE = 150 finney; // 15%, 0.15 ether
@@ -255,41 +293,45 @@ contract EasyStaking is Ownable {
 
     /**
      * @dev Sets the fee for forced withdrawals. Can only be called by owner.
-     * @param _fee The new fee value (in percentage).
+     * @param _value The new fee value (in percentage).
      */
-    function setFee(uint256 _fee) public onlyOwner {
-        require(_fee <= 1 ether, "should be less than or equal to 1 ether");
-        fee = _fee;
+    function setFee(uint256 _value) public onlyOwner {
+        require(_value <= 1 ether, "should be less than or equal to 1 ether");
+        fee = _value;
+        emit FeeSet(_value);
     }
 
     /**
      * @dev Sets the time from the request after which the withdrawal will be available.
      * Can only be called by owner.
-     * @param _withdrawalLockDuration The new duration value (in seconds).
+     * @param _value The new duration value (in seconds).
      */
-    function setWithdrawalLockDuration(uint256 _withdrawalLockDuration) public onlyOwner {
-        require(_withdrawalLockDuration > 0, "should be greater than 0");
-        withdrawalLockDuration = _withdrawalLockDuration;
+    function setWithdrawalLockDuration(uint256 _value) public onlyOwner {
+        require(_value > 0, "should be greater than 0");
+        withdrawalLockDuration = _value;
+        emit WithdrawalLockDurationSet(_value);
     }
 
     /**
      * @dev Sets the time during which the withdrawal will be available from the moment of unlocking.
      * Can only be called by owner.
-     * @param _withdrawalUnlockDuration The new duration value (in seconds).
+     * @param _value The new duration value (in seconds).
      */
-    function setWithdrawalUnlockDuration(uint256 _withdrawalUnlockDuration) public onlyOwner {
-        require(_withdrawalUnlockDuration > 0, "should be greater than 0");
-        withdrawalUnlockDuration = _withdrawalUnlockDuration;
+    function setWithdrawalUnlockDuration(uint256 _value) public onlyOwner {
+        require(_value > 0, "should be greater than 0");
+        withdrawalUnlockDuration = _value;
+        emit WithdrawalUnlockDurationSet(_value);
     }
 
     /**
      * @dev Sets total supply factor for calculating emission rate.
      * Can only be called by owner.
-     * @param _totalSupplyFactor The new factor value (in percentage).
+     * @param _value The new factor value (in percentage).
      */
-    function setTotalSupplyFactor(uint256 _totalSupplyFactor) public onlyOwner {
-        require(_totalSupplyFactor <= 1 ether, "should be less than or equal to 1 ether");
-        totalSupplyFactor = _totalSupplyFactor;
+    function setTotalSupplyFactor(uint256 _value) public onlyOwner {
+        require(_value <= 1 ether, "should be less than or equal to 1 ether");
+        totalSupplyFactor = _value;
+        emit TotalSupplyFactorSet(_value);
     }
 
     /**
@@ -302,6 +344,7 @@ contract EasyStaking is Ownable {
     function setSigmoidParameters(uint256 _a, int256 _b, uint256 _c) public onlyOwner {
         require(_a <= MAX_EMISSION_RATE.div(2), "should be less than or equal to a half of the maximum emission rate");
         sigmoid.setParameters(_a, _b, _c);
+        emit SigmoidParametersSet(_a, _b, _c);
     }
 
     /**
@@ -313,6 +356,7 @@ contract EasyStaking is Ownable {
         require(_address != address(0), "zero address");
         require(_address != address(this), "wrong address");
         liquidityProvidersRewardAddress = _address;
+        emit LiquidityProvidersRewardAddressSet(_address);
     }
 
     /**
