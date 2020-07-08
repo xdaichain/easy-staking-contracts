@@ -8,7 +8,7 @@ const ReceiverMock = artifacts.require('ReceiverMock');
 const Token = artifacts.require('ERC677Mock');
 const ExtendedMathMock = artifacts.require('ExtendedMathMock');
 
-contract('PoaMania', accounts => {
+contract('EasyStaking', accounts => {
   const [owner, user1, user2] = accounts;
   const YEAR = new BN(31536000); // in seconds
   const MAX_EMISSION_RATE = ether('0.15'); // 15%
@@ -357,11 +357,16 @@ contract('PoaMania', accounts => {
       expect(await easyStaking.totalStaked()).to.be.bignumber.equal(value);
       let totalSupply = await stakeToken.totalSupply();
       let totalStaked = await easyStaking.totalStaked();
+      await time.increase(1); // make sure the timestamp of two consequent blocks is different
       receipt = await easyStaking.makeForcedWithdrawal(1, oneEther, { from: user1 });
       let timestampAfter = await getBlockTimestamp(receipt);
+      expect(timestampAfter).to.be.bignumber.gt(timestampBefore);
       let timePassed = timestampAfter.sub(timestampBefore);
+      expect(timePassed).to.be.bignumber.gte(new BN(1));
       const userAccruedEmission1 = calculateUserAccruedEmission(oneEther, timePassed, totalSupply, totalStaked);
+      expect(userAccruedEmission1).to.be.bignumber.gt(new BN(0));
       const feeValue1 = oneEther.add(userAccruedEmission1).mul(fee).div(oneEther);
+      expect(feeValue1).to.be.bignumber.gt(new BN(0));
       expect(await easyStaking.balances(user1, 1)).to.be.bignumber.equal(value.sub(oneEther));
       expect(await easyStaking.depositDates(user1, 1)).to.be.bignumber.equal(timestampBefore);
       expect(await easyStaking.totalStaked()).to.be.bignumber.equal(value.sub(oneEther));
@@ -375,14 +380,16 @@ contract('PoaMania', accounts => {
         lastDepositDuration: timePassed,
         fee: feeValue1,
       });
-      timestampAfter = timestampBefore;
       totalSupply = await stakeToken.totalSupply();
       totalStaked = await easyStaking.totalStaked();
+      await time.increase(1); // make sure the timestamp of two consequent blocks is different
       receipt = await easyStaking.makeForcedWithdrawal(1, 0, { from: user1 });
       timestampAfter = await getBlockTimestamp(receipt);
       timePassed = timestampAfter.sub(timestampBefore);
       const userAccruedEmission2 = calculateUserAccruedEmission(value.sub(oneEther), timePassed, totalSupply, totalStaked);
+      expect(userAccruedEmission2).to.be.bignumber.gt(new BN(0));
       const feeValue2 = value.sub(oneEther).add(userAccruedEmission2).mul(fee).div(oneEther);
+      expect(feeValue2).to.be.bignumber.gt(new BN(0));
       expect(await easyStaking.balances(user1, 1)).to.be.bignumber.equal(new BN(0));
       const expectedBalance = value.add(userAccruedEmission1).add(userAccruedEmission2).sub(feeValue1).sub(feeValue2);
       expect(await stakeToken.balanceOf(user1)).to.be.bignumber.equal(expectedBalance);
@@ -408,6 +415,8 @@ contract('PoaMania', accounts => {
       const timePassed = timestampAfter.sub(timestampBefore);
       const userAccruedEmission = calculateUserAccruedEmission(value, timePassed, totalSupply, totalStaked);
       const feeValue = value.add(userAccruedEmission).mul(fee).div(oneEther);
+      expect(userAccruedEmission).to.be.bignumber.gt(new BN(0));
+      expect(feeValue).to.be.bignumber.gt(new BN(0));
       expect(await easyStaking.balances(user1, 1)).to.be.bignumber.equal(new BN(0));
       expect(await stakeToken.balanceOf(user1)).to.be.bignumber.equal(value.add(userAccruedEmission).sub(feeValue));
     });
@@ -422,6 +431,8 @@ contract('PoaMania', accounts => {
       const timePassed = timestampAfter.sub(timestampBefore);
       const userAccruedEmission = calculateUserAccruedEmission(oneEther, timePassed, totalSupply, totalStaked);
       const feeValue = oneEther.add(userAccruedEmission).mul(fee).div(oneEther);
+      expect(userAccruedEmission).to.be.bignumber.gt(new BN(0));
+      expect(feeValue).to.be.bignumber.gt(new BN(0));
       expect(await easyStaking.balances(user1, 1)).to.be.bignumber.equal(value.sub(oneEther));
       expect(await stakeToken.balanceOf(user1)).to.be.bignumber.equal(oneEther.add(userAccruedEmission).sub(feeValue));
     });
@@ -447,6 +458,7 @@ contract('PoaMania', accounts => {
         const feeValue = values[i].add(userAccruedEmission).mul(fee).div(oneEther);
         const expectedExchangeBalance = exchangeBalance.add(values[i]).add(userAccruedEmission).sub(feeValue);
         expect(userAccruedEmission).to.be.bignumber.gt(new BN(0));
+        expect(feeValue).to.be.bignumber.gt(new BN(0));
         expect(await easyStaking.balances(exchange, i + 1)).to.be.bignumber.equal(new BN(0));
         expect(await stakeToken.balanceOf(exchange)).to.be.bignumber.equal(expectedExchangeBalance);
         exchangeBalance = expectedExchangeBalance;
@@ -535,7 +547,7 @@ contract('PoaMania', accounts => {
     it('should fail if too late', async () => {
       await easyStaking.methods['deposit(uint256)'](value, { from: user1 });
       await easyStaking.requestWithdrawal(1, { from: user1 });
-      await time.increase(withdrawalLockDuration.add(new BN(86400)));
+      await time.increase(withdrawalLockDuration.add(withdrawalUnlockDuration).add(new BN(1)));
       await expectRevert(easyStaking.makeRequestedWithdrawal(1, 0, { from: user1 }), 'too late');
     });
   });
@@ -662,6 +674,12 @@ contract('PoaMania', accounts => {
         'zero address'
       );
     });
+    it('fails if equal to the address of EasyStaking contract', async () => {
+      await expectRevert(
+        easyStaking.setLiquidityProvidersRewardAddress(easyStaking.address, { from: owner }),
+        'wrong address'
+      );
+    });
   });
   describe('claimTokens', () => {
     it('should claim tokens', async () => {
@@ -781,10 +799,20 @@ contract('PoaMania', accounts => {
       extendedMath = await ExtendedMathMock.new();
     });
     it('sqrt should be within the gas limit and calculated correctly', async () => {
-      const { receipt } = await extendedMath.sqrt(constants.MAX_UINT256);
-      const expectedValue = squareRoot(constants.MAX_UINT256);
-      expect(receipt.gasUsed).to.be.lt(100000);
-      expect(await extendedMath.squareRoot()).to.be.bignumber.equal(expectedValue);
+      let inputs = [constants.MAX_UINT256];
+      for (let d = 2; d <= 9; d++) {
+        inputs.push(constants.MAX_UINT256.div(new BN(d)));
+      }
+      for (let m = 1; m <= 50; m++) {
+        inputs.push(constants.MAX_UINT256.div((new BN(10)).pow(new BN(m))));
+      }
+      for (let i = 0; i < inputs.length; i++) {
+        const value = inputs[i];
+        const { receipt } = await extendedMath.sqrt(value);
+        const expectedValue = squareRoot(value);
+        expect(receipt.gasUsed).to.be.lt(57000);
+        expect(await extendedMath.squareRoot()).to.be.bignumber.equal(expectedValue);
+      }
     });
     it('sqrt of 0-3', async () => {
       await extendedMath.sqrt(0);

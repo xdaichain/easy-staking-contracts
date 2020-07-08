@@ -303,6 +303,7 @@ contract EasyStaking is Ownable {
      */
     function setLiquidityProvidersRewardAddress(address _address) public onlyOwner {
         require(_address != address(0), "zero address");
+        require(_address != address(this), "wrong address");
         liquidityProvidersRewardAddress = _address;
     }
 
