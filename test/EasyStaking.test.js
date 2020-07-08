@@ -8,7 +8,7 @@ const ReceiverMock = artifacts.require('ReceiverMock');
 const Token = artifacts.require('ERC677Mock');
 const ExtendedMathMock = artifacts.require('ExtendedMathMock');
 
-contract('PoaMania', accounts => {
+contract('EasyStaking', accounts => {
   const [owner, user1, user2] = accounts;
   const YEAR = new BN(31536000); // in seconds
   const MAX_EMISSION_RATE = ether('0.15'); // 15%
