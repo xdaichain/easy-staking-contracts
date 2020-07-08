@@ -788,10 +788,20 @@ contract('EasyStaking', accounts => {
       extendedMath = await ExtendedMathMock.new();
     });
     it('sqrt should be within the gas limit and calculated correctly', async () => {
-      const { receipt } = await extendedMath.sqrt(constants.MAX_UINT256);
-      const expectedValue = squareRoot(constants.MAX_UINT256);
-      expect(receipt.gasUsed).to.be.lt(100000);
-      expect(await extendedMath.squareRoot()).to.be.bignumber.equal(expectedValue);
+      let inputs = [constants.MAX_UINT256];
+      for (let d = 2; d <= 9; d++) {
+        inputs.push(constants.MAX_UINT256.div(new BN(d)));
+      }
+      for (let m = 1; m <= 50; m++) {
+        inputs.push(constants.MAX_UINT256.div((new BN(10)).pow(new BN(m))));
+      }
+      for (let i = 0; i < inputs.length; i++) {
+        const value = inputs[i];
+        const { receipt } = await extendedMath.sqrt(value);
+        const expectedValue = squareRoot(value);
+        expect(receipt.gasUsed).to.be.lt(57000);
+        expect(await extendedMath.squareRoot()).to.be.bignumber.equal(expectedValue);
+      }
     });
     it('sqrt of 0-3', async () => {
       await extendedMath.sqrt(0);
