@@ -70,15 +70,16 @@ To withdraw tokens from the `EasyStaking` contract immediately, a user needs to 
 
 There are 2 parts that make up the emission rate:
 1. Personal (time-based): Calculated using a sigmoid function based on the staking period and amount of time a deposit is staked (max 7.5%).
-2. General (supply-based): Calculated using a linear function and based on the total amount of staked tokens in relation to the total supply of STAKE tokens (max 7.5%).
+2. General (supply-based): Calculated using a linear function and based on the total amount of staked tokens in relation to the total supply of STAKE tokens (max 7.5%). There is also a `totalSupplyFactor` which defines a percentage of STAKE's `totalSupply` (from 0% to 100%) used for the supply-based emission calculation. The factor can be changed by the owner.
 
 Accrued emissions are calculated for the user (`userShare`), and the remaining accrued amount (15% APR - `userShare`) is sent to the assigned Liquidity Pool (LP) `liquidityProvidersRewardAddress`.
 
 Data for examples:
 1. sigmoid function: https://www.desmos.com/calculator/2xtimbnzqw
 2. total supply: `8537500 STAKE`
-3. total staked: `1500000 STAKE`
-4. instant withdrawal fee: 3%
+3. total supply factor: 100%
+4. total staked: `1500000 STAKE`
+5. instant withdrawal fee: 3%
 
 **1st example:**
 
@@ -105,7 +106,7 @@ User deposits `1000 tokens`. Then they make a timed withdrawal for half after `6
 
 ### Withdrawal Window
 
-When a user requests a timed withdrawal, they must wait to withdraw their tokens within a set window of time. There is a lock period (e.g., 7 days) before they can withdraw, then there is a set withdrawal window during which they can execute their withdrawal (e.g., 24 hours).
+When a user requests a timed withdrawal, they must wait to withdraw their tokens within a set window of time. There is a lock period (e.g., 12 hours) before they can withdraw, then there is a set withdrawal window during which they can execute their withdrawal (e.g., 12 hours as well).
 
 If a user requests a timed withdrawal but fails to execute within the allotted time, their STAKE tokens are relocked into the contract. This does not update their deposit date. Tokens are relocked and accrue emission according to the initial deposit timestamp.
 
