@@ -745,6 +745,17 @@ contract('PoaMania', accounts => {
       expect(await easyStaking.getSupplyBasedEmissionRate()).to.be.bignumber.equal(supplyBasedEmissionRate2);
       expect(supplyBasedEmissionRate1).to.be.bignumber.equal(supplyBasedEmissionRate2.mul(newTotalSupplyFactor).div(oneEther))
     });
+    it(`can't be more than 7.5%`, async () => {
+      const maxSupplyBasedEmissionRate = MAX_EMISSION_RATE.div(new BN(2));
+      const totalSupply = ether('8537500');
+      await stakeToken.mint(owner, totalSupply, { from: owner });
+      await stakeToken.transfer(easyStaking.address, totalSupply.div(new BN(2)), { from: owner });
+      expect(await easyStaking.getSupplyBasedEmissionRate()).to.be.bignumber.equal(maxSupplyBasedEmissionRate.div(new BN(2)));
+      await easyStaking.setTotalSupplyFactor(ether('0.5'));
+      expect(await easyStaking.getSupplyBasedEmissionRate()).to.be.bignumber.equal(maxSupplyBasedEmissionRate);
+      await stakeToken.transfer(easyStaking.address, totalSupply.div(new BN(2)), { from: owner });
+      expect(await easyStaking.getSupplyBasedEmissionRate()).to.be.bignumber.equal(maxSupplyBasedEmissionRate);
+    });
   });
   describe('getAccruedEmission', () => {
     it('should be calculated correctly', async () => {
