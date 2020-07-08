@@ -662,6 +662,12 @@ contract('EasyStaking', accounts => {
         'zero address'
       );
     });
+    it('fails if equal to the address of EasyStaking contract', async () => {
+      await expectRevert(
+        easyStaking.setLiquidityProvidersRewardAddress(easyStaking.address, { from: owner }),
+        'wrong address'
+      );
+    });
   });
   describe('claimTokens', () => {
     it('should claim tokens', async () => {
