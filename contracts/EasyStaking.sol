@@ -40,6 +40,13 @@ contract EasyStaking is Ownable {
     );
 
     /**
+     * @dev Emitted when a user requests withdrawal.
+     * @param sender User address.
+     * @param id User's unique deposit ID.
+     */
+    event WithdrawalRequested(address indexed sender, uint256 indexed id);
+
+    /**
      * @dev Emitted when a user withdraws tokens.
      * @param sender User address.
      * @param id User's unique deposit ID.
@@ -197,6 +204,7 @@ contract EasyStaking is Ownable {
         require(_depositId > 0 && _depositId <= lastDepositIds[msg.sender], "wrong deposit id");
         // solium-disable-next-line security/no-block-members
         withdrawalRequestsDates[msg.sender][_depositId] = block.timestamp;
+        emit WithdrawalRequested(msg.sender, _depositId);
     }
 
     /**

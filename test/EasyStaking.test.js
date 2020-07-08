@@ -500,6 +500,10 @@ contract('EasyStaking', accounts => {
       const receipt = await easyStaking.requestWithdrawal(1, { from: user1 });
       const timestamp = await getBlockTimestamp(receipt);
       expect(await easyStaking.withdrawalRequestsDates(user1, 1)).to.be.bignumber.equal(timestamp);
+      expectEvent(receipt, 'WithdrawalRequested', {
+        sender: user1,
+        id: new BN(1),
+      });
     });
     it('fails if wrong deposit id', async () => {
       await expectRevert(easyStaking.requestWithdrawal(1, { from: user1 }), 'wrong deposit id');
