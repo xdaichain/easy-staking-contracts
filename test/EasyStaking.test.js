@@ -357,11 +357,16 @@ contract('EasyStaking', accounts => {
       expect(await easyStaking.totalStaked()).to.be.bignumber.equal(value);
       let totalSupply = await stakeToken.totalSupply();
       let totalStaked = await easyStaking.totalStaked();
+      await time.increase(1); // make sure the timestamp of two consequent blocks is different
       receipt = await easyStaking.makeForcedWithdrawal(1, oneEther, { from: user1 });
       let timestampAfter = await getBlockTimestamp(receipt);
+      expect(timestampAfter).to.be.bignumber.gt(timestampBefore);
       let timePassed = timestampAfter.sub(timestampBefore);
+      expect(timePassed).to.be.bignumber.gte(new BN(1));
       const userAccruedEmission1 = calculateUserAccruedEmission(oneEther, timePassed, totalSupply, totalStaked);
+      expect(userAccruedEmission1).to.be.bignumber.gt(new BN(0));
       const feeValue1 = oneEther.add(userAccruedEmission1).mul(fee).div(oneEther);
+      expect(feeValue1).to.be.bignumber.gt(new BN(0));
       expect(await easyStaking.balances(user1, 1)).to.be.bignumber.equal(value.sub(oneEther));
       expect(await easyStaking.depositDates(user1, 1)).to.be.bignumber.equal(timestampBefore);
       expect(await easyStaking.totalStaked()).to.be.bignumber.equal(value.sub(oneEther));
@@ -375,14 +380,16 @@ contract('EasyStaking', accounts => {
         lastDepositDuration: timePassed,
         fee: feeValue1,
       });
-      timestampAfter = timestampBefore;
       totalSupply = await stakeToken.totalSupply();
       totalStaked = await easyStaking.totalStaked();
+      await time.increase(1); // make sure the timestamp of two consequent blocks is different
       receipt = await easyStaking.makeForcedWithdrawal(1, 0, { from: user1 });
       timestampAfter = await getBlockTimestamp(receipt);
       timePassed = timestampAfter.sub(timestampBefore);
       const userAccruedEmission2 = calculateUserAccruedEmission(value.sub(oneEther), timePassed, totalSupply, totalStaked);
+      expect(userAccruedEmission2).to.be.bignumber.gt(new BN(0));
       const feeValue2 = value.sub(oneEther).add(userAccruedEmission2).mul(fee).div(oneEther);
+      expect(feeValue2).to.be.bignumber.gt(new BN(0));
       expect(await easyStaking.balances(user1, 1)).to.be.bignumber.equal(new BN(0));
       const expectedBalance = value.add(userAccruedEmission1).add(userAccruedEmission2).sub(feeValue1).sub(feeValue2);
       expect(await stakeToken.balanceOf(user1)).to.be.bignumber.equal(expectedBalance);
