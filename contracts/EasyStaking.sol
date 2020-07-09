@@ -69,40 +69,46 @@ contract EasyStaking is Ownable {
     /**
      * @dev Emitted when a new fee value is set.
      * @param value A new fee value.
+     * @param sender The owner address at the moment of fee changing.
      */
-    event FeeSet(uint256 value);
+    event FeeSet(uint256 value, address sender);
 
     /**
      * @dev Emitted when a new withdrawal lock duration value is set.
      * @param value A new withdrawal lock duration value.
+     * @param sender The owner address at the moment of value changing.
      */
-    event WithdrawalLockDurationSet(uint256 value);
+    event WithdrawalLockDurationSet(uint256 value, address sender);
 
     /**
      * @dev Emitted when a new withdrawal unlock duration value is set.
      * @param value A new withdrawal unlock duration value.
+     * @param sender The owner address at the moment of value changing.
      */
-    event WithdrawalUnlockDurationSet(uint256 value);
+    event WithdrawalUnlockDurationSet(uint256 value, address sender);
 
     /**
      * @dev Emitted when a new total supply factor value is set.
      * @param value A new total supply factor value.
+     * @param sender The owner address at the moment of value changing.
      */
-    event TotalSupplyFactorSet(uint256 value);
+    event TotalSupplyFactorSet(uint256 value, address sender);
 
     /**
      * @dev Emitted when new sigmoid parameters values are set.
      * @param a A new parameter A value.
      * @param b A new parameter B value.
      * @param c A new parameter C value.
+     * @param sender The owner address at the moment of value changing.
      */
-    event SigmoidParametersSet(uint256 a, int256 b, uint256 c);
+    event SigmoidParametersSet(uint256 a, int256 b, uint256 c, address sender);
 
     /**
      * @dev Emitted when a new Liquidity Providers Reward address value is set.
      * @param value A new address value.
+     * @param sender The owner address at the moment of address changing.
      */
-    event LiquidityProvidersRewardAddressSet(address value);
+    event LiquidityProvidersRewardAddressSet(address value, address sender);
 
     uint256 private constant YEAR = 365 days;
     // The maximum emission rate (in percentage)
@@ -298,7 +304,7 @@ contract EasyStaking is Ownable {
     function setFee(uint256 _value) public onlyOwner {
         require(_value <= 1 ether, "should be less than or equal to 1 ether");
         fee = _value;
-        emit FeeSet(_value);
+        emit FeeSet(_value, msg.sender);
     }
 
     /**
@@ -309,7 +315,7 @@ contract EasyStaking is Ownable {
     function setWithdrawalLockDuration(uint256 _value) public onlyOwner {
         require(_value > 0, "should be greater than 0");
         withdrawalLockDuration = _value;
-        emit WithdrawalLockDurationSet(_value);
+        emit WithdrawalLockDurationSet(_value, msg.sender);
     }
 
     /**
@@ -320,7 +326,7 @@ contract EasyStaking is Ownable {
     function setWithdrawalUnlockDuration(uint256 _value) public onlyOwner {
         require(_value > 0, "should be greater than 0");
         withdrawalUnlockDuration = _value;
-        emit WithdrawalUnlockDurationSet(_value);
+        emit WithdrawalUnlockDurationSet(_value, msg.sender);
     }
 
     /**
@@ -331,7 +337,7 @@ contract EasyStaking is Ownable {
     function setTotalSupplyFactor(uint256 _value) public onlyOwner {
         require(_value <= 1 ether, "should be less than or equal to 1 ether");
         totalSupplyFactor = _value;
-        emit TotalSupplyFactorSet(_value);
+        emit TotalSupplyFactorSet(_value, msg.sender);
     }
 
     /**
@@ -344,7 +350,7 @@ contract EasyStaking is Ownable {
     function setSigmoidParameters(uint256 _a, int256 _b, uint256 _c) public onlyOwner {
         require(_a <= MAX_EMISSION_RATE.div(2), "should be less than or equal to a half of the maximum emission rate");
         sigmoid.setParameters(_a, _b, _c);
-        emit SigmoidParametersSet(_a, _b, _c);
+        emit SigmoidParametersSet(_a, _b, _c, msg.sender);
     }
 
     /**
@@ -356,7 +362,7 @@ contract EasyStaking is Ownable {
         require(_address != address(0), "zero address");
         require(_address != address(this), "wrong address");
         liquidityProvidersRewardAddress = _address;
-        emit LiquidityProvidersRewardAddressSet(_address);
+        emit LiquidityProvidersRewardAddressSet(_address, msg.sender);
     }
 
     /**

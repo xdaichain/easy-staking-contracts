@@ -703,7 +703,7 @@ contract('EasyStaking', accounts => {
       expect(newFee).to.be.bignumber.not.equal(fee);
       const receipt = await easyStaking.setFee(newFee, { from: owner });
       expect(await easyStaking.fee()).to.be.bignumber.equal(newFee);
-      expectEvent(receipt, 'FeeSet', { value: newFee });
+      expectEvent(receipt, 'FeeSet', { value: newFee, sender: owner });
     });
     it('fails if not an owner', async () => {
       await expectRevert(
@@ -722,7 +722,7 @@ contract('EasyStaking', accounts => {
       expect(newWithdrawalLockDuration).to.be.bignumber.not.equal(withdrawalLockDuration);
       const receipt = await easyStaking.setWithdrawalLockDuration(newWithdrawalLockDuration, { from: owner });
       expect(await easyStaking.withdrawalLockDuration()).to.be.bignumber.equal(newWithdrawalLockDuration);
-      expectEvent(receipt, 'WithdrawalLockDurationSet', { value: newWithdrawalLockDuration });
+      expectEvent(receipt, 'WithdrawalLockDurationSet', { value: newWithdrawalLockDuration, sender: owner });
     });
     it('fails if not an owner', async () => {
       await expectRevert(
@@ -741,7 +741,7 @@ contract('EasyStaking', accounts => {
       expect(newWithdrawalUnlockDuration).to.be.bignumber.not.equal(withdrawalUnlockDuration);
       const receipt = await easyStaking.setWithdrawalUnlockDuration(newWithdrawalUnlockDuration, { from: owner });
       expect(await easyStaking.withdrawalUnlockDuration()).to.be.bignumber.equal(newWithdrawalUnlockDuration);
-      expectEvent(receipt, 'WithdrawalUnlockDurationSet', { value: newWithdrawalUnlockDuration });
+      expectEvent(receipt, 'WithdrawalUnlockDurationSet', { value: newWithdrawalUnlockDuration, sender: owner });
     });
     it('fails if not an owner', async () => {
       await expectRevert(
@@ -760,7 +760,7 @@ contract('EasyStaking', accounts => {
       expect(newTotalSupplyFactor).to.be.bignumber.not.equal(totalSupplyFactor);
       const receipt = await easyStaking.setTotalSupplyFactor(newTotalSupplyFactor, { from: owner });
       expect(await easyStaking.totalSupplyFactor()).to.be.bignumber.equal(newTotalSupplyFactor);
-      expectEvent(receipt, 'TotalSupplyFactorSet', { value: newTotalSupplyFactor });
+      expectEvent(receipt, 'TotalSupplyFactorSet', { value: newTotalSupplyFactor, sender: owner });
     });
     it('fails if not an owner', async () => {
       await expectRevert(
@@ -787,7 +787,7 @@ contract('EasyStaking', accounts => {
       expect(sigmoidParams.a).to.be.bignumber.equal(newSigmoidParams.a);
       expect(sigmoidParams.b).to.be.bignumber.equal(newSigmoidParams.b);
       expect(sigmoidParams.c).to.be.bignumber.equal(newSigmoidParams.c);
-      expectEvent(receipt, 'SigmoidParametersSet', { a: newSigmoidParams.a, b: newSigmoidParams.b, c: newSigmoidParams.c });
+      expectEvent(receipt, 'SigmoidParametersSet', { a: newSigmoidParams.a, b: newSigmoidParams.b, c: newSigmoidParams.c, sender: owner });
     });
     it('fails if not an owner', async () => {
       const newSigmoidParams = { a: ether('0.065'), b: new BN(10000), c: new BN(999999) };
@@ -811,7 +811,7 @@ contract('EasyStaking', accounts => {
       expect(newLiquidityProvidersRewardAddress).to.be.bignumber.not.equal(liquidityProvidersRewardAddress);
       const receipt = await easyStaking.setLiquidityProvidersRewardAddress(newLiquidityProvidersRewardAddress, { from: owner });
       expect(await easyStaking.liquidityProvidersRewardAddress()).to.be.bignumber.equal(newLiquidityProvidersRewardAddress);
-      expectEvent(receipt, 'LiquidityProvidersRewardAddressSet', { value: newLiquidityProvidersRewardAddress });
+      expectEvent(receipt, 'LiquidityProvidersRewardAddressSet', { value: newLiquidityProvidersRewardAddress, sender: owner });
     });
     it('fails if not an owner', async () => {
       await expectRevert(
