@@ -407,6 +407,7 @@ contract('EasyStaking', accounts => {
       const expectedBalance = value.add(userAccruedEmission1).add(userAccruedEmission2).sub(feeValue1).sub(feeValue2);
       expect(await stakeToken.balanceOf(user1)).to.be.bignumber.equal(expectedBalance);
       expect(await easyStaking.totalStaked()).to.be.bignumber.equal(new BN(0));
+      expect(await easyStaking.depositDates(user1, 1)).to.be.bignumber.equal(new BN(0));
       expectEvent(receipt, 'Withdrawn', {
         sender: user1,
         amount: value.sub(oneEther).add(userAccruedEmission2).sub(feeValue2),
