@@ -545,16 +545,35 @@ contract('EasyStaking', accounts => {
     });
     it('should withdraw the same amount', async () => {
       await easyStaking.setFee(0);
-      await easyStaking.setTotalSupplyFactor(0);
+
+      let receipt = await easyStaking.methods['deposit(uint256)'](value, { from: user1 });
+      let timestampBefore = await getBlockTimestamp(receipt);
+      expect(await easyStaking.balances(user1, 1)).to.be.bignumber.equal(value);
+      await time.increase(YEAR);
+      let totalSupply = await stakeToken.totalSupply();
+      let totalStaked = await easyStaking.totalStaked();
+      receipt = await easyStaking.makeForcedWithdrawal(1, 0, { from: user1 });
+      let timestampAfter = await getBlockTimestamp(receipt);
+      let timePassed = timestampAfter.sub(timestampBefore);
+      let userAccruedEmission = calculateUserAccruedEmission(value, timePassed, totalSupply, totalStaked);
+      expect(await easyStaking.balances(user1, 1)).to.be.bignumber.equal(new BN(0));
+      expect(await stakeToken.balanceOf(user1)).to.be.bignumber.equal(value.add(userAccruedEmission));
+
       await stakeToken.mint(user2, value, { from: owner });
       await stakeToken.approve(easyStaking.address, ether('10000'), { from: user2 });
-      expect(await stakeToken.balanceOf(user1)).to.be.bignumber.equal(await stakeToken.balanceOf(user2));
-      for (let i = 0; i < 2; i++) {
-        await easyStaking.methods['deposit(uint256)'](value, { from: i === 0 ? user1 : user2 });
-        await time.increase(YEAR);
-        await easyStaking.makeForcedWithdrawal(1, i === 0 ? 0 : value, { from: i === 0 ? user1 : user2 });
-      }
-      expect(await stakeToken.balanceOf(user1)).to.be.bignumber.equal(await stakeToken.balanceOf(user2));
+
+      receipt = await easyStaking.methods['deposit(uint256)'](value, { from: user2 });
+      timestampBefore = await getBlockTimestamp(receipt);
+      expect(await easyStaking.balances(user2, 1)).to.be.bignumber.equal(value);
+      await time.increase(YEAR);
+      totalSupply = await stakeToken.totalSupply();
+      totalStaked = await easyStaking.totalStaked();
+      receipt = await easyStaking.makeForcedWithdrawal(1, value, { from: user2 });
+      timestampAfter = await getBlockTimestamp(receipt);
+      timePassed = timestampAfter.sub(timestampBefore);
+      userAccruedEmission = calculateUserAccruedEmission(value, timePassed, totalSupply, totalStaked);
+      expect(await easyStaking.balances(user2, 1)).to.be.bignumber.equal(new BN(0));
+      expect(await stakeToken.balanceOf(user2)).to.be.bignumber.equal(value.add(userAccruedEmission));
     });
   });
   describe('requestWithdrawal', () => {
