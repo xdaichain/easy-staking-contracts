@@ -394,8 +394,8 @@ contract EasyStaking is Ownable {
         uint256 userEmissionRate = sigmoid.calculate(int256(timePassed));
         userEmissionRate = userEmissionRate.add(getSupplyBasedEmissionRate());
         require(userEmissionRate <= MAX_EMISSION_RATE, "should be less than or equal to the maximum emission rate");
-        total = _amount.mul(MAX_EMISSION_RATE).div(1 ether).mul(timePassed).div(YEAR);
-        userShare = _amount.mul(userEmissionRate).div(1 ether).mul(timePassed).div(YEAR);
+        total = _amount.mul(MAX_EMISSION_RATE).mul(timePassed).div(1 ether).div(YEAR);
+        userShare = _amount.mul(userEmissionRate).mul(timePassed).div(1 ether).div(YEAR);
     }
 
     /**

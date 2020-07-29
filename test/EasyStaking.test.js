@@ -73,7 +73,7 @@ contract('EasyStaking', accounts => {
   }
 
   function calculateAccruedEmission(deposit, timePassed, emissionRate) {
-    return deposit.mul(emissionRate).div(oneEther).mul(timePassed).div(YEAR);
+    return deposit.mul(emissionRate).mul(timePassed).div(oneEther).div(YEAR);
   }
 
   function calculateUserAccruedEmission(deposit, timePassed, totalSupply, totalStaked) {
