@@ -422,7 +422,7 @@ contract EasyStaking is Ownable {
      * @dev Calls internal "_mint" method and then transfers tokens to the sender.
      * @param _sender The address of the sender.
      * @param _id User's unique deposit ID.
-     * @param _amount The amount to withdraw.
+     * @param _amount The amount to withdraw (0 - to withdraw all).
      * @param _forced Defines whether to apply fee (true), or not (false).
      */
     function _withdraw(address _sender, uint256 _id, uint256 _amount, bool _forced) internal {
