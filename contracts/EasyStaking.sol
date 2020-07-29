@@ -246,8 +246,7 @@ contract EasyStaking is Ownable {
      */
     function requestWithdrawal(uint256 _depositId) external {
         require(_depositId > 0 && _depositId <= lastDepositIds[msg.sender], "wrong deposit id");
-        // solium-disable-next-line security/no-block-members
-        withdrawalRequestsDates[msg.sender][_depositId] = block.timestamp;
+        withdrawalRequestsDates[msg.sender][_depositId] = _now();
         emit WithdrawalRequested(msg.sender, _depositId);
     }
 
@@ -264,8 +263,7 @@ contract EasyStaking is Ownable {
     function makeRequestedWithdrawal(uint256 _depositId, uint256 _amount) external {
         uint256 requestDate = withdrawalRequestsDates[msg.sender][_depositId];
         require(requestDate > 0, "withdrawal wasn't requested");
-        // solium-disable-next-line security/no-block-members
-        uint256 timestamp = block.timestamp;
+        uint256 timestamp = _now();
         uint256 lockEnd = requestDate.add(withdrawalLockDuration);
         require(timestamp >= lockEnd, "too early");
         require(timestamp < lockEnd.add(withdrawalUnlockDuration), "too late");
@@ -388,8 +386,7 @@ contract EasyStaking is Ownable {
         uint256 _amount
     ) public view returns (uint256 total, uint256 userShare, uint256 timePassed) {
         if (_amount == 0 || _depositDate == 0) return (0, 0, 0);
-        // solium-disable-next-line security/no-block-members
-        timePassed = block.timestamp.sub(_depositDate);
+        timePassed = _now().sub(_depositDate);
         if (timePassed == 0) return (0, 0, 0);
         uint256 userEmissionRate = sigmoid.calculate(int256(timePassed));
         userEmissionRate = userEmissionRate.add(getSupplyBasedEmissionRate());
@@ -417,8 +414,7 @@ contract EasyStaking is Ownable {
         uint256 newBalance = balances[_sender][_id].add(_amount);
         balances[_sender][_id] = newBalance;
         totalStaked = totalStaked.add(_amount);
-        // solium-disable-next-line security/no-block-members
-        depositDates[_sender][_id] = block.timestamp;
+        depositDates[_sender][_id] = _now();
         emit Deposited(_sender, _id, _amount, newBalance, userShare, timePassed);
     }
 
@@ -473,5 +469,14 @@ contract EasyStaking is Ownable {
      */
     function _setLocked(bool _locked) internal {
         locked = _locked;
+    }
+
+    /**
+     * @return Returns current timestamp.
+     */
+    function _now() internal view returns (uint256) {
+        // Note that the timestamp can have a 900-second error:
+        // https://github.com/ethereum/wiki/blob/c02254611f218f43cbb07517ca8e5d00fd6d6d75/Block-Protocol-2.0.md
+        return now; // solium-disable-line security/no-block-members
     }
 }
