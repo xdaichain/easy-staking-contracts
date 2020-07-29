@@ -208,7 +208,7 @@ contract EasyStaking is Ownable {
         require(_depositId > 0 && _depositId <= lastDepositIds[msg.sender], "wrong deposit id");
         _deposit(msg.sender, _depositId, _amount);
         _setLocked(true);
-        token.transferFrom(msg.sender, address(this), _amount);
+        require(token.transferFrom(msg.sender, address(this), _amount), "transfer failed");
         _setLocked(false);
     }
 
@@ -289,7 +289,7 @@ contract EasyStaking is Ownable {
         } else if (_token == address(token)) {
             uint256 amount = token.balanceOf(address(this)).sub(totalStaked);
             require(amount > 0, "nothing to claim");
-            token.transfer(_to, amount);
+            require(token.transfer(_to, amount), "transfer failed");
         } else {
             IERC20 customToken = IERC20(_token);
             uint256 balance = customToken.balanceOf(address(this));
@@ -443,9 +443,9 @@ contract EasyStaking is Ownable {
         if (_forced) {
             feeValue = amount.mul(fee).div(1 ether);
             amount = amount.sub(feeValue);
-            token.transfer(liquidityProvidersRewardAddress, feeValue);
+            require(token.transfer(liquidityProvidersRewardAddress, feeValue), "transfer failed");
         }
-        token.transfer(_sender, amount);
+        require(token.transfer(_sender, amount), "transfer failed");
         emit Withdrawn(_sender, _id, amount, feeValue, balances[_sender][_id], accruedEmission, timePassed);
     }
 
@@ -460,10 +460,10 @@ contract EasyStaking is Ownable {
         uint256 amount = _amount == 0 ? currentBalance : _amount;
         (uint256 total, uint256 userShare, uint256 timePassed) = getAccruedEmission(depositDates[_user][_id], amount);
         if (total > 0) {
-            token.mint(address(this), total);
+            require(token.mint(address(this), total), "minting failed");
             balances[_user][_id] = currentBalance.add(userShare);
             totalStaked = totalStaked.add(userShare);
-            token.transfer(liquidityProvidersRewardAddress, total.sub(userShare));
+            require(token.transfer(liquidityProvidersRewardAddress, total.sub(userShare)), "transfer failed");
         }
         return (userShare, timePassed);
     }
