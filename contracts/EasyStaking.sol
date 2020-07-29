@@ -431,7 +431,7 @@ contract EasyStaking is Ownable {
      */
     function _withdraw(address _sender, uint256 _id, uint256 _amount, bool _forced) internal {
         require(_id > 0 && _id <= lastDepositIds[_sender], "wrong deposit id");
-        require(balances[_sender][_id] > 0, "zero balance");
+        require(balances[_sender][_id] > 0 && balances[_sender][_id] >= _amount, "insufficient funds");
         (uint256 accruedEmission, uint256 timePassed) = _mint(_sender, _id, _amount);
         uint256 amount = _amount == 0 ? balances[_sender][_id] : _amount.add(accruedEmission);
         balances[_sender][_id] = balances[_sender][_id].sub(amount);

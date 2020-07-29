@@ -486,7 +486,7 @@ contract('EasyStaking', accounts => {
       await time.increase(YEAR);
       await expectRevert(
         easyStaking.makeForcedWithdrawal(1, ether('10.000000000000000001'), { from: user1 }),
-        'SafeMath: subtraction overflow'
+        'insufficient funds'
       );
       await easyStaking.makeForcedWithdrawal(1, ether('10'), { from: user1 });
     });
@@ -503,7 +503,7 @@ contract('EasyStaking', accounts => {
       await easyStaking.makeForcedWithdrawal(1, ether('10'), { from: user1 });
       await expectRevert(
         easyStaking.makeForcedWithdrawal(1, ether('10'), { from: user1 }),
-        'zero balance'
+        'insufficient funds'
       );
     });
     it('should withdraw entire deposit by several parts', async () => {
