@@ -139,7 +139,7 @@ contract EasyStaking is Ownable {
     // The total staked amount
     uint256 public totalStaked;
 
-    // Variable that prevents reentrance
+    // Variable that prevents _deposit method from being called 2 times
     bool private locked;
     // The library that is used to calculate user's current emission rate
     Sigmoid.State private sigmoid;
