@@ -122,7 +122,7 @@ If a user requests a timed withdrawal but fails to execute within the allotted t
 
 ### Owner
 The owner can change the contract parameters and claim unsupported tokens accidentally sent to the contract.
-1. `claimTokens(address,address)`
+1. `claimTokens(address,address,uint256)`
 2. `setFee(uint256)`
 3. `setWithdrawalLockDuration(uint256)`
 4. `setWithdrawalUnlockDuration(uint256)`

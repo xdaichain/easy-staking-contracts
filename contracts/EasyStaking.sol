@@ -276,22 +276,22 @@ contract EasyStaking is Ownable {
      * It can only be called by the owner.
      * @param _token The address of the token contract (zero address for claiming native coins).
      * @param _to The address of the tokens/coins receiver.
+     * @param _amount Amount to claim.
      */
-    function claimTokens(address _token, address payable _to) external onlyOwner {
+    function claimTokens(address _token, address payable _to, uint256 _amount) external onlyOwner {
         require(_to != address(0) && _to != address(this), "not a valid recipient");
+        require(_amount > 0, "amount should be greater than 0");
         if (_token == address(0)) {
-            uint256 value = address(this).balance;
-            if (!_to.send(value)) { // solium-disable-line security/no-send
-                (new Sacrifice).value(value)(_to);
+            if (!_to.send(_amount)) { // solium-disable-line security/no-send
+                (new Sacrifice).value(_amount)(_to);
             }
         } else if (_token == address(token)) {
-            uint256 amount = token.balanceOf(address(this)).sub(totalStaked);
-            require(amount > 0, "nothing to claim");
-            require(token.transfer(_to, amount), "transfer failed");
+            uint256 availableAmount = token.balanceOf(address(this)).sub(totalStaked);
+            require(availableAmount >= _amount, "insufficient funds");
+            require(token.transfer(_to, _amount), "transfer failed");
         } else {
             IERC20 customToken = IERC20(_token);
-            uint256 balance = customToken.balanceOf(address(this));
-            customToken.safeTransfer(_to, balance);
+            customToken.safeTransfer(_to, _amount);
         }
     }
 
