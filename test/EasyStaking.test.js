@@ -13,8 +13,8 @@ contract('EasyStaking', accounts => {
   const YEAR = new BN(31536000); // in seconds
   const MAX_EMISSION_RATE = ether('0.15'); // 15%
   const fee = ether('0.03'); // 3%
-  const withdrawalLockDuration = new BN(600); // in seconds
-  const withdrawalUnlockDuration = new BN(60); // in seconds
+  const withdrawalLockDuration = new BN(3600); // in seconds
+  const withdrawalUnlockDuration = new BN(3600); // in seconds
   const sigmoidParamA = ether('0.075'); // 7.5%
   const sigmoidParamB = new BN(0);
   const sigmoidParamC = new BN(10000000000000);
@@ -175,14 +175,14 @@ contract('EasyStaking', accounts => {
           stakeToken.address,
           liquidityProvidersRewardAddress,
           fee.toString(),
-          0,
+          2592001,
           withdrawalUnlockDuration.toString(),
           totalSupplyFactor.toString(),
           sigmoidParamA.toString(),
           sigmoidParamB.toString(),
           sigmoidParamC.toString(),
         ),
-        'should be greater than 0'
+        `shouldn't be greater than 30 days`
       );
       await expectRevert(
         initialize(
@@ -197,7 +197,7 @@ contract('EasyStaking', accounts => {
           sigmoidParamB.toString(),
           sigmoidParamC.toString(),
         ),
-        'should be greater than 0'
+        `shouldn't be less than 1 hour`
       );
       await expectRevert(
         initialize(
@@ -730,13 +730,13 @@ contract('EasyStaking', accounts => {
         'Ownable: caller is not the owner',
       );
     });
-    it('fails if equal to zero', async () => {
-      await expectRevert(easyStaking.setWithdrawalLockDuration(0, { from: owner }), 'should be greater than 0');
+    it('fails if greater than 30 days', async () => {
+      await expectRevert(easyStaking.setWithdrawalLockDuration(2592001, { from: owner }), `shouldn't be greater than 30 days`);
     });
   });
   describe('setWithdrawalUnlockDuration', () => {
     it('should set', async () => {
-      const newWithdrawalUnlockDuration = new BN(100);
+      const newWithdrawalUnlockDuration = new BN(10000);
       expect(await easyStaking.withdrawalUnlockDuration()).to.be.bignumber.equal(withdrawalUnlockDuration);
       expect(newWithdrawalUnlockDuration).to.be.bignumber.not.equal(withdrawalUnlockDuration);
       const receipt = await easyStaking.setWithdrawalUnlockDuration(newWithdrawalUnlockDuration, { from: owner });
@@ -745,12 +745,12 @@ contract('EasyStaking', accounts => {
     });
     it('fails if not an owner', async () => {
       await expectRevert(
-        easyStaking.setWithdrawalUnlockDuration(new BN(100), { from: user1 }),
+        easyStaking.setWithdrawalUnlockDuration(new BN(10000), { from: user1 }),
         'Ownable: caller is not the owner',
       );
     });
-    it('fails if equal to zero', async () => {
-      await expectRevert(easyStaking.setWithdrawalUnlockDuration(0, { from: owner }), 'should be greater than 0');
+    it('fails if less than 1 hour', async () => {
+      await expectRevert(easyStaking.setWithdrawalUnlockDuration(3599, { from: owner }), `shouldn't be less than 1 hour`);
     });
   });
   describe('setTotalSupplyFactor', () => {

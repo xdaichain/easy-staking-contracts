@@ -313,7 +313,7 @@ contract EasyStaking is Ownable {
      * @param _value The new duration value (in seconds).
      */
     function setWithdrawalLockDuration(uint256 _value) public onlyOwner {
-        require(_value > 0, "should be greater than 0");
+        require(_value <= 30 days, "shouldn't be greater than 30 days");
         withdrawalLockDuration = _value;
         emit WithdrawalLockDurationSet(_value, msg.sender);
     }
@@ -324,7 +324,7 @@ contract EasyStaking is Ownable {
      * @param _value The new duration value (in seconds).
      */
     function setWithdrawalUnlockDuration(uint256 _value) public onlyOwner {
-        require(_value > 0, "should be greater than 0");
+        require(_value >= 1 hours, "shouldn't be less than 1 hour");
         withdrawalUnlockDuration = _value;
         emit WithdrawalUnlockDurationSet(_value, msg.sender);
     }
