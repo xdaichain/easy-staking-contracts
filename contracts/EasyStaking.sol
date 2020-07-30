@@ -429,7 +429,9 @@ contract EasyStaking is Ownable {
      */
     function getSupplyBasedEmissionRate() public view returns (uint256) {
         uint256 totalSupply = token.totalSupply();
-        uint256 target = totalSupply.mul(totalSupplyFactor()).div(1 ether);
+        uint256 factor = totalSupplyFactor();
+        if (factor == 0) return 0;
+        uint256 target = totalSupply.mul(factor).div(1 ether);
         uint256 maxSupplyBasedEmissionRate = MAX_EMISSION_RATE.div(2); // 7.5%
         if (totalStaked >= target) {
             return maxSupplyBasedEmissionRate;
@@ -451,6 +453,7 @@ contract EasyStaking is Ownable {
         if (timePassed == 0) return (0, 0, 0);
         uint256 userEmissionRate = sigmoid.calculate(int256(timePassed));
         userEmissionRate = userEmissionRate.add(getSupplyBasedEmissionRate());
+        if (userEmissionRate == 0) return (0, 0, timePassed);
         assert(userEmissionRate <= MAX_EMISSION_RATE);
         total = _amount.mul(MAX_EMISSION_RATE).mul(timePassed).div(1 ether).div(YEAR);
         userShare = _amount.mul(userEmissionRate).mul(timePassed).div(1 ether).div(YEAR);

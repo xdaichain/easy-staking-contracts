@@ -482,6 +482,26 @@ contract('EasyStaking', accounts => {
       }
       expect(await easyStaking.totalStaked()).to.be.bignumber.equal(new BN(0));
     });
+    it('should pause minting tokens', async () => {
+      await easyStaking.setFee(0, { from: owner });
+      await easyStaking.methods['deposit(uint256)'](ether('100'), { from: user1 });
+      await easyStaking.methods['deposit(uint256)'](ether('100'), { from: user1 });
+      await time.increase(YEAR);
+      let balanceBefore = await stakeToken.balanceOf(user1);
+      await easyStaking.makeForcedWithdrawal(1, 0, { from: user1 });
+      let balanceAfter = await stakeToken.balanceOf(user1);
+      expect(balanceAfter).to.be.bignumber.gt(balanceBefore.add(ether('100')));
+      expect(await stakeToken.isMinter(easyStaking.address)).to.be.equal(true);
+      await stakeToken.removeMinter(easyStaking.address);
+      expect(await stakeToken.isMinter(easyStaking.address)).to.be.equal(false);
+      await easyStaking.setSigmoidParameters(0, sigmoidParamB, sigmoidParamC, { from: owner });
+      await easyStaking.setTotalSupplyFactor(0, { from: owner });
+      await time.increase(PARAM_UPDATE_DELAY.add(new BN(1)));
+      balanceBefore = balanceAfter;
+      await easyStaking.makeForcedWithdrawal(2, 0, { from: user1 });
+      balanceAfter = await stakeToken.balanceOf(user1);
+      expect(balanceAfter).to.be.bignumber.equal(balanceBefore.add(ether('100'))); // 0 emission
+    });
     it('fails if trying to withdraw more than deposited', async () => {
       await easyStaking.methods['deposit(uint256)'](ether('10'), { from: user1 });
       await time.increase(YEAR);
