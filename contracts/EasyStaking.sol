@@ -218,12 +218,14 @@ contract EasyStaking is Ownable {
      * It generates a new deposit ID and calls the internal "_deposit" method.
      * @param _sender The sender of tokens.
      * @param _amount The transferred amount.
+     * @return true if successful
      */
-    function onTokenTransfer(address _sender, uint256 _amount, bytes calldata) external {
+    function onTokenTransfer(address _sender, uint256 _amount, bytes calldata) external returns (bool) {
         require(msg.sender == address(token), "only token contract is allowed");
         if (!locked) {
             _deposit(_sender, ++lastDepositIds[_sender], _amount);
         }
+        return true;
     }
 
     /**
