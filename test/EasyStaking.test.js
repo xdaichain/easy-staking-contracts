@@ -340,6 +340,22 @@ contract('EasyStaking', accounts => {
         );
       }
     });
+    it('fails if emission is stopped', async () => {
+      await easyStaking.setSigmoidParameters(0, sigmoidParamB, sigmoidParamC);
+      await easyStaking.setTotalSupplyFactor(0);
+      await time.increase(PARAM_UPDATE_DELAY.add(new BN(1)));
+      if (directly) {
+        await expectRevert(
+          easyStaking.methods['deposit(uint256)'](ether('1'), { from: user1 }),
+          'emission stopped'
+        );
+      } else {
+        await expectRevert(
+          stakeToken.transfer(easyStaking.address, ether('1'), { from: user1 }),
+          `you can't transfer to bridge contract` // if onTokenTransfer() fails
+        );
+      }
+    });
   }
   describe('deposit', () => {
     testDeposit(true);

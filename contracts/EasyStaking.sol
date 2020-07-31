@@ -462,7 +462,7 @@ contract EasyStaking is Ownable {
     /**
      * @return Sigmoid parameters.
      */
-    function getSigmoidParameters() external view returns (uint256 a, int256 b, uint256 c) {
+    function getSigmoidParameters() public view returns (uint256 a, int256 b, uint256 c) {
         return sigmoid.getParameters();
     }
 
@@ -474,6 +474,8 @@ contract EasyStaking is Ownable {
      */
     function _deposit(address _sender, uint256 _id, uint256 _amount) internal {
         require(_amount > 0, "deposit amount should be more than 0");
+        (uint256 sigmoidParamA,,) = getSigmoidParameters();
+        if (sigmoidParamA == 0 && totalSupplyFactor() == 0) revert("emission stopped");
         (uint256 userShare, uint256 timePassed) = _mint(_sender, _id, 0);
         uint256 newBalance = balances[_sender][_id].add(_amount);
         balances[_sender][_id] = newBalance;
