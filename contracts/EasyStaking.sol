@@ -113,20 +113,34 @@ contract EasyStaking is Ownable {
     uint256 private constant YEAR = 365 days;
     // The maximum emission rate (in percentage)
     uint256 public constant MAX_EMISSION_RATE = 150 finney; // 15%, 0.15 ether
+    // The period after which the new value of the parameter is set
+    uint256 public constant PARAM_UPDATE_DELAY = 7 days;
 
     // STAKE token
     IERC20Mintable public token;
-    // The address for the Liquidity Providers reward
-    address public liquidityProvidersRewardAddress;
 
+    struct UintParam {
+        uint256 oldValue;
+        uint256 newValue;
+        uint256 timestamp;
+    }
+
+    struct AddressParam {
+        address oldValue;
+        address newValue;
+        uint256 timestamp;
+    }
+
+    // The address for the Liquidity Providers reward
+    AddressParam public liquidityProvidersRewardAddressParam;
     // The fee of the forced withdrawal (in percentage)
-    uint256 public fee;
+    UintParam public feeParam;
     // The time from the request after which the withdrawal will be available (in seconds)
-    uint256 public withdrawalLockDuration;
+    UintParam public withdrawalLockDurationParam;
     // The time during which the withdrawal will be available from the moment of unlocking (in seconds)
-    uint256 public withdrawalUnlockDuration;
+    UintParam public withdrawalUnlockDurationParam;
     // Total supply factor for calculating emission rate (in percentage)
-    uint256 public totalSupplyFactor;
+    UintParam public totalSupplyFactorParam;
 
     // The deposit balances of users
     mapping (address => mapping (uint256 => uint256)) public balances;
@@ -266,9 +280,9 @@ contract EasyStaking is Ownable {
         uint256 requestDate = withdrawalRequestsDates[msg.sender][_depositId];
         require(requestDate > 0, "withdrawal wasn't requested");
         uint256 timestamp = _now();
-        uint256 lockEnd = requestDate.add(withdrawalLockDuration);
+        uint256 lockEnd = requestDate.add(withdrawalLockDuration());
         require(timestamp >= lockEnd, "too early");
-        require(timestamp < lockEnd.add(withdrawalUnlockDuration), "too late");
+        require(timestamp < lockEnd.add(withdrawalUnlockDuration()), "too late");
         withdrawalRequestsDates[msg.sender][_depositId] = 0;
         _withdraw(msg.sender, _depositId, _amount, false);
     }
@@ -303,7 +317,7 @@ contract EasyStaking is Ownable {
      */
     function setFee(uint256 _value) public onlyOwner {
         require(_value <= 1 ether, "should be less than or equal to 1 ether");
-        fee = _value;
+        _updateUintParam(feeParam, _value);
         emit FeeSet(_value, msg.sender);
     }
 
@@ -314,7 +328,7 @@ contract EasyStaking is Ownable {
      */
     function setWithdrawalLockDuration(uint256 _value) public onlyOwner {
         require(_value <= 30 days, "shouldn't be greater than 30 days");
-        withdrawalLockDuration = _value;
+        _updateUintParam(withdrawalLockDurationParam, _value);
         emit WithdrawalLockDurationSet(_value, msg.sender);
     }
 
@@ -325,7 +339,7 @@ contract EasyStaking is Ownable {
      */
     function setWithdrawalUnlockDuration(uint256 _value) public onlyOwner {
         require(_value >= 1 hours, "shouldn't be less than 1 hour");
-        withdrawalUnlockDuration = _value;
+        _updateUintParam(withdrawalUnlockDurationParam, _value);
         emit WithdrawalUnlockDurationSet(_value, msg.sender);
     }
 
@@ -336,7 +350,7 @@ contract EasyStaking is Ownable {
      */
     function setTotalSupplyFactor(uint256 _value) public onlyOwner {
         require(_value <= 1 ether, "should be less than or equal to 1 ether");
-        totalSupplyFactor = _value;
+        _updateUintParam(totalSupplyFactorParam, _value);
         emit TotalSupplyFactorSet(_value, msg.sender);
     }
 
@@ -361,8 +375,52 @@ contract EasyStaking is Ownable {
     function setLiquidityProvidersRewardAddress(address _address) public onlyOwner {
         require(_address != address(0), "zero address");
         require(_address != address(this), "wrong address");
-        liquidityProvidersRewardAddress = _address;
+        AddressParam memory param = liquidityProvidersRewardAddressParam;
+        if (param.timestamp == 0) {
+            param.oldValue = _address;
+        } else if (_paramUpdateDelayElapsed(param.timestamp)) {
+            param.oldValue = param.newValue;
+        }
+        param.newValue = _address;
+        param.timestamp = _now();
+        liquidityProvidersRewardAddressParam = param;
         emit LiquidityProvidersRewardAddressSet(_address, msg.sender);
+    }
+
+    /**
+     * @return Returns current fee.
+     */
+    function fee() public view returns (uint256) {
+        return _getUintParamValue(feeParam);
+    }
+
+    /**
+     * @return Returns current withdrawal lock duration.
+     */
+    function withdrawalLockDuration() public view returns (uint256) {
+        return _getUintParamValue(withdrawalLockDurationParam);
+    }
+
+    /**
+     * @return Returns current withdrawal unlock duration.
+     */
+    function withdrawalUnlockDuration() public view returns (uint256) {
+        return _getUintParamValue(withdrawalUnlockDurationParam);
+    }
+
+    /**
+     * @return Returns current total supply factor.
+     */
+    function totalSupplyFactor() public view returns (uint256) {
+        return _getUintParamValue(totalSupplyFactorParam);
+    }
+
+    /**
+     * @return Returns current liquidity providers reward address.
+     */
+    function liquidityProvidersRewardAddress() public view returns (address) {
+        AddressParam memory param = liquidityProvidersRewardAddressParam;
+        return _paramUpdateDelayElapsed(param.timestamp) ? param.newValue : param.oldValue;
     }
 
     /**
@@ -370,7 +428,7 @@ contract EasyStaking is Ownable {
      */
     function getSupplyBasedEmissionRate() public view returns (uint256) {
         uint256 totalSupply = token.totalSupply();
-        uint256 target = totalSupply.mul(totalSupplyFactor).div(1 ether);
+        uint256 target = totalSupply.mul(totalSupplyFactor()).div(1 ether);
         uint256 maxSupplyBasedEmissionRate = MAX_EMISSION_RATE.div(2); // 7.5%
         if (totalStaked >= target) {
             return maxSupplyBasedEmissionRate;
@@ -439,9 +497,9 @@ contract EasyStaking is Ownable {
         }
         uint256 feeValue = 0;
         if (_forced) {
-            feeValue = amount.mul(fee).div(1 ether);
+            feeValue = amount.mul(fee()).div(1 ether);
             amount = amount.sub(feeValue);
-            require(token.transfer(liquidityProvidersRewardAddress, feeValue), "transfer failed");
+            require(token.transfer(liquidityProvidersRewardAddress(), feeValue), "transfer failed");
         }
         require(token.transfer(_sender, amount), "transfer failed");
         emit Withdrawn(_sender, _id, amount, feeValue, balances[_sender][_id], accruedEmission, timePassed);
@@ -461,9 +519,36 @@ contract EasyStaking is Ownable {
             require(token.mint(address(this), total), "minting failed");
             balances[_user][_id] = currentBalance.add(userShare);
             totalStaked = totalStaked.add(userShare);
-            require(token.transfer(liquidityProvidersRewardAddress, total.sub(userShare)), "transfer failed");
+            require(token.transfer(liquidityProvidersRewardAddress(), total.sub(userShare)), "transfer failed");
         }
         return (userShare, timePassed);
+    }
+
+    /**
+     * @dev Sets the next value of the parameter and the timestamp of this setting.
+     */
+    function _updateUintParam(UintParam storage _param, uint256 _newValue) internal {
+        if (_param.timestamp == 0) {
+            _param.oldValue = _newValue;
+        } else if (_paramUpdateDelayElapsed(_param.timestamp)) {
+            _param.oldValue = _param.newValue;
+        }
+        _param.newValue = _newValue;
+        _param.timestamp = _now();
+    }
+
+    /**
+     * @return Returns the current value of the parameter.
+     */
+    function _getUintParamValue(UintParam memory _param) internal view returns (uint256) {
+        return _paramUpdateDelayElapsed(_param.timestamp) ? _param.newValue : _param.oldValue;
+    }
+
+    /**
+     * @return Returns true if param update delay elapsed.
+     */
+    function _paramUpdateDelayElapsed(uint256 _paramTimestamp) internal view returns (bool) {
+        return _now() > _paramTimestamp.add(PARAM_UPDATE_DELAY);
     }
 
     /**
