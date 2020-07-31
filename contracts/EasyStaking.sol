@@ -232,12 +232,14 @@ contract EasyStaking is Ownable {
      * It generates a new deposit ID and calls the internal "_deposit" method.
      * @param _sender The sender of tokens.
      * @param _amount The transferred amount.
+     * @return true if successful
      */
-    function onTokenTransfer(address _sender, uint256 _amount, bytes calldata) external {
+    function onTokenTransfer(address _sender, uint256 _amount, bytes calldata) external returns (bool) {
         require(msg.sender == address(token), "only token contract is allowed");
         if (!locked) {
             _deposit(_sender, ++lastDepositIds[_sender], _amount);
         }
+        return true;
     }
 
     /**
@@ -373,15 +375,14 @@ contract EasyStaking is Ownable {
     function setLiquidityProvidersRewardAddress(address _address) public onlyOwner {
         require(_address != address(0), "zero address");
         require(_address != address(this), "wrong address");
-        uint256 currentTimestamp = _now();
         AddressParam memory param = liquidityProvidersRewardAddressParam;
         if (param.timestamp == 0) {
             param.oldValue = _address;
-        } else if (currentTimestamp > param.timestamp.add(PARAM_UPDATE_DELAY)) {
+        } else if (_paramUpdateDelayElapsed(param.timestamp)) {
             param.oldValue = param.newValue;
         }
         param.newValue = _address;
-        param.timestamp = currentTimestamp;
+        param.timestamp = _now();
         liquidityProvidersRewardAddressParam = param;
         emit LiquidityProvidersRewardAddressSet(_address, msg.sender);
     }
@@ -418,10 +419,8 @@ contract EasyStaking is Ownable {
      * @return Returns current liquidity providers reward address.
      */
     function liquidityProvidersRewardAddress() public view returns (address) {
-        uint256 currentTimestamp = _now();
         AddressParam memory param = liquidityProvidersRewardAddressParam;
-        bool isUpdated = currentTimestamp > param.timestamp.add(PARAM_UPDATE_DELAY);
-        return isUpdated ? param.newValue : param.oldValue;
+        return _paramUpdateDelayElapsed(param.timestamp) ? param.newValue : param.oldValue;
     }
 
     /**
@@ -455,8 +454,8 @@ contract EasyStaking is Ownable {
         userEmissionRate = userEmissionRate.add(getSupplyBasedEmissionRate());
         if (userEmissionRate == 0) return (0, 0, timePassed);
         assert(userEmissionRate <= MAX_EMISSION_RATE);
-        total = _amount.mul(MAX_EMISSION_RATE).mul(timePassed).div(1 ether).div(YEAR);
-        userShare = _amount.mul(userEmissionRate).mul(timePassed).div(1 ether).div(YEAR);
+        total = _amount.mul(MAX_EMISSION_RATE).mul(timePassed).div(YEAR * 1 ether);
+        userShare = _amount.mul(userEmissionRate).mul(timePassed).div(YEAR * 1 ether);
     }
 
     /**
@@ -534,22 +533,27 @@ contract EasyStaking is Ownable {
      * @dev Sets the next value of the parameter and the timestamp of this setting.
      */
     function _updateUintParam(UintParam storage _param, uint256 _newValue) internal {
-        uint256 currentTimestamp = _now();
         if (_param.timestamp == 0) {
             _param.oldValue = _newValue;
-        } else if (currentTimestamp > _param.timestamp.add(PARAM_UPDATE_DELAY)) {
+        } else if (_paramUpdateDelayElapsed(_param.timestamp)) {
             _param.oldValue = _param.newValue;
         }
         _param.newValue = _newValue;
-        _param.timestamp = currentTimestamp;
+        _param.timestamp = _now();
     }
 
     /**
      * @return Returns the current value of the parameter.
      */
     function _getUintParamValue(UintParam memory _param) internal view returns (uint256) {
-        bool isUpdated = _now() > _param.timestamp.add(PARAM_UPDATE_DELAY);
-        return isUpdated ? _param.newValue : _param.oldValue;
+        return _paramUpdateDelayElapsed(_param.timestamp) ? _param.newValue : _param.oldValue;
+    }
+
+    /**
+     * @return Returns true if param update delay elapsed.
+     */
+    function _paramUpdateDelayElapsed(uint256 _paramTimestamp) internal view returns (bool) {
+        return _now() > _paramTimestamp.add(PARAM_UPDATE_DELAY);
     }
 
     /**
