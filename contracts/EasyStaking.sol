@@ -428,7 +428,9 @@ contract EasyStaking is Ownable {
      */
     function getSupplyBasedEmissionRate() public view returns (uint256) {
         uint256 totalSupply = token.totalSupply();
-        uint256 target = totalSupply.mul(totalSupplyFactor()).div(1 ether);
+        uint256 factor = totalSupplyFactor();
+        if (factor == 0) return 0;
+        uint256 target = totalSupply.mul(factor).div(1 ether);
         uint256 maxSupplyBasedEmissionRate = MAX_EMISSION_RATE.div(2); // 7.5%
         if (totalStaked >= target) {
             return maxSupplyBasedEmissionRate;
@@ -450,6 +452,7 @@ contract EasyStaking is Ownable {
         if (timePassed == 0) return (0, 0, 0);
         uint256 userEmissionRate = sigmoid.calculate(int256(timePassed));
         userEmissionRate = userEmissionRate.add(getSupplyBasedEmissionRate());
+        if (userEmissionRate == 0) return (0, 0, timePassed);
         assert(userEmissionRate <= MAX_EMISSION_RATE);
         total = _amount.mul(MAX_EMISSION_RATE).mul(timePassed).div(YEAR * 1 ether);
         userShare = _amount.mul(userEmissionRate).mul(timePassed).div(YEAR * 1 ether);
@@ -458,7 +461,7 @@ contract EasyStaking is Ownable {
     /**
      * @return Sigmoid parameters.
      */
-    function getSigmoidParameters() external view returns (uint256 a, int256 b, uint256 c) {
+    function getSigmoidParameters() public view returns (uint256 a, int256 b, uint256 c) {
         return sigmoid.getParameters();
     }
 
@@ -470,6 +473,8 @@ contract EasyStaking is Ownable {
      */
     function _deposit(address _sender, uint256 _id, uint256 _amount) internal {
         require(_amount > 0, "deposit amount should be more than 0");
+        (uint256 sigmoidParamA,,) = getSigmoidParameters();
+        if (sigmoidParamA == 0 && totalSupplyFactor() == 0) revert("emission stopped");
         (uint256 userShare, uint256 timePassed) = _mint(_sender, _id, 0);
         uint256 newBalance = balances[_sender][_id].add(_amount);
         balances[_sender][_id] = newBalance;

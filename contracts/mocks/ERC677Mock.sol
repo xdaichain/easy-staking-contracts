@@ -16,6 +16,10 @@ contract ERC677Mock is StandaloneERC20 {
         bridge = _bridge;
     }
 
+    function removeMinter(address _account) external {
+        _removeMinter(_account);
+    }
+
     function transfer(address recipient, uint256 amount) public returns (bool) {
         bool success = super.transfer(recipient, amount);
         require(success, "transfer failed");
