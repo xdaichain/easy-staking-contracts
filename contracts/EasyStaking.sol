@@ -4,6 +4,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
 import "./IERC20Mintable.sol";
 import "./Sacrifice.sol";
 import "./lib/Sigmoid.sol";
@@ -15,7 +16,7 @@ import "./lib/Sigmoid.sol";
  * and represented as fixed point numbers containing 18 decimals like with Ether
  * 100% == 1 ether
  */
-contract EasyStaking is Ownable {
+contract EasyStaking is Ownable, ReentrancyGuard {
     using Address for address;
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
@@ -186,6 +187,7 @@ contract EasyStaking is Ownable {
         require(_owner != address(0), "zero address");
         require(_tokenAddress.isContract(), "not a contract address");
         Ownable.initialize(msg.sender);
+        ReentrancyGuard.initialize();
         token = IERC20Mintable(_tokenAddress);
         setFee(_fee);
         setWithdrawalLockDuration(_withdrawalLockDuration);
@@ -471,7 +473,7 @@ contract EasyStaking is Ownable {
      * @param _id User's unique deposit ID.
      * @param _amount The amount to deposit.
      */
-    function _deposit(address _sender, uint256 _id, uint256 _amount) internal {
+    function _deposit(address _sender, uint256 _id, uint256 _amount) internal nonReentrant {
         require(_amount > 0, "deposit amount should be more than 0");
         (uint256 sigmoidParamA,,) = getSigmoidParameters();
         if (sigmoidParamA == 0 && totalSupplyFactor() == 0) revert("emission stopped");
@@ -490,7 +492,7 @@ contract EasyStaking is Ownable {
      * @param _amount The amount to withdraw (0 - to withdraw all).
      * @param _forced Defines whether to apply fee (true), or not (false).
      */
-    function _withdraw(address _sender, uint256 _id, uint256 _amount, bool _forced) internal {
+    function _withdraw(address _sender, uint256 _id, uint256 _amount, bool _forced) internal nonReentrant {
         require(_id > 0 && _id <= lastDepositIds[_sender], "wrong deposit id");
         require(balances[_sender][_id] > 0 && balances[_sender][_id] >= _amount, "insufficient funds");
         (uint256 accruedEmission, uint256 timePassed) = _mint(_sender, _id, _amount);
