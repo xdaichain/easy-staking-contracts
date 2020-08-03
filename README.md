@@ -123,16 +123,17 @@ If a user requests a timed withdrawal but fails to execute within the allotted t
 ### Owner
 The owner can change the contract parameters and claim unsupported tokens accidentally sent to the contract.
 
-Parameters changes take effect only after 7 days.
-1. `claimTokens(address,address,uint256)`
-2. `setFee(uint256)`
-3. `setWithdrawalLockDuration(uint256)`
-4. `setWithdrawalUnlockDuration(uint256)`
-5. `setTotalSupplyFactor(uint256)`
-6. `setSigmoidParameters(uint256,int256,uint256)`
-7. `setLiquidityProvidersRewardAddress(address)`
-8. `transferOwnership(address)`
-9. `renounceOwnership()`
+For the `set*` functions listed below the changed parameter values will only take effect `7 days` after the function is called.
+
+1. `setFee(uint256)` allows the owner to set a fee percentage for an instant withdrawal.
+2. `setWithdrawalLockDuration(uint256)` allows the owner to change time period from the withdrawal request after which a timed withdrawal is available. 12 hours by default. Cannot exceed 30 days.
+3. `setWithdrawalUnlockDuration(uint256)` allows the owner to change time period during which a timed withdrawal is available from the moment of unlocking. 12 hours by default. Cannot be less than 1 hour.
+4. `setTotalSupplyFactor(uint256)` allows the owner to change the value of `total supply factor` which defines a percentage of STAKE's `totalSupply` (from 0% to 100%) used for the supply-based emission calculation (the larger the factor, the smaller the supply-based emission).
+5. `setSigmoidParameters(uint256,int256,uint256)` allows the owner to change sigmoid's parameters (`a`, `b`, and `c`) which is used for the time-based emission.
+6. `setLiquidityProvidersRewardAddress(address)` allows the owner to change the address to which the liquidity providers reward is sent.
+7. `claimTokens(address,address,uint256)` allows the owner to return any tokens (or native coins) mistakenly transferred to the EasyStaking contract by any address.
+8. `transferOwnership(address)` allows the owner to transfer the ownership to another address.
+9. `renounceOwnership()` allows the owner to resign forever.
 
 ### Proxy Admin
 The Proxy Admin can upgrade the contract logic. This role will be abolished following an audit and sufficient testing.
