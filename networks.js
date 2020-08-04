@@ -21,5 +21,10 @@ module.exports = {
       gasPrice: 1e10,
       networkId: 42,
     },
+    mainnet: {
+      provider: getProvider('mainnet'),
+      gasPrice: 7e10,
+      networkId: 1,
+    },
   },
 };
