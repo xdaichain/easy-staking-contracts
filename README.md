@@ -13,6 +13,9 @@ EasyStaking serves to reduce the overall amount of STAKE in active circulation, 
 
 See also: https://www.xdaichain.com/for-stakers/easy-staking
 
+## Security Audit
+
+EasyStaking was audited by Quantstamp. You can find the audit report [here](https://github.com/xdaichain/easy-staking-contracts/blob/master/audit/Quantstamp/xDai%20EasyStaking%20-%20Final%20Report.pdf).
 
 ## How to run
 ### Setup
