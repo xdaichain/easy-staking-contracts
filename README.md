@@ -128,17 +128,17 @@ The owner can change the contract parameters and claim unsupported tokens accide
 
 For the `set*` functions listed below the changed parameter values will only take effect `7 days` after the function is called.
 
-1. `setFee(uint256)` allows the owner to set a fee percentage for an instant withdrawal.
+1. `setFee(uint256)` allows the owner to set a fee percentage for an instant withdrawal. 2% by default.
 2. `setWithdrawalLockDuration(uint256)` allows the owner to change time period from the withdrawal request after which a timed withdrawal is available. 12 hours by default. Cannot exceed 30 days.
 3. `setWithdrawalUnlockDuration(uint256)` allows the owner to change time period during which a timed withdrawal is available from the moment of unlocking. 12 hours by default. Cannot be less than 1 hour.
-4. `setTotalSupplyFactor(uint256)` allows the owner to change the value of `total supply factor` which defines a percentage of STAKE's `totalSupply` (from 0% to 100%) used for the supply-based emission calculation (the larger the factor, the smaller the supply-based emission).
-5. `setSigmoidParameters(uint256,int256,uint256)` allows the owner to change sigmoid's parameters (`a`, `b`, and `c`) which is used for the time-based emission.
+4. `setTotalSupplyFactor(uint256)` allows the owner to change the value of `total supply factor` which defines a percentage of STAKE's `totalSupply` (from 0% to 100%) used for the supply-based emission calculation (the larger the factor, the smaller the supply-based emission). 50% by default.
+5. `setSigmoidParameters(uint256,int256,uint256)` allows the owner to change sigmoid's parameters (`a`, `b`, and `c`) which is used for the time-based emission. The default values are: `a` = `75000000000000000`, `b` = `0`, `c` = `10000000000000` - they represent a sigmoid on the page https://www.desmos.com/calculator/2xtimbnzqw
 6. `setLiquidityProvidersRewardAddress(address)` allows the owner to change the address to which the liquidity providers reward is sent.
 7. `claimTokens(address,address,uint256)` allows the owner to return any tokens (or native coins) mistakenly transferred to the EasyStaking contract by any address.
 8. `transferOwnership(address)` allows the owner to transfer the ownership to another address.
 9. `renounceOwnership()` allows the owner to resign forever.
 
 ### Proxy Admin
-The Proxy Admin can upgrade the contract logic. This role will be abolished following an audit and sufficient testing.
+The Proxy Admin can upgrade the contract logic. This role was abolished by [calling `renounceOwnership`](https://etherscan.io/tx/0x5b8ee5625ee76f90bc3444811185202af3bf29e8d1a72c2dc72767b32cfd14e9) in the [ProxyAdmin contract](https://etherscan.io/address/0xec800ffdd7c4081911614fed9a6dd780ab264ea6#code).
 
 *`Note: All methods are described in code.`*
