@@ -1,0 +1,332 @@
+{
+  "contracts": {
+    "EasyStaking": {
+      "address": "0xEcdAA01647290E1e9Fdc8a26628a33561Ba02949",
+      "constructorCode": "6080604052613144806100136000396000f3fe",
+      "bodyBytecodeHash": "fc3d0c6678b58808a17627626c8d0d4a2de97b91b9e52e0d9975e1674730c80a",
+      "localBytecodeHash": "2c66fe53de08701edf9f4d0695d3ea0b9eba36a36111f48b463c178f2cc08c5e",
+      "deployedBytecodeHash": "2c66fe53de08701edf9f4d0695d3ea0b9eba36a36111f48b463c178f2cc08c5e",
+      "types": {
+        "t_bool": {
+          "id": "t_bool",
+          "kind": "elementary",
+          "label": "bool"
+        },
+        "t_uint256": {
+          "id": "t_uint256",
+          "kind": "elementary",
+          "label": "uint256"
+        },
+        "t_array:50<t_uint256>": {
+          "id": "t_array:50<t_uint256>",
+          "valueType": "t_uint256",
+          "length": "50",
+          "kind": "array",
+          "label": "uint256[50]"
+        },
+        "t_address": {
+          "id": "t_address",
+          "kind": "elementary",
+          "label": "address"
+        },
+        "t_struct<EasyStaking.AddressParam>": {
+          "id": "t_struct<EasyStaking.AddressParam>",
+          "kind": "struct",
+          "label": "EasyStaking.AddressParam",
+          "members": [
+            {
+              "label": "oldValue",
+              "astId": 2227,
+              "type": "t_address",
+              "src": "4556:16:17"
+            },
+            {
+              "label": "newValue",
+              "astId": 2229,
+              "type": "t_address",
+              "src": "4582:16:17"
+            },
+            {
+              "label": "timestamp",
+              "astId": 2231,
+              "type": "t_uint256",
+              "src": "4608:17:17"
+            }
+          ]
+        },
+        "t_struct<EasyStaking.UintParam>": {
+          "id": "t_struct<EasyStaking.UintParam>",
+          "kind": "struct",
+          "label": "EasyStaking.UintParam",
+          "members": [
+            {
+              "label": "oldValue",
+              "astId": 2220,
+              "type": "t_uint256",
+              "src": "4444:16:17"
+            },
+            {
+              "label": "newValue",
+              "astId": 2222,
+              "type": "t_uint256",
+              "src": "4470:16:17"
+            },
+            {
+              "label": "timestamp",
+              "astId": 2224,
+              "type": "t_uint256",
+              "src": "4496:17:17"
+            }
+          ]
+        },
+        "t_mapping<t_uint256>": {
+          "id": "t_mapping<t_uint256>",
+          "valueType": "t_uint256",
+          "label": "mapping(key => uint256)",
+          "kind": "mapping"
+        },
+        "t_struct<Sigmoid.State>": {
+          "id": "t_struct<Sigmoid.State>",
+          "kind": "struct",
+          "label": "Sigmoid.State",
+          "members": [
+            {
+              "label": "oldParams",
+              "astId": 3773,
+              "type": "t_struct<Sigmoid.Params>",
+              "src": "457:16:21"
+            },
+            {
+              "label": "newParams",
+              "astId": 3775,
+              "type": "t_struct<Sigmoid.Params>",
+              "src": "483:16:21"
+            },
+            {
+              "label": "timestamp",
+              "astId": 3777,
+              "type": "t_uint256",
+              "src": "509:17:21"
+            }
+          ]
+        },
+        "t_struct<Sigmoid.Params>": {
+          "id": "t_struct<Sigmoid.Params>",
+          "kind": "struct",
+          "label": "Sigmoid.Params",
+          "members": [
+            {
+              "label": "a",
+              "astId": 3766,
+              "type": "t_uint256",
+              "src": "375:9:21"
+            },
+            {
+              "label": "b",
+              "astId": 3768,
+              "type": "t_int256",
+              "src": "394:8:21"
+            },
+            {
+              "label": "c",
+              "astId": 3770,
+              "type": "t_uint256",
+              "src": "412:9:21"
+            }
+          ]
+        },
+        "t_int256": {
+          "id": "t_int256",
+          "kind": "elementary",
+          "label": "int256"
+        }
+      },
+      "storage": [
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "initialized",
+          "astId": 2040,
+          "type": "t_bool",
+          "src": "757:24:16"
+        },
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "initializing",
+          "astId": 2042,
+          "type": "t_bool",
+          "src": "876:25:16"
+        },
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "______gap",
+          "astId": 2104,
+          "type": "t_array:50<t_uint256>",
+          "src": "1982:29:16"
+        },
+        {
+          "contract": "Ownable",
+          "path": "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol",
+          "label": "_owner",
+          "astId": 658,
+          "type": "t_address",
+          "src": "526:22:6"
+        },
+        {
+          "contract": "Ownable",
+          "path": "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol",
+          "label": "______gap",
+          "astId": 771,
+          "type": "t_array:50<t_uint256>",
+          "src": "2471:29:6"
+        },
+        {
+          "contract": "ReentrancyGuard",
+          "path": "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol",
+          "label": "_guardCounter",
+          "astId": 2002,
+          "type": "t_uint256",
+          "src": "733:29:15"
+        },
+        {
+          "contract": "ReentrancyGuard",
+          "path": "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol",
+          "label": "______gap",
+          "astId": 2035,
+          "type": "t_array:50<t_uint256>",
+          "src": "1563:29:15"
+        },
+        {
+          "contract": "EasyStaking",
+          "path": "contracts/EasyStaking.sol",
+          "label": "token",
+          "astId": 2218,
+          "type": "t_address",
+          "src": "4383:27:17"
+        },
+        {
+          "contract": "EasyStaking",
+          "path": "contracts/EasyStaking.sol",
+          "label": "liquidityProvidersRewardAddressParam",
+          "astId": 2234,
+          "type": "t_struct<EasyStaking.AddressParam>",
+          "src": "4692:56:17"
+        },
+        {
+          "contract": "EasyStaking",
+          "path": "contracts/EasyStaking.sol",
+          "label": "feeParam",
+          "astId": 2236,
+          "type": "t_struct<EasyStaking.UintParam>",
+          "src": "4810:25:17"
+        },
+        {
+          "contract": "EasyStaking",
+          "path": "contracts/EasyStaking.sol",
+          "label": "withdrawalLockDurationParam",
+          "astId": 2238,
+          "type": "t_struct<EasyStaking.UintParam>",
+          "src": "4932:44:17"
+        },
+        {
+          "contract": "EasyStaking",
+          "path": "contracts/EasyStaking.sol",
+          "label": "withdrawalUnlockDurationParam",
+          "astId": 2240,
+          "type": "t_struct<EasyStaking.UintParam>",
+          "src": "5086:46:17"
+        },
+        {
+          "contract": "EasyStaking",
+          "path": "contracts/EasyStaking.sol",
+          "label": "totalSupplyFactorParam",
+          "astId": 2242,
+          "type": "t_struct<EasyStaking.UintParam>",
+          "src": "5211:39:17"
+        },
+        {
+          "contract": "EasyStaking",
+          "path": "contracts/EasyStaking.sol",
+          "label": "balances",
+          "astId": 2248,
+          "type": "t_mapping<t_uint256>",
+          "src": "5294:65:17"
+        },
+        {
+          "contract": "EasyStaking",
+          "path": "contracts/EasyStaking.sol",
+          "label": "depositDates",
+          "astId": 2254,
+          "type": "t_mapping<t_uint256>",
+          "src": "5401:69:17"
+        },
+        {
+          "contract": "EasyStaking",
+          "path": "contracts/EasyStaking.sol",
+          "label": "withdrawalRequestsDates",
+          "astId": 2260,
+          "type": "t_mapping<t_uint256>",
+          "src": "5523:80:17"
+        },
+        {
+          "contract": "EasyStaking",
+          "path": "contracts/EasyStaking.sol",
+          "label": "lastDepositIds",
+          "astId": 2264,
+          "type": "t_mapping<t_uint256>",
+          "src": "5636:50:17"
+        },
+        {
+          "contract": "EasyStaking",
+          "path": "contracts/EasyStaking.sol",
+          "label": "totalStaked",
+          "astId": 2266,
+          "type": "t_uint256",
+          "src": "5723:26:17"
+        },
+        {
+          "contract": "EasyStaking",
+          "path": "contracts/EasyStaking.sol",
+          "label": "locked",
+          "astId": 2268,
+          "type": "t_bool",
+          "src": "5828:19:17"
+        },
+        {
+          "contract": "EasyStaking",
+          "path": "contracts/EasyStaking.sol",
+          "label": "sigmoid",
+          "astId": 2270,
+          "type": "t_struct<Sigmoid.State>",
+          "src": "5927:29:17"
+        }
+      ],
+      "warnings": {
+        "hasConstructor": false,
+        "hasSelfDestruct": false,
+        "hasDelegateCall": false,
+        "hasInitialValuesInDeclarations": false,
+        "uninitializedBaseContracts": []
+      }
+    }
+  },
+  "solidityLibs": {},
+  "proxies": {
+    "easy-staking-contracts/EasyStaking": [
+      {
+        "address": "0xecbCd6D7264e3c9eAc24C7130Ed3cd2B38F5A7AD",
+        "version": "1.0.0",
+        "implementation": "0xEcdAA01647290E1e9Fdc8a26628a33561Ba02949",
+        "admin": "0xeC800FFdD7c4081911614Fed9A6dd780Ab264eA6",
+        "kind": "Upgradeable"
+      }
+    ]
+  },
+  "manifestVersion": "2.2",
+  "version": "1.0.0",
+  "proxyAdmin": {
+    "address": "0xeC800FFdD7c4081911614Fed9A6dd780Ab264eA6"
+  }
+}
