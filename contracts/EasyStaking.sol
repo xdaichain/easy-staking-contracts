@@ -318,7 +318,6 @@ contract EasyStaking is Ownable, ReentrancyGuard {
      * @param _value The new fee value (in percentage).
      */
     function setFee(uint256 _value) public onlyOwner {
-        require(_value <= 1 ether, "should be less than or equal to 1 ether");
         _updateUintParam(feeParam, _value);
         emit FeeSet(_value, msg.sender);
     }
@@ -523,7 +522,6 @@ contract EasyStaking is Ownable, ReentrancyGuard {
         uint256 amount = _amount == 0 ? currentBalance : _amount;
         (uint256 total, uint256 userShare, uint256 timePassed) = getAccruedEmission(depositDates[_user][_id], amount);
         if (total > 0) {
-            require(token.mint(address(this), total), "minting failed");
             balances[_user][_id] = currentBalance.add(userShare);
             totalStaked = totalStaked.add(userShare);
             require(token.transfer(liquidityProvidersRewardAddress(), total.sub(userShare)), "transfer failed");
