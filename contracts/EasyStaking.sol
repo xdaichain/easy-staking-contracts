@@ -459,6 +459,36 @@ contract EasyStaking is Ownable, ReentrancyGuard {
         userShare = _amount.mul(userEmissionRate).mul(timePassed).div(YEAR * 1 ether);
     }
 
+    function calculateApy(
+        uint256 _days,
+        uint256 _amount
+    ) public view returns (uint256) {
+        if (_amount == 0 || _days == 0) return 0;
+        uint256 userEmissionRate = sigmoid.calculate(int256(_days));
+        userEmissionRate = userEmissionRate.add(getAdjustedSupplyBasedEmissionRate(_amount));
+        if (userEmissionRate == 0) return 0;
+        assert(userEmissionRate <= MAX_EMISSION_RATE);
+        total = _amount.mul(MAX_EMISSION_RATE).mul(timePassed).div(YEAR * 1 ether);
+        userShare = _amount.mul(userEmissionRate).mul(timePassed).div(YEAR * 1 ether);
+    }
+
+    /**
+     * @return Emission rate based on the ratio of total staked to total supply.
+     */
+    function getAdjustedSupplyBasedEmissionRate(
+        uint256 _increaseByAmount,
+    ) public view returns (uint256) {
+        uint256 totalSupply = token.totalSupply();
+        uint256 factor = totalSupplyFactor();
+        if (factor == 0) return 0;
+        uint256 target = totalSupply.mul(factor).div(1 ether);
+        uint256 maxSupplyBasedEmissionRate = MAX_EMISSION_RATE.div(2); // 7.5%
+        if (totalStaked >= target) {
+            return maxSupplyBasedEmissionRate;
+        }
+        return maxSupplyBasedEmissionRate.mul(totalStaked+_increaseByAmount).div(target);
+    }
+
     /**
      * @return Sigmoid parameters.
      */
