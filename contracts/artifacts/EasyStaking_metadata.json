@@ -1,0 +1,1458 @@
+{
+	"compiler": {
+		"version": "0.5.16+commit.9c3226ce"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "uint256",
+						"name": "id",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "balance",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "accruedEmission",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "prevDepositDuration",
+						"type": "uint256"
+					}
+				],
+				"name": "Deposited",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "value",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
+					}
+				],
+				"name": "FeeSet",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "value",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
+					}
+				],
+				"name": "LiquidityProvidersRewardAddressSet",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "value",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
+					}
+				],
+				"name": "LockAfterStakeDurationSet",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "previousOwner",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "newOwner",
+						"type": "address"
+					}
+				],
+				"name": "OwnershipTransferred",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "a",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "int256",
+						"name": "b",
+						"type": "int256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "c",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
+					}
+				],
+				"name": "SigmoidParametersSet",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "value",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
+					}
+				],
+				"name": "TotalSupplyFactorSet",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "value",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
+					}
+				],
+				"name": "WithdrawalLockDurationSet",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "uint256",
+						"name": "id",
+						"type": "uint256"
+					}
+				],
+				"name": "WithdrawalRequested",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "value",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
+					}
+				],
+				"name": "WithdrawalUnlockDurationSet",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "uint256",
+						"name": "id",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "fee",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "balance",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "accruedEmission",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "lastDepositDuration",
+						"type": "uint256"
+					}
+				],
+				"name": "Withdrawn",
+				"type": "event"
+			},
+			{
+				"constant": true,
+				"inputs": [],
+				"name": "MAX_EMISSION_RATE",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"payable": false,
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"constant": true,
+				"inputs": [],
+				"name": "PARAM_UPDATE_DELAY",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"payable": false,
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"constant": true,
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"name": "balances",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"payable": false,
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"constant": false,
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_token",
+						"type": "address"
+					},
+					{
+						"internalType": "address payable",
+						"name": "_to",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_amount",
+						"type": "uint256"
+					}
+				],
+				"name": "claimTokens",
+				"outputs": [],
+				"payable": false,
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"constant": false,
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_amount",
+						"type": "uint256"
+					}
+				],
+				"name": "deposit",
+				"outputs": [],
+				"payable": false,
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"constant": false,
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_depositId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_amount",
+						"type": "uint256"
+					}
+				],
+				"name": "deposit",
+				"outputs": [],
+				"payable": false,
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"constant": true,
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"name": "depositDates",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"payable": false,
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"constant": true,
+				"inputs": [],
+				"name": "fee",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"payable": false,
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"constant": true,
+				"inputs": [],
+				"name": "feeParam",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "oldValue",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "newValue",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					}
+				],
+				"payable": false,
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"constant": true,
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_depositDate",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_amount",
+						"type": "uint256"
+					}
+				],
+				"name": "getAccruedEmission",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "total",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "userShare",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "timePassed",
+						"type": "uint256"
+					}
+				],
+				"payable": false,
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"constant": true,
+				"inputs": [],
+				"name": "getSigmoidParameters",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "a",
+						"type": "uint256"
+					},
+					{
+						"internalType": "int256",
+						"name": "b",
+						"type": "int256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "c",
+						"type": "uint256"
+					}
+				],
+				"payable": false,
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"constant": true,
+				"inputs": [],
+				"name": "getSupplyBasedEmissionRate",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"payable": false,
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"constant": false,
+				"inputs": [],
+				"name": "initialize",
+				"outputs": [],
+				"payable": false,
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"constant": false,
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
+					}
+				],
+				"name": "initialize",
+				"outputs": [],
+				"payable": false,
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"constant": false,
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_owner",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "_tokenAddress",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "_liquidityProvidersRewardAddress",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_fee",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_withdrawalLockDuration",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_withdrawalUnlockDuration",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_lockAfterStakeDuration",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_totalSupplyFactor",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_sigmoidParamA",
+						"type": "uint256"
+					},
+					{
+						"internalType": "int256",
+						"name": "_sigmoidParamB",
+						"type": "int256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_sigmoidParamC",
+						"type": "uint256"
+					}
+				],
+				"name": "initialize",
+				"outputs": [],
+				"payable": false,
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"constant": true,
+				"inputs": [],
+				"name": "isOwner",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"payable": false,
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"constant": true,
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"name": "lastDepositIds",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"payable": false,
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"constant": true,
+				"inputs": [],
+				"name": "liquidityProvidersRewardAddress",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"payable": false,
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"constant": true,
+				"inputs": [],
+				"name": "liquidityProvidersRewardAddressParam",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "oldValue",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "newValue",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					}
+				],
+				"payable": false,
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"constant": true,
+				"inputs": [],
+				"name": "lockAfterStakeDuration",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"payable": false,
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"constant": true,
+				"inputs": [],
+				"name": "lockAfterStakeDurationParam",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "oldValue",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "newValue",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					}
+				],
+				"payable": false,
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"constant": true,
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_sender",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_id",
+						"type": "uint256"
+					}
+				],
+				"name": "lockAfterStakeDurationPassed",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"payable": false,
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"constant": false,
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_depositId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_amount",
+						"type": "uint256"
+					}
+				],
+				"name": "makeForcedWithdrawal",
+				"outputs": [],
+				"payable": false,
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"constant": false,
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_depositId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_amount",
+						"type": "uint256"
+					}
+				],
+				"name": "makeRequestedWithdrawal",
+				"outputs": [],
+				"payable": false,
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"constant": false,
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_sender",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_amount",
+						"type": "uint256"
+					},
+					{
+						"internalType": "bytes",
+						"name": "",
+						"type": "bytes"
+					}
+				],
+				"name": "onTokenTransfer",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"payable": false,
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"constant": true,
+				"inputs": [],
+				"name": "owner",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"payable": false,
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"constant": false,
+				"inputs": [],
+				"name": "renounceOwnership",
+				"outputs": [],
+				"payable": false,
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"constant": false,
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_depositId",
+						"type": "uint256"
+					}
+				],
+				"name": "requestWithdrawal",
+				"outputs": [],
+				"payable": false,
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"constant": false,
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_value",
+						"type": "uint256"
+					}
+				],
+				"name": "setFee",
+				"outputs": [],
+				"payable": false,
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"constant": false,
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_address",
+						"type": "address"
+					}
+				],
+				"name": "setLiquidityProvidersRewardAddress",
+				"outputs": [],
+				"payable": false,
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"constant": false,
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_value",
+						"type": "uint256"
+					}
+				],
+				"name": "setLockAfterStakeDuration",
+				"outputs": [],
+				"payable": false,
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"constant": false,
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_a",
+						"type": "uint256"
+					},
+					{
+						"internalType": "int256",
+						"name": "_b",
+						"type": "int256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_c",
+						"type": "uint256"
+					}
+				],
+				"name": "setSigmoidParameters",
+				"outputs": [],
+				"payable": false,
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"constant": false,
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_value",
+						"type": "uint256"
+					}
+				],
+				"name": "setTotalSupplyFactor",
+				"outputs": [],
+				"payable": false,
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"constant": false,
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_value",
+						"type": "uint256"
+					}
+				],
+				"name": "setWithdrawalLockDuration",
+				"outputs": [],
+				"payable": false,
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"constant": false,
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_value",
+						"type": "uint256"
+					}
+				],
+				"name": "setWithdrawalUnlockDuration",
+				"outputs": [],
+				"payable": false,
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"constant": true,
+				"inputs": [],
+				"name": "token",
+				"outputs": [
+					{
+						"internalType": "contract IERC20Mintable",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"payable": false,
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"constant": true,
+				"inputs": [],
+				"name": "totalStaked",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"payable": false,
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"constant": true,
+				"inputs": [],
+				"name": "totalSupplyFactor",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"payable": false,
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"constant": true,
+				"inputs": [],
+				"name": "totalSupplyFactorParam",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "oldValue",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "newValue",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					}
+				],
+				"payable": false,
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"constant": false,
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "newOwner",
+						"type": "address"
+					}
+				],
+				"name": "transferOwnership",
+				"outputs": [],
+				"payable": false,
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"constant": true,
+				"inputs": [],
+				"name": "withdrawalLockDuration",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"payable": false,
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"constant": true,
+				"inputs": [],
+				"name": "withdrawalLockDurationParam",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "oldValue",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "newValue",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					}
+				],
+				"payable": false,
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"constant": true,
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"name": "withdrawalRequestsDates",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"payable": false,
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"constant": true,
+				"inputs": [],
+				"name": "withdrawalUnlockDuration",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"payable": false,
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"constant": true,
+				"inputs": [],
+				"name": "withdrawalUnlockDurationParam",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "oldValue",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "newValue",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					}
+				],
+				"payable": false,
+				"stateMutability": "view",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"methods": {
+				"claimTokens(address,address,uint256)": {
+					"details": "This method is used to claim unsupported tokens accidentally sent to the contract. It can only be called by the owner.",
+					"params": {
+						"_amount": "Amount to claim.",
+						"_to": "The address of the tokens/coins receiver.",
+						"_token": "The address of the token contract (zero address for claiming native coins)."
+					}
+				},
+				"deposit(uint256)": {
+					"details": "This method is used to deposit tokens to a new deposit. It generates a new deposit ID and calls another public \"deposit\" method. See its description.",
+					"params": {
+						"_amount": "The amount to deposit."
+					}
+				},
+				"deposit(uint256,uint256)": {
+					"details": "This method is used to deposit tokens to the deposit opened before. It calls the internal \"_deposit\" method and transfers tokens from sender to contract. Sender must approve tokens first.     * Instead this, user can use the simple \"transfer\" method of STAKE token contract to make a deposit. Sender's approval is not needed in this case.     * Note: each call updates the deposit date so be careful if you want to make a long staking.",
+					"params": {
+						"_amount": "The amount to deposit.",
+						"_depositId": "User's unique deposit ID."
+					}
+				},
+				"fee()": {
+					"return": "Returns current fee."
+				},
+				"getAccruedEmission(uint256,uint256)": {
+					"params": {
+						"_amount": "Amount based on which emission is calculated and accrued.",
+						"_depositDate": "Deposit date."
+					},
+					"return": "Total accrued emission (for the user and Liquidity Providers), user share, and seconds passed since the previous deposit started."
+				},
+				"getSigmoidParameters()": {
+					"return": "Sigmoid parameters."
+				},
+				"getSupplyBasedEmissionRate()": {
+					"return": "Emission rate based on the ratio of total staked to total supply."
+				},
+				"initialize(address)": {
+					"details": "Initializes the contract setting the deployer as the initial owner."
+				},
+				"initialize(address,address,address,uint256,uint256,uint256,uint256,uint256,uint256,int256,uint256)": {
+					"details": "Initializes the contract.",
+					"params": {
+						"_fee": "The fee of the forced withdrawal (in percentage).",
+						"_liquidityProvidersRewardAddress": "The address for the Liquidity Providers reward.",
+						"_owner": "The owner of the contract.",
+						"_sigmoidParamA": "Sigmoid parameter A.",
+						"_sigmoidParamB": "Sigmoid parameter B.",
+						"_sigmoidParamC": "Sigmoid parameter C.",
+						"_tokenAddress": "The address of the STAKE token contract.",
+						"_totalSupplyFactor": "Total supply factor for calculating emission rate (in percentage).",
+						"_withdrawalLockDuration": "The time from the request after which the withdrawal will be available (in seconds).",
+						"_withdrawalUnlockDuration": "The time during which the withdrawal will be available from the moment of unlocking (in seconds)."
+					}
+				},
+				"isOwner()": {
+					"details": "Returns true if the caller is the current owner."
+				},
+				"liquidityProvidersRewardAddress()": {
+					"return": "Returns current liquidity providers reward address."
+				},
+				"lockAfterStakeDuration()": {
+					"return": "Returns current lock after stake duration."
+				},
+				"makeForcedWithdrawal(uint256,uint256)": {
+					"details": "This method is used to make a forced withdrawal with a fee. It calls the internal \"_withdraw\" method.",
+					"params": {
+						"_amount": "The amount to withdraw (0 - to withdraw all).",
+						"_depositId": "User's unique deposit ID."
+					}
+				},
+				"makeRequestedWithdrawal(uint256,uint256)": {
+					"details": "This method is used to make a requested withdrawal. It calls the internal \"_withdraw\" method and resets the date of the request.     * If sender didn't call this method during the unlock period (if timestamp >= lockEnd + withdrawalUnlockDuration) they have to call \"requestWithdrawal\" one more time.",
+					"params": {
+						"_amount": "The amount to withdraw (0 - to withdraw all).",
+						"_depositId": "User's unique deposit ID."
+					}
+				},
+				"onTokenTransfer(address,uint256,bytes)": {
+					"details": "This method is called when STAKE tokens are transferred to this contract. using \"transfer\", \"transferFrom\", or \"transferAndCall\" method of STAKE token contract. It generates a new deposit ID and calls the internal \"_deposit\" method.",
+					"params": {
+						"_amount": "The transferred amount.",
+						"_sender": "The sender of tokens."
+					},
+					"return": "true if successful"
+				},
+				"owner()": {
+					"details": "Returns the address of the current owner."
+				},
+				"renounceOwnership()": {
+					"details": "Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner.     * > Note: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner."
+				},
+				"requestWithdrawal(uint256)": {
+					"details": "This method is used to request a withdrawal without a fee. It sets the date of the request.     * Note: each call updates the date of the request so don't call this method twice during the lock.",
+					"params": {
+						"_depositId": "User's unique deposit ID."
+					}
+				},
+				"setFee(uint256)": {
+					"details": "Sets the fee for forced withdrawals. Can only be called by owner.",
+					"params": {
+						"_value": "The new fee value (in percentage)."
+					}
+				},
+				"setLiquidityProvidersRewardAddress(address)": {
+					"details": "Sets the address for the Liquidity Providers reward. Can only be called by owner.",
+					"params": {
+						"_address": "The new address."
+					}
+				},
+				"setLockAfterStakeDuration(uint256)": {
+					"details": "Sets the time from the initial stake after which withdrawals are allowed Can only be called by owner.",
+					"params": {
+						"_value": "The new duration value (in seconds)."
+					}
+				},
+				"setSigmoidParameters(uint256,int256,uint256)": {
+					"details": "Sets parameters of the sigmoid that is used to calculate the user's current emission rate. Can only be called by owner.",
+					"params": {
+						"_a": "Sigmoid parameter A. Unsigned integer.",
+						"_b": "Sigmoid parameter B. Signed integer.",
+						"_c": "Sigmoid parameter C. Unsigned integer. Cannot be zero."
+					}
+				},
+				"setTotalSupplyFactor(uint256)": {
+					"details": "Sets total supply factor for calculating emission rate. Can only be called by owner.",
+					"params": {
+						"_value": "The new factor value (in percentage)."
+					}
+				},
+				"setWithdrawalLockDuration(uint256)": {
+					"details": "Sets the time from the request after which the withdrawal will be available. Can only be called by owner.",
+					"params": {
+						"_value": "The new duration value (in seconds)."
+					}
+				},
+				"setWithdrawalUnlockDuration(uint256)": {
+					"details": "Sets the time during which the withdrawal will be available from the moment of unlocking. Can only be called by owner.",
+					"params": {
+						"_value": "The new duration value (in seconds)."
+					}
+				},
+				"totalSupplyFactor()": {
+					"return": "Returns current total supply factor."
+				},
+				"transferOwnership(address)": {
+					"details": "Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner."
+				},
+				"withdrawalLockDuration()": {
+					"return": "Returns current withdrawal lock duration."
+				},
+				"withdrawalUnlockDuration()": {
+					"return": "Returns current withdrawal unlock duration."
+				}
+			},
+			"title": "EasyStaking * Note: all percentage values are between 0 (0%) and 1 (100%) and represented as fixed point numbers containing 18 decimals like with Ether 100% == 1 ether"
+		},
+		"userdoc": {
+			"methods": {}
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/EasyStaking.sol": "EasyStaking"
+		},
+		"evmVersion": "istanbul",
+		"libraries": {},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"@openzeppelin/contracts-ethereum-package/contracts/GSN/Context.sol": {
+			"keccak256": "0x3491510fa4862af1a43f6c860d9cf7392240196540cd3c0eea79d374d419c5a1",
+			"urls": [
+				"bzz-raw://3e51386d74eb723d3acaaddafce1dd0b4082ad4c10ddba6b9fc154aad2930d02",
+				"dweb:/ipfs/QmcA8Huap1c7YjdVjx5TGasxKNMLgsa3XyLvQUaMa1nMt8"
+			]
+		},
+		"@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol": {
+			"keccak256": "0x640b6dee7a4b830bdfd52b5031a07fc2b12209f5b2e29e5d364a7d37f69d8076",
+			"urls": [
+				"bzz-raw://31113152e1ddb78fe7a4197f247591ca894e93f916867beb708d8e747b6cc74f",
+				"dweb:/ipfs/QmbZaJyXdpsYGykVhHH9qpVGQg9DGCxE2QufbCUy3daTgq"
+			]
+		},
+		"@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol": {
+			"keccak256": "0xd7e8ab76fa35c4d8d35a06a6ed538cadab8b75a1aa00594ced1568b2c0cadde3",
+			"urls": [
+				"bzz-raw://a3f816aa3e6161b4cf882ad34755673848d835f7fb964db49bcef9df14570cef",
+				"dweb:/ipfs/QmQACSH1W7pKQnqTAqpuEP8ychp3PvosfnyondLaLE1nVq"
+			]
+		},
+		"@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol": {
+			"keccak256": "0xe5bb0f57cff3e299f360052ba50f1ea0fff046df2be070b6943e0e3c3fdad8a9",
+			"urls": [
+				"bzz-raw://59fd025151435da35faa8093a5c7a17de02de9d08ad27275c5cdf05050820d91",
+				"dweb:/ipfs/QmQMvwEcPhoRXzbXyrdoeRtvLoifUW9Qh7Luho7bmUPRkc"
+			]
+		},
+		"@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/SafeERC20.sol": {
+			"keccak256": "0x6f2c9955d65c522b80f4b8792f076512d2df947d2112cbc4d98a4781ed42ede2",
+			"urls": [
+				"bzz-raw://7d8ec81683520c06baeef3f7e06cd82bd6fd5fa611f26857f475f6c829540aff",
+				"dweb:/ipfs/QmTDkFzKnrpiV1UKnSoiZAHPuguWzokrr4pFbSPvyaSo56"
+			]
+		},
+		"@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol": {
+			"keccak256": "0x1a8e5072509c5ea7365eb1d48030b9be865140c8fb779968da0a459a0e174a11",
+			"urls": [
+				"bzz-raw://03335b7b07c7c8c8d613cfdd8ec39a0b5ec133ee510bf2fe6cc5a496767bef4b",
+				"dweb:/ipfs/Qmebp4nzPja645c9yXSdJkGq96oU3am3LUnG2K3R7XxyKf"
+			]
+		},
+		"@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol": {
+			"keccak256": "0xb2fbd0f9a0bd0d99ace5603f1ce5388ed7d81031a188f5f4667e702fe690e61a",
+			"urls": [
+				"bzz-raw://b5a018485e3e184d24fabf939a2ca2b82a95b55ad7fcb109f2005d755ddedd29",
+				"dweb:/ipfs/QmbpUfNbKjnVhARJRwMvD4h5z6ajYcdAB5Up6m1V3Rf2Ee"
+			]
+		},
+		"@openzeppelin/upgrades/contracts/Initializable.sol": {
+			"keccak256": "0x9bfec92e36234ecc99b5d37230acb6cd1f99560233753162204104a4897e8721",
+			"urls": [
+				"bzz-raw://5cf7c208583d4d046d75bd99f5507412ab01cce9dd9f802ce9768a416d93ea2f",
+				"dweb:/ipfs/QmcQS1BBMPpVEkXP3qzwSjxHNrqDek8YeR7xbVWDC9ApC7"
+			]
+		},
+		"contracts/EasyStaking.sol": {
+			"keccak256": "0x3291b0bd76f7d01be259251c678256158b9129292e1dec3b60cc7c00591a5fbf",
+			"urls": [
+				"bzz-raw://857d33230ab12da9d955c04e94d6d2403927171ad049c740c55e72151f5bfe07",
+				"dweb:/ipfs/Qmcr2DJT1wvY1YsuNEH3yxvL5fDzzpPQb343srXYBEewbH"
+			]
+		},
+		"contracts/IERC20Mintable.sol": {
+			"keccak256": "0xe91eea6c269b56838ee4125a599b00c92f3527a6f436a763f2f14bfcd868f0fe",
+			"urls": [
+				"bzz-raw://f071eb46eb8bf95bc7fd45e44033ff27aea9747463d2720c844b39514f731b12",
+				"dweb:/ipfs/Qmah2QKciPxcjRk9r9kbduUTTim28341jdULHcJbBdWhhA"
+			]
+		},
+		"contracts/Sacrifice.sol": {
+			"keccak256": "0xb67c5bb9b4002d32f7c96c16b88a63dcdd3b259a9f5da911bee3b313596a91b1",
+			"urls": [
+				"bzz-raw://8c29c01c7c4a126054b8b706ee14c38737068646b87cfa2fa5a4831066e5b5f7",
+				"dweb:/ipfs/QmXZTf7mkNSsfyQbH2Xt2W7xCPmr222k8DB1ugPznVfCru"
+			]
+		},
+		"contracts/lib/ExtendedMath.sol": {
+			"keccak256": "0x60d373c199714e80dc18be2bd1e10cb9cea898226449e934bd7f576f616da5e7",
+			"urls": [
+				"bzz-raw://e0546063959c3504f0adfb9a3603573146b9e5a1843a8a0c57802e6f71ae8424",
+				"dweb:/ipfs/QmT9x1CHn3pWn2oRKNJyowccKD6oDFeRqoffxQxpC5FTPd"
+			]
+		},
+		"contracts/lib/Sigmoid.sol": {
+			"keccak256": "0xadd70b7cfd76ed034067dc2bec5a6fe3ffe4006eab936e2f30a7896e6f5cb6a4",
+			"urls": [
+				"bzz-raw://545c1bf171c2c11caebd127edaa54bc189eadfed610dba7dcbe4b92d9331d3c7",
+				"dweb:/ipfs/QmaKyZzyTempgpyfDEwuCU2JBYF6kUZgPDDJqTS72MRxf6"
+			]
+		}
+	},
+	"version": 1
+}
