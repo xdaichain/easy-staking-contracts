@@ -89,6 +89,13 @@ contract EasyStaking is Ownable, ReentrancyGuard {
     event WithdrawalUnlockDurationSet(uint256 value, address sender);
 
     /**
+     * @dev Emitted when lock after duration value is set.
+     * @param value A new withdrawal lock duration value.
+     * @param sender The owner address at the moment of value changing.
+     */
+    event LockAfterStakeDurationSet(uint256 value, address sender);
+    
+    /**
      * @dev Emitted when a new total supply factor value is set.
      * @param value A new total supply factor value.
      * @param sender The owner address at the moment of value changing.
@@ -140,6 +147,8 @@ contract EasyStaking is Ownable, ReentrancyGuard {
     UintParam public withdrawalLockDurationParam;
     // The time during which the withdrawal will be available from the moment of unlocking (in seconds)
     UintParam public withdrawalUnlockDurationParam;
+    // The time during which the user can not withdraw after initial stake.
+    UintParam public lockAfterStakeDurationParam;
     // Total supply factor for calculating emission rate (in percentage)
     UintParam public totalSupplyFactorParam;
 
@@ -179,6 +188,7 @@ contract EasyStaking is Ownable, ReentrancyGuard {
         uint256 _fee,
         uint256 _withdrawalLockDuration,
         uint256 _withdrawalUnlockDuration,
+        uint256 _lockAfterStakeDuration,
         uint256 _totalSupplyFactor,
         uint256 _sigmoidParamA,
         int256 _sigmoidParamB,
@@ -192,6 +202,7 @@ contract EasyStaking is Ownable, ReentrancyGuard {
         setFee(_fee);
         setWithdrawalLockDuration(_withdrawalLockDuration);
         setWithdrawalUnlockDuration(_withdrawalUnlockDuration);
+        setLockAfterStakeDuration(_lockAfterStakeDuration);
         setTotalSupplyFactor(_totalSupplyFactor);
         setSigmoidParameters(_sigmoidParamA, _sigmoidParamB, _sigmoidParamC);
         setLiquidityProvidersRewardAddress(_liquidityProvidersRewardAddress);
@@ -345,6 +356,16 @@ contract EasyStaking is Ownable, ReentrancyGuard {
     }
 
     /**
+     * @dev Sets the time from the initial stake after which withdrawals are allowed
+     * Can only be called by owner.
+     * @param _value The new duration value (in seconds).
+     */
+    function setLockAfterStakeDuration(uint256 _value) public onlyOwner {
+        _updateUintParam(lockAfterStakeDurationParam, _value);
+        emit LockAfterStakeDurationSet(_value, msg.sender);
+    }
+
+    /**
      * @dev Sets total supply factor for calculating emission rate.
      * Can only be called by owner.
      * @param _value The new factor value (in percentage).
@@ -407,6 +428,18 @@ contract EasyStaking is Ownable, ReentrancyGuard {
      */
     function withdrawalUnlockDuration() public view returns (uint256) {
         return _getUintParamValue(withdrawalUnlockDurationParam);
+    }
+
+    /**
+     * @return Returns current lock after stake duration.
+     */
+    function lockAfterStakeDuration() public view returns (uint256) {
+        return _getUintParamValue(lockAfterStakeDurationParam);
+    }
+
+    function lockAfterStakeDurationPassed(address _sender, uint256 _id) public view returns (bool) {
+        uint256 timePassed = _now().sub(depositDates[_sender][_id]);
+        return timePassed >= lockAfterStakeDuration();
     }
 
     /**
@@ -494,6 +527,7 @@ contract EasyStaking is Ownable, ReentrancyGuard {
     function _withdraw(address _sender, uint256 _id, uint256 _amount, bool _forced) internal nonReentrant {
         require(_id > 0 && _id <= lastDepositIds[_sender], "wrong deposit id");
         require(balances[_sender][_id] > 0 && balances[_sender][_id] >= _amount, "insufficient funds");
+        require(lockAfterStakeDurationPassed(_sender, _id), "can not withdraw during initial lock period");
         (uint256 accruedEmission, uint256 timePassed) = _mint(_sender, _id, _amount);
         uint256 amount = _amount == 0 ? balances[_sender][_id] : _amount.add(accruedEmission);
         balances[_sender][_id] = balances[_sender][_id].sub(amount);
